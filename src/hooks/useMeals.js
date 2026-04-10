@@ -174,15 +174,25 @@ export function useMeals() {
   useEffect(() => { fetchMeals() }, [fetchMeals])
 
   const addMeal = async (meal) => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Not authenticated')
     const { data, error: addError } = await supabase
       .from('meals')
-      .insert({ ...meal, user_id: user.id })
+      .insert([{
+        user_id: session.user.id,
+        name: meal.name,
+        rating: meal.rating ?? 3,
+        last_made: meal.last_made ?? null,
+        times_made: meal.times_made ?? 0,
+        ingredients: meal.ingredients ?? [],
+        notes: meal.notes ?? '',
+        tags: meal.tags ?? [],
+        source: meal.source ?? ''
+      }])
       .select()
-      .single()
     if (addError) throw addError
-    setMeals(prev => [data, ...prev])
-    return data
+    await fetchMeals()
+    return data[0]
   }
 
   const updateMeal = async (id, updates) => {
