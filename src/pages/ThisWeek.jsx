@@ -25,7 +25,8 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
       <div className="page-header">
         <div>
           <h1 className="page-title">This Week</h1>
-          <div className="page-subtitle">{getWeekRange()} · {weekMeals.length} meal{weekMeals.length !== 1 ? 's' : ''}</div>
+          <p className="page-subtitle">Queue up meals for the week. Use Randomize to let your ratings and cook history decide — or hand-pick from your Rolodex.</p>
+          <div className="week-header-meta">{getWeekRange()} · {weekMeals.length} meal{weekMeals.length !== 1 ? 's' : ''}</div>
         </div>
       </div>
 

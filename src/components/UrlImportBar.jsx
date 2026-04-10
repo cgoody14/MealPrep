@@ -100,8 +100,10 @@ async function scrapeRecipe(url) {
 
 export default function UrlImportBar({ onImport }) {
   const [url, setUrl] = useState('')
-  const [status, setStatus] = useState('idle') // idle | loading | preview | error
+  const [status, setStatus] = useState('idle') // idle | loading | preview
   const [preview, setPreview] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   const handleImport = async () => {
     if (!url.trim()) return
@@ -125,21 +127,29 @@ export default function UrlImportBar({ onImport }) {
     }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!preview) return
-    onImport({
-      name: preview.name,
-      rating: null,
-      last_made: null,
-      times_made: 1,
-      ingredients: preview.ingredients,
-      notes: preview.description || '',
-      tags: preview.tags,
-      source: preview.source,
-    })
-    setUrl('')
-    setPreview(null)
-    setStatus('idle')
+    setSaving(true)
+    setSaveError('')
+    try {
+      await onImport({
+        name: preview.name || 'Imported Recipe',
+        rating: 3,
+        last_made: null,
+        times_made: 0,
+        ingredients: preview.ingredients,
+        notes: preview.description || '',
+        tags: preview.tags,
+        source: preview.source,
+      })
+      setUrl('')
+      setPreview(null)
+      setStatus('idle')
+    } catch (err) {
+      setSaveError(err.message || 'Failed to save. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleDiscard = () => {
@@ -195,9 +205,12 @@ export default function UrlImportBar({ onImport }) {
               {preview.tags.map(tag => <span key={tag} className="tag">{tag}</span>)}
             </div>
           )}
+          {saveError && <div className="form-error" style={{ marginBottom: 8 }}>{saveError}</div>}
           <div className="import-preview-actions">
-            <button className="btn btn-primary" onClick={handleSave}>Save to Rolodex</button>
-            <button className="btn btn-ghost" onClick={handleDiscard}>Discard</button>
+            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving…' : 'Save to Rolodex'}
+            </button>
+            <button className="btn btn-ghost" onClick={handleDiscard} disabled={saving}>Discard</button>
           </div>
         </div>
       )}

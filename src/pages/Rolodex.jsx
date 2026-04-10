@@ -3,7 +3,6 @@ import MealCard from '../components/MealCard'
 import MealDetail from '../components/MealDetail'
 import MealForm from '../components/MealForm'
 import UrlImportBar from '../components/UrlImportBar'
-import { daysSince } from '../utils/format'
 
 const ALL_TAGS = [
   'protein','pasta','seafood','vegetarian','sides','easy','weeknight',
@@ -25,6 +24,7 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
   const [editMeal, setEditMeal] = useState(null)
   const [showAdd, setShowAdd] = useState(false)
   const [weekLoading, setWeekLoading] = useState(false)
+  const [importError, setImportError] = useState('')
 
   const weekMealIds = new Set((weekMeals || []).map(wm => wm.meal_id))
 
@@ -81,14 +81,9 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
     }
   }
 
-  const handleDelete = async (id) => {
-    await deleteMeal(id)
+  const handleAddToWeekFromDetail = async (mealId) => {
+    await addToWeek(mealId)
     setDetailMeal(null)
-  }
-
-  const handleMarkMade = async (id) => {
-    const updated = await markMadeToday(id)
-    if (detailMeal?.id === id && updated) setDetailMeal(updated)
   }
 
   const handleSaveEdit = async (data) => {
@@ -100,6 +95,7 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
   }
 
   const handleUrlImport = async (data) => {
+    setImportError('')
     await addMeal(data)
   }
 
@@ -109,6 +105,7 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
         <h1 className="page-title">Rolodex</h1>
         <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Add Meal</button>
       </div>
+      <p className="page-subtitle">Your personal recipe archive. Add meals manually or import from any recipe URL. Search, filter by tag, and track how often you cook each dish.</p>
 
       <UrlImportBar onImport={handleUrlImport} />
 
@@ -161,15 +158,15 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
       ) : (
         <div className="meal-grid">
           {filtered.map((meal, i) => (
-            <div key={meal.id} style={{ animationDelay: `${i * 40}ms` }}>
-              <MealCard
-                meal={meal}
-                onOpen={setDetailMeal}
-                onToggleWeek={handleToggleWeek}
-                inWeek={weekMealIds.has(meal.id)}
-                weekLoading={weekLoading}
-              />
-            </div>
+            <MealCard
+              key={meal.id}
+              meal={meal}
+              onOpen={setDetailMeal}
+              onToggleWeek={handleToggleWeek}
+              inWeek={weekMealIds.has(meal.id)}
+              weekLoading={weekLoading}
+              animDelay={i * 40}
+            />
           ))}
         </div>
       )}
@@ -178,9 +175,8 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
         <MealDetail
           meal={detailMeal}
           onClose={() => setDetailMeal(null)}
-          onEdit={(meal) => { setEditMeal(meal); setDetailMeal(null) }}
-          onDelete={handleDelete}
-          onMarkMade={handleMarkMade}
+          inWeek={weekMealIds.has(detailMeal.id)}
+          onAddToWeek={handleAddToWeekFromDetail}
         />
       )}
 

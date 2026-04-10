@@ -68,6 +68,7 @@ export default function Planner({ meals, addToWeek, weekMeals }) {
       <div className="page-header">
         <h1 className="page-title">Meal Planner</h1>
       </div>
+      <p className="page-subtitle">Generate a ranked meal plan based on your preferences, ingredient overlap, and cook history. Fine-tune with cooldown and ingredient filters.</p>
 
       <div className="planner-controls card">
         <div className="form-row">

@@ -58,7 +58,8 @@ export default function Shopping({ weekMeals, loading }) {
       <div className="page-header">
         <div>
           <h1 className="page-title">Shopping List</h1>
-          <div className="page-subtitle">
+          <p className="page-subtitle">Auto-generated from this week's meals. Check off items as you shop — your progress saves automatically and resets each new week.</p>
+          <div className="week-header-meta">
             {totalItems} item{totalItems !== 1 ? 's' : ''} across {totalCategories} categor{totalCategories !== 1 ? 'ies' : 'y'}
             {' · '}{getWeekRange()}
           </div>

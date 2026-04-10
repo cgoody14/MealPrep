@@ -17,11 +17,11 @@ function CooldownBar({ lastMade }) {
   )
 }
 
-export default function MealCard({ meal, onOpen, onToggleWeek, inWeek, weekLoading }) {
+export default function MealCard({ meal, onOpen, onToggleWeek, inWeek, weekLoading, animDelay = 0 }) {
   const days = daysSince(meal.last_made)
   const daysText = meal.last_made ? (days === 0 ? 'Today' : `${days}d ago`) : 'Never made'
-  const visibleIngredients = (meal.ingredients || []).slice(0, 5)
-  const extraIngredients = (meal.ingredients || []).length - 5
+  const visibleIngredients = (meal.ingredients || []).slice(0, 4)
+  const extraIngredients = (meal.ingredients || []).length - 4
   const visibleTags = (meal.tags || []).slice(0, 3)
 
   const handleWeekToggle = (e) => {
@@ -30,7 +30,7 @@ export default function MealCard({ meal, onOpen, onToggleWeek, inWeek, weekLoadi
   }
 
   return (
-    <div className="meal-card fade-up" onClick={() => onOpen(meal)}>
+    <div className="meal-card fade-up" style={{ animationDelay: `${animDelay}ms` }} onClick={() => onOpen(meal)}>
       {meal.source && <span className="url-ribbon">URL</span>}
       <div className="meal-card-body">
         <div className="meal-card-header">

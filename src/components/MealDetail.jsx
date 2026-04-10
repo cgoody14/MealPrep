@@ -2,25 +2,18 @@ import { useState } from 'react'
 import Stars from './Stars'
 import { daysSince, formatDate } from '../utils/format'
 
-export default function MealDetail({ meal, onClose, onEdit, onDelete, onMarkMade }) {
-  const [deleting, setDeleting] = useState(false)
-  const [marking, setMarking] = useState(false)
+export default function MealDetail({ meal, onClose, inWeek, onAddToWeek }) {
+  const [adding, setAdding] = useState(false)
 
   const days = daysSince(meal.last_made)
 
-  const handleDelete = async () => {
-    if (!window.confirm) {
-      setDeleting(true)
-      try { await onDelete(meal.id) } finally { setDeleting(false) }
-      return
+  const handleAddToWeek = async () => {
+    setAdding(true)
+    try {
+      await onAddToWeek(meal.id)
+    } finally {
+      setAdding(false)
     }
-    setDeleting(true)
-    try { await onDelete(meal.id); onClose() } catch { setDeleting(false) }
-  }
-
-  const handleMarkMade = async () => {
-    setMarking(true)
-    try { await onMarkMade(meal.id) } finally { setMarking(false) }
   }
 
   return (
@@ -84,17 +77,14 @@ export default function MealDetail({ meal, onClose, onEdit, onDelete, onMarkMade
         )}
 
         <div className="detail-footer">
-          <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
-            {deleting ? 'Deleting…' : 'Delete'}
+          <button className="btn btn-ghost" onClick={onClose}>Exit</button>
+          <button
+            className={`btn ${inWeek ? 'btn-week-active-full' : 'btn-primary'}`}
+            onClick={inWeek ? undefined : handleAddToWeek}
+            disabled={inWeek || adding}
+          >
+            {adding ? 'Adding…' : inWeek ? '✓ In This Week' : 'Add to This Week'}
           </button>
-          <div className="detail-footer-right">
-            <button className="btn btn-secondary" onClick={handleMarkMade} disabled={marking}>
-              {marking ? 'Saving…' : '✓ Made Today'}
-            </button>
-            <button className="btn btn-primary" onClick={() => { onClose(); onEdit(meal) }}>
-              Edit
-            </button>
-          </div>
         </div>
       </div>
     </div>
