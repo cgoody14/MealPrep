@@ -1716,6 +1716,37 @@ button {
    SEND MODAL
    ================================================ */
 
+.send-format-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.send-format-tab {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text2);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.send-format-tab:hover {
+  background: var(--bg3, var(--border));
+  color: var(--text);
+}
+
+.send-format-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
 .send-preview {
   background: var(--bg2);
   border: 1px solid var(--border);
