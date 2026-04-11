@@ -1,78 +1,95 @@
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
+export async function scrapeRecipeWithAI(url) {
+  try {
+    // Step 1: Fetch HTML via our own serverless function
+    const scrapeRes = await fetch('/api/scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    })
+    const { html, error } = await scrapeRes.json()
+    if (error || !html) throw new Error(error ?? 'No HTML returned')
 
-async function fetchWithProxy(url) {
-  const proxies = [
-    `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
-  ]
+    console.log('[gemini] fetched html length:', html.length)
 
-  for (const proxyUrl of proxies) {
-    try {
-      console.log('[gemini] trying proxy:', proxyUrl)
-      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) })
-      if (!res.ok) continue
+    // Step 2: Strip to readable text
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    doc.querySelectorAll(
+      'script,style,nav,footer,header,aside,[class*="ad-"],[id*="ad-"]'
+    ).forEach(el => el.remove())
+    const rawText = (doc.body?.innerText ?? doc.body?.textContent ?? '').slice(0, 6000)
 
-      const raw = await res.text()
-      // allorigins wraps in { contents }, others return html text directly
-      let html
-      try {
-        const parsed = JSON.parse(raw)
-        html = parsed.contents ?? raw
-      } catch {
-        html = raw
-      }
+    console.log('[gemini] stripped text preview:', rawText.slice(0, 300))
 
-      if (typeof html === 'string' && html.length > 500) {
-        console.log('[gemini] proxy success, html length:', html.length)
-        return html
-      }
-    } catch (err) {
-      console.warn('[gemini] proxy failed:', proxyUrl, err.message)
-      continue
-    }
-  }
-  throw new Error('All proxies failed')
-}
+    // Step 3: Send to Gemini
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
 
-export { fetchWithProxy }
-
-export async function callGemini(rawText, url) {
-  const prompt = `You are a recipe parser. Extract structured recipe data from the text below and return ONLY a valid JSON object. No preamble, no markdown, no backticks — raw JSON only.
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `You are a recipe parser. Extract structured recipe data from the text below and return ONLY a valid JSON object. No preamble, no markdown, no backticks — raw JSON only.
 
 Return exactly this shape:
 {
-  name: recipe name as a string,
-  ingredients: array of ingredient name strings with all quantities and measurements stripped. '2 cups chicken broth' becomes 'chicken broth'. '1 tbsp olive oil' becomes 'olive oil',
-  notes: recipe description or key cooking tips as a string max 300 chars,
-  tags: array of tags only chosen from this exact list based on what genuinely applies: protein, pasta, seafood, vegetarian, sides, easy, weeknight, weekend, crowd-pleaser, healthy, brunch, italian, japanese, greek,
-  cookTime: cook time as a readable string e.g. 30 mins,
-  servings: servings as a readable string e.g. 4 servings
+  "name": "recipe name",
+  "ingredients": ["ingredient name only no quantities"],
+  "notes": "description or cooking tips max 300 chars",
+  "tags": [],
+  "cookTime": "e.g. 30 mins",
+  "servings": "e.g. 4 servings"
 }
 
-Never return null for any field. Return empty arrays for ingredients and tags if none found. Return empty string for other fields if not found.
+Ingredient rules:
+- Strip ALL quantities and measurements
+- "2 cups chicken broth" → "chicken broth"
+- "1 tbsp olive oil" → "olive oil"
+
+Tag rules — only use from this exact list:
+protein, pasta, seafood, vegetarian, sides, easy, weeknight, weekend,
+crowd-pleaser, healthy, brunch, italian, japanese, greek
+
+Never return null. Empty arrays if nothing found.
 
 Recipe text:
 ${rawText}
 
 Source URL: ${url}`
-
-  const resp = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 1000 }
+          }]
+        }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 1000 }
+      })
     })
-  })
 
-  if (!resp.ok) throw new Error(`Gemini API error: ${resp.status}`)
-  const data = await resp.json()
-  let text = data.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error('No response from Gemini')
+    const aiData = await response.json()
+    console.log('[gemini] raw response:', JSON.stringify(aiData))
 
-  // Strip potential markdown code fences Gemini sometimes adds despite instructions
-  text = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
-  return JSON.parse(text)
+    const text = aiData.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
+    const clean = text.replace(/```json|```/g, '').trim()
+    const result = JSON.parse(clean)
+    console.log('[gemini] parsed result:', result)
+    return result
+
+  } catch (err) {
+    console.error('[gemini] failed:', err.message)
+    return buildFallback(url)
+  }
+}
+
+function buildFallback(url) {
+  try {
+    const path = new URL(url).pathname
+    const slug = path.split('/').filter(Boolean).pop() ?? ''
+    const name = slug
+      .replace(/[-_]/g, ' ')
+      .replace(/\.(html|htm|php|aspx)$/i, '')
+      .replace(/\b\w/g, c => c.toUpperCase())
+      .trim() || 'Imported Recipe'
+    return { name, ingredients: [], notes: '', tags: [], cookTime: '', servings: '', _fallback: true }
+  } catch {
+    return { name: 'Imported Recipe', ingredients: [], notes: '', tags: [], cookTime: '', servings: '', _fallback: true }
+  }
 }

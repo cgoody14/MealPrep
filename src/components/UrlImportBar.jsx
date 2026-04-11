@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Stars from './Stars'
-import { fetchWithProxy, callGemini } from '../utils/recipeAgent'
+import { scrapeRecipeWithAI } from '../utils/recipeAgent'
 
 const ALLOWED_TAGS = [
   'protein','pasta','seafood','vegetarian','sides','easy','weeknight',
@@ -14,23 +14,6 @@ const STATUS_MESSAGES = [
   'Building preview…',
 ]
 
-function extractText(html) {
-  const doc = new DOMParser().parseFromString(html, 'text/html')
-  doc.querySelectorAll('script, style, nav, footer, header, aside').forEach(el => el.remove())
-  const text = (doc.body?.textContent || '').replace(/\s+/g, ' ').trim()
-  return text.slice(0, 6000)
-}
-
-function slugToName(url) {
-  try {
-    const path = new URL(url).pathname
-    const slug = path.split('/').filter(Boolean).pop() || ''
-    const name = slug.replace(/[-_]/g, ' ').trim()
-    return name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Imported Recipe'
-  } catch {
-    return 'Imported Recipe'
-  }
-}
 
 export default function UrlImportBar({ onImport }) {
   const [url, setUrl] = useState('')
@@ -98,41 +81,27 @@ export default function UrlImportBar({ onImport }) {
     setSuccessMsg('')
     startStatusCycle()
 
-    try {
-      const html = await fetchWithProxy(url.trim())
-      const rawText = extractText(html)
+    // scrapeRecipeWithAI never throws — returns buildFallback on any error
+    const result = await scrapeRecipeWithAI(url.trim())
+    stopStatusCycle()
 
-      const result = await callGemini(rawText, url.trim())
-
-      stopStatusCycle()
-      setPreview({
-        name: result.name || slugToName(url.trim()),
-        ingredients: Array.isArray(result.ingredients) ? result.ingredients : [],
-        notes: result.notes || '',
-        tags: Array.isArray(result.tags)
-          ? result.tags.filter(t => ALLOWED_TAGS.includes(t))
-          : [],
-        cookTime: result.cookTime || '',
-        servings: result.servings || '',
-        source: url.trim(),
-        rating: 3,
-      })
-      setStatus('preview')
-    } catch {
-      stopStatusCycle()
-      setPreview({
-        name: slugToName(url.trim()),
-        ingredients: [],
-        notes: '',
-        tags: [],
-        cookTime: '',
-        servings: '',
-        source: url.trim(),
-        rating: 3,
-      })
+    if (result._fallback) {
       setFallbackMsg("Couldn't reach that recipe site — fill in the details below.")
-      setStatus('preview')
     }
+
+    setPreview({
+      name: result.name || '',
+      ingredients: Array.isArray(result.ingredients) ? result.ingredients : [],
+      notes: result.notes || '',
+      tags: Array.isArray(result.tags)
+        ? result.tags.filter(t => ALLOWED_TAGS.includes(t))
+        : [],
+      cookTime: result.cookTime || '',
+      servings: result.servings || '',
+      source: url.trim(),
+      rating: 3,
+    })
+    setStatus('preview')
   }
 
   const handleSave = async () => {
