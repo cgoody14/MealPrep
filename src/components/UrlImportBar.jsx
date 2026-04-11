@@ -9,7 +9,7 @@ const ALLOWED_TAGS = [
 
 const STATUS_MESSAGES = [
   'Looking up recipe…',
-  'Asking Gemini…',
+  'Asking Groq…',
   'Extracting ingredients…',
   'Building preview…',
 ]

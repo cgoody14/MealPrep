@@ -1,25 +1,30 @@
 export async function scrapeRecipeWithAI(url) {
   try {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY
+    const endpoint = 'https://api.groq.com/openai/v1/chat/completions'
 
-    console.log('[gemini] looking up recipe from URL:', url)
+    console.log('[groq] looking up recipe from URL:', url)
 
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `A user wants to save this recipe to their meal planner: ${url}
-
-Based on the URL and your knowledge of this recipe, return ONLY a valid JSON object with no preamble, no markdown, no backticks — raw JSON only.
+        model: 'llama3-8b-8192',
+        temperature: 0.1,
+        max_tokens: 1000,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a recipe parser. When given a recipe URL, use your training knowledge to return ONLY a valid JSON object with no preamble, no markdown, no backticks — raw JSON only.
 
 Exactly this shape:
 {
   "name": "recipe name",
-  "ingredients": ["ingredient name only, no quantities or measurements"],
-  "notes": "2-3 sentence cooking tips or description, max 300 chars",
+  "ingredients": ["ingredient name only no quantities or measurements"],
+  "notes": "2-3 sentence cooking tips or description max 300 chars",
   "tags": [],
   "cookTime": "e.g. 30 mins",
   "servings": "e.g. 4 servings"
@@ -28,38 +33,38 @@ Exactly this shape:
 Ingredient rules — strip ALL quantities and measurements:
 - "2 cups chicken broth" → "chicken broth"
 - "1 tbsp olive oil" → "olive oil"
-- "3 cloves garlic, minced" → "garlic"
-- Keep only the core ingredient name
+- "3 cloves garlic minced" → "garlic"
 
-Tag rules — only use tags from this exact list that genuinely apply:
+Tag rules — only use from this exact list that genuinely apply:
 protein, pasta, seafood, vegetarian, sides, easy, weeknight, weekend,
 crowd-pleaser, healthy, brunch, italian, japanese, greek
 
-If you do not recognize the recipe from the URL, make your best guess from the URL slug words. Never return null. Return empty arrays for ingredients and tags if truly unknown. Return empty string for other fields if unknown.`
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 1000
-        }
+Never return null. Return empty arrays for ingredients and tags if unknown.
+Return empty string for other fields if unknown.`
+          },
+          {
+            role: 'user',
+            content: `Extract the recipe data for this URL: ${url}`
+          }
+        ]
       })
     })
 
     const aiData = await response.json()
-    console.log('[gemini] raw response:', JSON.stringify(aiData))
+    console.log('[groq] raw response:', JSON.stringify(aiData))
 
     if (aiData.error) throw new Error(aiData.error.message)
 
-    const text = aiData.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
-    console.log('[gemini] extracted text:', text)
+    const text = aiData.choices?.[0]?.message?.content ?? '{}'
+    console.log('[groq] extracted text:', text)
 
     const clean = text.replace(/```json|```/g, '').trim()
     const result = JSON.parse(clean)
-    console.log('[gemini] parsed result:', result)
+    console.log('[groq] parsed result:', result)
     return result
 
   } catch (err) {
-    console.error('[gemini] failed:', err.message)
+    console.error('[groq] failed:', err.message)
     return buildFallback(url)
   }
 }
