@@ -38,7 +38,7 @@ export default function MealCard({ meal, onOpen, onToggleWeek, inWeek, weekLoadi
           <Stars rating={meal.rating} size="sm" />
         </div>
         <div className="meal-meta">
-          {daysText} · <strong>{meal.times_made}×</strong> cooked
+          {daysText} · <strong>{meal.times_made}×</strong> cooked{meal.cook_time ? ` · ${meal.cook_time}` : ''}
         </div>
         {visibleIngredients.length > 0 && (
           <div className="chip-row">

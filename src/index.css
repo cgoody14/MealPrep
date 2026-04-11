@@ -1089,6 +1089,14 @@ button {
   animation: fadeOut 2s ease forwards;
 }
 
+/* Instructions text — in MealDetail and This Week cards */
+.instructions-text {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.75;
+  white-space: pre-line;
+}
+
 /* ================================================
    THIS WEEK
    ================================================ */
@@ -1134,6 +1142,44 @@ button {
   justify-content: flex-end;
   gap: 10px;
   padding-top: 4px;
+}
+
+.week-card-expand-btns {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.week-card-expand-btn {
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text2);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.week-card-expand-btn:hover,
+.week-card-expand-btn.active {
+  background: var(--bg2);
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+.week-card-expandable {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.week-card-instr-text {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+  white-space: pre-line;
 }
 
 .remove-btn {

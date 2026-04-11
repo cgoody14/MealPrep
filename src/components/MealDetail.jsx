@@ -39,6 +39,12 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek }) {
             <div className="stat-value" style={{ fontSize: 14 }}>{formatDate(meal.last_made)}</div>
             <div className="stat-label">Last Made</div>
           </div>
+          {meal.cook_time && (
+            <div className="stat-box">
+              <div className="stat-value" style={{ fontSize: 14 }}>{meal.cook_time}</div>
+              <div className="stat-label">Cook Time</div>
+            </div>
+          )}
         </div>
 
         {meal.source && (
@@ -55,6 +61,13 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek }) {
                 <span key={ing} className="chip">{ing}</span>
               ))}
             </div>
+          </div>
+        )}
+
+        {meal.instructions && (
+          <div className="detail-section">
+            <div className="detail-section-label">Instructions</div>
+            <div className="instructions-text">{meal.instructions}</div>
           </div>
         )}
 

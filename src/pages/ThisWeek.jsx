@@ -9,6 +9,14 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
   const [showSend, setShowSend] = useState(false)
   const [clearing, setClearing] = useState(false)
   const [markingId, setMarkingId] = useState(null)
+  const [expandedIng, setExpandedIng] = useState(new Set())
+  const [expandedInstr, setExpandedInstr] = useState(new Set())
+
+  const toggleSet = (setter, id) => setter(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
 
   const handleClearWeek = async () => {
     setClearing(true)
@@ -56,6 +64,8 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
             if (!m) return null
             const days = daysSince(m.last_made)
             const daysText = m.last_made ? (days === 0 ? 'Today' : `${days}d ago`) : 'Never made'
+            const ingOpen = expandedIng.has(wm.id)
+            const instrOpen = expandedInstr.has(wm.id)
 
             return (
               <div key={wm.id} className="week-card fade-up" style={{ animationDelay: `${i * 60}ms` }}>
@@ -70,8 +80,10 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
                   </div>
                   <div className="meal-meta">
                     <Stars rating={m.rating} size="sm" />
-                    <span>{daysText} · <strong>{m.times_made}×</strong> cooked</span>
+                    <span>{daysText} · <strong>{m.times_made}×</strong> cooked{m.cook_time ? ` · ${m.cook_time}` : ''}</span>
                   </div>
+
+                  {/* Quick ingredient preview — always visible */}
                   {m.ingredients?.length > 0 && (
                     <div className="chip-row">
                       {(m.ingredients || []).slice(0, 4).map(ing => (
@@ -82,6 +94,47 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
                       )}
                     </div>
                   )}
+
+                  {/* Expand toggles */}
+                  {(m.ingredients?.length > 0 || m.instructions) && (
+                    <div className="week-card-expand-btns">
+                      {m.ingredients?.length > 0 && (
+                        <button
+                          className={`week-card-expand-btn ${ingOpen ? 'active' : ''}`}
+                          onClick={() => toggleSet(setExpandedIng, wm.id)}
+                        >
+                          {ingOpen ? '▲ Ingredients' : '▼ Ingredients'}
+                        </button>
+                      )}
+                      {m.instructions && (
+                        <button
+                          className={`week-card-expand-btn ${instrOpen ? 'active' : ''}`}
+                          onClick={() => toggleSet(setExpandedInstr, wm.id)}
+                        >
+                          {instrOpen ? '▲ Instructions' : '▼ Instructions'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Expanded: all ingredients */}
+                  {ingOpen && m.ingredients?.length > 0 && (
+                    <div className="week-card-expandable">
+                      <div className="chip-row">
+                        {m.ingredients.map(ing => (
+                          <span key={ing} className="chip">{ing}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Expanded: step-by-step instructions */}
+                  {instrOpen && m.instructions && (
+                    <div className="week-card-expandable">
+                      <div className="week-card-instr-text">{m.instructions}</div>
+                    </div>
+                  )}
+
                   <div className="week-card-footer">
                     {m.source && (
                       <a href={m.source} target="_blank" rel="noopener noreferrer" className="source-link">↗ recipe</a>

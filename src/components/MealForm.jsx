@@ -12,9 +12,11 @@ const emptyMeal = {
   last_made: new Date().toISOString().split('T')[0],
   ingredients: [],
   notes: '',
+  instructions: '',
   tags: [],
   source: '',
   times_made: 1,
+  cook_time: '',
 }
 
 export default function MealForm({ initial, onSave, onClose }) {
@@ -63,8 +65,10 @@ export default function MealForm({ initial, onSave, onClose }) {
         times_made: Number(form.times_made) || 1,
         ingredients: form.ingredients,
         notes: form.notes.trim(),
+        instructions: form.instructions.trim(),
         tags: form.tags,
         source: form.source.trim(),
+        cook_time: form.cook_time.trim(),
       })
       onClose()
     } catch (err) {
@@ -120,6 +124,16 @@ export default function MealForm({ initial, onSave, onClose }) {
           </div>
 
           <div className="form-group">
+            <label className="form-label">Cook Time</label>
+            <input
+              className="form-input"
+              value={form.cook_time}
+              onChange={e => set('cook_time', e.target.value)}
+              placeholder="e.g. 45 mins"
+            />
+          </div>
+
+          <div className="form-group">
             <label className="form-label">Ingredients</label>
             <div className="ing-input-row">
               <input
@@ -155,6 +169,17 @@ export default function MealForm({ initial, onSave, onClose }) {
               onChange={e => set('notes', e.target.value)}
               placeholder="Cooking tips, modifications…"
               rows={3}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Instructions</label>
+            <textarea
+              className="form-textarea"
+              value={form.instructions}
+              onChange={e => set('instructions', e.target.value)}
+              placeholder={"1. Preheat oven to 425°F.\n2. Season and sear the protein.\n3. Finish in oven…"}
+              rows={6}
             />
           </div>
 

@@ -14,7 +14,7 @@ export async function scrapeRecipeWithAI(url) {
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         temperature: 0.1,
-        max_tokens: 1000,
+        max_tokens: 1500,
         messages: [
           {
             role: 'system',
@@ -27,7 +27,8 @@ Exactly this shape:
   "notes": "2-3 sentence cooking tips or description max 300 chars",
   "tags": [],
   "cookTime": "e.g. 30 mins",
-  "servings": "e.g. 4 servings"
+  "servings": "e.g. 4 servings",
+  "instructions": "1. First step.\n2. Second step.\n3. Third step."
 }
 
 Ingredient rules — strip ALL quantities and measurements:
@@ -38,6 +39,11 @@ Ingredient rules — strip ALL quantities and measurements:
 Tag rules — only use from this exact list that genuinely apply:
 protein, pasta, seafood, vegetarian, sides, easy, weeknight, weekend,
 crowd-pleaser, healthy, brunch, italian, japanese, greek
+
+Instructions rules:
+- Write clear numbered steps, one per line using \\n between steps
+- Include all key cooking actions: prep, cook, plate
+- Keep each step concise and actionable
 
 Never return null. Return empty arrays for ingredients and tags if unknown.
 Return empty string for other fields if unknown.`
@@ -78,8 +84,8 @@ function buildFallback(url) {
       .replace(/\.(html|htm|php|aspx)$/i, '')
       .replace(/\b\w/g, c => c.toUpperCase())
       .trim() || 'Imported Recipe'
-    return { name, ingredients: [], notes: '', tags: [], cookTime: '', servings: '', _fallback: true }
+    return { name, ingredients: [], notes: '', tags: [], cookTime: '', servings: '', instructions: '', _fallback: true }
   } catch {
-    return { name: 'Imported Recipe', ingredients: [], notes: '', tags: [], cookTime: '', servings: '', _fallback: true }
+    return { name: 'Imported Recipe', ingredients: [], notes: '', tags: [], cookTime: '', servings: '', instructions: '', _fallback: true }
   }
 }

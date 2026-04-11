@@ -98,6 +98,7 @@ export default function UrlImportBar({ onImport }) {
         : [],
       cookTime: result.cookTime || '',
       servings: result.servings || '',
+      instructions: result.instructions || '',
       source: url.trim(),
       rating: 3,
     })
@@ -116,6 +117,8 @@ export default function UrlImportBar({ onImport }) {
         times_made: 0,
         ingredients: preview.ingredients,
         notes: preview.notes,
+        instructions: preview.instructions || '',
+        cook_time: preview.cookTime || '',
         tags: preview.tags,
         source: preview.source,
       })
@@ -242,6 +245,18 @@ export default function UrlImportBar({ onImport }) {
               onChange={e => setField('notes', e.target.value)}
               placeholder="Description, tips, or notes…"
               rows={3}
+            />
+          </div>
+
+          {/* Editable instructions */}
+          <div className="import-section">
+            <div className="import-section-label">Instructions</div>
+            <textarea
+              className="form-textarea"
+              value={preview.instructions}
+              onChange={e => setField('instructions', e.target.value)}
+              placeholder={"1. First step.\n2. Second step.\n3. Third step…"}
+              rows={5}
             />
           </div>
 
