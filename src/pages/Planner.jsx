@@ -66,9 +66,9 @@ export default function Planner({ meals, addToWeek, weekMeals }) {
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="page-title">Meal Planner</h1>
+        <h1 className="page-title">Meal Randomizer</h1>
       </div>
-      <p className="page-subtitle">Generate a ranked meal plan based on your preferences, ingredient overlap, and cook history. Fine-tune with cooldown and ingredient filters.</p>
+      <p className="page-subtitle">Generate a randomized meal plan based on your cook history, ratings, and ingredient preferences. Add results directly to This Week.</p>
 
       <div className="planner-controls card">
         <div className="form-row">

@@ -3,6 +3,7 @@ import MealCard from '../components/MealCard'
 import MealDetail from '../components/MealDetail'
 import MealForm from '../components/MealForm'
 import UrlImportBar from '../components/UrlImportBar'
+import RandomizeModal from '../components/RandomizeModal'
 
 const ALL_TAGS = [
   'protein','pasta','seafood','vegetarian','sides','easy','weeknight',
@@ -25,6 +26,8 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
   const [showAdd, setShowAdd] = useState(false)
   const [weekLoading, setWeekLoading] = useState(false)
   const [importError, setImportError] = useState('')
+  const [showRandomize, setShowRandomize] = useState(false)
+  const [randomizeSuccess, setRandomizeSuccess] = useState('')
 
   const weekMealIds = new Set((weekMeals || []).map(wm => wm.meal_id))
 
@@ -99,6 +102,14 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
     await addMeal(data)
   }
 
+  const handleRandomizeDone = (count) => {
+    setShowRandomize(false)
+    if (count) {
+      setRandomizeSuccess(`✓ ${count} meal${count !== 1 ? 's' : ''} added to This Week!`)
+      setTimeout(() => setRandomizeSuccess(''), 3000)
+    }
+  }
+
   return (
     <div className="page">
       <div className="page-header">
@@ -126,7 +137,13 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
+        <button className="btn btn-secondary" onClick={() => setShowRandomize(true)}>
+          🎲 Randomize
+        </button>
       </div>
+      {randomizeSuccess && (
+        <div className="randomize-success fade-in">{randomizeSuccess}</div>
+      )}
 
       {availableTags.length > 0 && (
         <div className="tag-filter-row">
@@ -178,6 +195,7 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
           inWeek={weekMealIds.has(detailMeal.id)}
           onAddToWeek={handleAddToWeekFromDetail}
           onDelete={async (id) => { await deleteMeal(id); setDetailMeal(null) }}
+          onEdit={(meal) => { setDetailMeal(null); setEditMeal(meal) }}
         />
       )}
 
@@ -186,6 +204,15 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
           initial={editMeal || {}}
           onSave={handleSaveEdit}
           onClose={() => { setEditMeal(null); setShowAdd(false) }}
+          existingMeals={meals}
+        />
+      )}
+
+      {showRandomize && (
+        <RandomizeModal
+          meals={meals}
+          onAdd={addToWeek}
+          onClose={handleRandomizeDone}
         />
       )}
     </div>

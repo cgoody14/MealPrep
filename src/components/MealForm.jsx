@@ -19,14 +19,24 @@ const emptyMeal = {
   cook_time: '',
 }
 
-export default function MealForm({ initial, onSave, onClose }) {
+export default function MealForm({ initial, onSave, onClose, existingMeals = [] }) {
   const [form, setForm] = useState({ ...emptyMeal, ...initial })
   const [ingInput, setIngInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [nameError, setNameError] = useState('')
+  const [dupWarning, setDupWarning] = useState('')
   const [error, setError] = useState('')
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+
+  const checkDuplicate = (name) => {
+    const trimmed = name.trim().toLowerCase()
+    if (!trimmed) { setDupWarning(''); return }
+    const dup = existingMeals.find(m =>
+      m.name.toLowerCase() === trimmed && m.id !== initial?.id
+    )
+    setDupWarning(dup ? `A recipe named "${dup.name}" already exists in your Rolodex.` : '')
+  }
 
   const addIngredient = () => {
     const val = ingInput.trim()
@@ -89,11 +99,19 @@ export default function MealForm({ initial, onSave, onClose }) {
             <input
               className={`form-input ${nameError ? 'input-error' : ''}`}
               value={form.name}
-              onChange={e => { set('name', e.target.value); if (nameError) setNameError('') }}
+              onChange={e => {
+                set('name', e.target.value)
+                if (nameError) setNameError('')
+                checkDuplicate(e.target.value)
+              }}
+              onBlur={e => checkDuplicate(e.target.value)}
               placeholder="e.g. Lemon Herb Chicken"
               autoFocus
             />
             {nameError && <div className="field-error">{nameError}</div>}
+            {dupWarning && !nameError && (
+              <div className="dup-warning">⚠️ {dupWarning}</div>
+            )}
           </div>
 
           <div className="form-group">

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Stars from './Stars'
 import { daysSince, formatDate } from '../utils/format'
 
-export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelete }) {
+export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelete, onEdit }) {
   const [adding, setAdding] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -35,13 +35,16 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
         {/* Sticky top bar */}
         <div className="detail-sticky-bar">
           <button className="btn btn-ghost detail-exit-btn" onClick={onClose}>Exit</button>
-          <button
-            className={`btn ${inWeek ? 'btn-in-week' : 'btn-primary'}`}
-            onClick={inWeek ? undefined : handleAddToWeek}
-            disabled={inWeek || adding}
-          >
-            {adding ? 'Adding…' : inWeek ? '✓ In This Week' : 'Add to This Week'}
-          </button>
+          <div className="detail-sticky-actions">
+            <button className="btn btn-edit" onClick={() => onEdit(meal)}>✏️ Edit</button>
+            <button
+              className={`btn ${inWeek ? 'btn-in-week' : 'btn-primary'}`}
+              onClick={inWeek ? undefined : handleAddToWeek}
+              disabled={inWeek || adding}
+            >
+              {adding ? 'Adding…' : inWeek ? '✓ In This Week' : 'Add to This Week'}
+            </button>
+          </div>
         </div>
 
         {/* Scrollable content body */}

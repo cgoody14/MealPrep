@@ -139,7 +139,7 @@ function AppShell() {
             }
           />
           <Route
-            path="/planner"
+            path="/randomizer"
             element={
               <Planner
                 meals={meals}

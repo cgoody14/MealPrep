@@ -77,3 +77,46 @@ Return a JSON array of the same ingredients with realistic quantities added.`
     return ingredients
   }
 }
+
+export async function categorizeIngredient(ingredient) {
+  try {
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY
+    const endpoint = 'https://api.groq.com/openai/v1/chat/completions'
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.1,
+        max_tokens: 50,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a grocery categorizer. Given an ingredient name return ONLY a JSON object with one key "category" whose value is exactly one of these categories:
+"Proteins & Meat", "Seafood", "Produce", "Dairy & Eggs", "Pantry & Dry Goods", "Herbs & Spices", "Other"
+
+No preamble, no markdown, no backticks. Raw JSON only.
+Example: {"category": "Produce"}`
+          },
+          {
+            role: 'user',
+            content: ingredient
+          }
+        ]
+      })
+    })
+
+    const data = await response.json()
+    const text = data.choices?.[0]?.message?.content ?? '{}'
+    const clean = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
+    const jsonMatch = clean.match(/\{[\s\S]*\}/)
+    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : {}
+    return parsed.category ?? 'Other'
+  } catch {
+    return 'Other'
+  }
+}

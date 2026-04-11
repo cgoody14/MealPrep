@@ -20,7 +20,7 @@ export default function RandomizeModal({ meals, onAdd, onClose }) {
       for (const meal of selected) {
         await onAdd(meal.id)
       }
-      onClose()
+      onClose(selected.length)
     } catch (err) {
       setError(err.message)
       setLoading(false)
