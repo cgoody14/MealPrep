@@ -177,6 +177,7 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
           onClose={() => setDetailMeal(null)}
           inWeek={weekMealIds.has(detailMeal.id)}
           onAddToWeek={handleAddToWeekFromDetail}
+          onDelete={async (id) => { await deleteMeal(id); setDetailMeal(null) }}
         />
       )}
 

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
-import { buildShoppingList } from '../utils/shopping'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { buildShoppingList, enrichIngredientsWithQuantities } from '../utils/shopping'
 import { getWeekRange, getWeekStart } from '../utils/format'
 
 export default function Shopping({ weekMeals, loading }) {
@@ -11,8 +11,9 @@ export default function Shopping({ weekMeals, loading }) {
       return new Set(JSON.parse(localStorage.getItem(storageKey) || '[]'))
     } catch { return new Set() }
   })
-  const [byRecipeOpen, setByRecipeOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [quantities, setQuantities] = useState({}) // { [meal.id]: string[] | 'loading' }
+  const fetchedRef = useRef(new Set())
 
   const mealObjects = useMemo(() => weekMeals.map(wm => wm.meals).filter(Boolean), [weekMeals])
   const categories = useMemo(() => buildShoppingList(mealObjects), [mealObjects])
@@ -23,6 +24,19 @@ export default function Shopping({ weekMeals, loading }) {
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify([...checked]))
   }, [checked, storageKey])
+
+  // Fetch quantities for each meal once per session, cached by meal.id
+  useEffect(() => {
+    mealObjects.forEach(meal => {
+      if (!meal.ingredients?.length) return
+      if (fetchedRef.current.has(meal.id)) return
+      fetchedRef.current.add(meal.id)
+      setQuantities(prev => ({ ...prev, [meal.id]: 'loading' }))
+      enrichIngredientsWithQuantities(meal.name, meal.ingredients).then(result => {
+        setQuantities(prev => ({ ...prev, [meal.id]: result }))
+      })
+    })
+  }, [mealObjects])
 
   const toggleChecked = (item) => {
     setChecked(prev => {
@@ -76,49 +90,61 @@ export default function Shopping({ weekMeals, loading }) {
         </div>
       ) : (
         <>
-          <div className="shop-grid">
-            {Object.entries(categories).map(([cat, items]) => (
-              <div key={cat} className="shop-card card">
-                <div className="shop-card-title">{cat}</div>
-                <ul className="shop-item-list">
-                  {items.map(item => (
-                    <li
-                      key={item}
-                      className={`shop-item ${checked.has(item) ? 'checked' : ''}`}
-                      onClick={() => toggleChecked(item)}
-                    >
-                      <span className="shop-checkbox">
-                        {checked.has(item) ? '✓' : ''}
-                      </span>
-                      <span className="shop-item-label">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          {/* By Recipe — always expanded at top */}
+          <div className="shop-section">
+            <div className="shop-section-title">By Recipe</div>
+            <div className="by-recipe-grid">
+              {mealObjects.map(meal => {
+                const qData = quantities[meal.id]
+                const isLoading = qData === 'loading'
+                const enriched = Array.isArray(qData) ? qData : (meal.ingredients || [])
+
+                return (
+                  <div key={meal.id} className="by-recipe-card card">
+                    <div className="by-recipe-card-header">
+                      <span className="by-recipe-card-name">{meal.name}</span>
+                      {isLoading && <span className="qty-loading">Adding quantities…</span>}
+                    </div>
+                    <ul className="shop-item-list">
+                      {enriched.map(ing => (
+                        <li
+                          key={ing}
+                          className={`shop-item ${checked.has(ing) ? 'checked' : ''}`}
+                          onClick={() => toggleChecked(ing)}
+                        >
+                          <span className="shop-checkbox">{checked.has(ing) ? '✓' : ''}</span>
+                          <span className="shop-item-label">{ing}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
-          <div className="by-recipe-section">
-            <button
-              className="by-recipe-toggle"
-              onClick={() => setByRecipeOpen(o => !o)}
-            >
-              {byRecipeOpen ? '▼' : '▶'} By Recipe
-            </button>
-            {byRecipeOpen && (
-              <div className="by-recipe-content">
-                {mealObjects.map(meal => (
-                  <div key={meal.id} className="by-recipe-meal">
-                    <div className="by-recipe-meal-name">{meal.name}</div>
-                    <div className="chip-row">
-                      {(meal.ingredients || []).map(ing => (
-                        <span key={ing} className="chip">{ing}</span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* All Items by Category */}
+          <div className="shop-section">
+            <div className="shop-section-title">All Items by Category</div>
+            <div className="shop-grid">
+              {Object.entries(categories).map(([cat, items]) => (
+                <div key={cat} className="shop-card card">
+                  <div className="shop-card-title">{cat}</div>
+                  <ul className="shop-item-list">
+                    {items.map(item => (
+                      <li
+                        key={item}
+                        className={`shop-item ${checked.has(item) ? 'checked' : ''}`}
+                        onClick={() => toggleChecked(item)}
+                      >
+                        <span className="shop-checkbox">{checked.has(item) ? '✓' : ''}</span>
+                        <span className="shop-item-label">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
         </>
       )}
