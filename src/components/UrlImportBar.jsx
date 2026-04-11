@@ -8,9 +8,9 @@ const ALLOWED_TAGS = [
 ]
 
 const STATUS_MESSAGES = [
-  'Trying to fetch recipe…',
-  'Reading page content…',
+  'Looking up recipe…',
   'Asking Gemini…',
+  'Extracting ingredients…',
   'Building preview…',
 ]
 
