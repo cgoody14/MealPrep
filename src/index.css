@@ -1062,6 +1062,33 @@ button {
   border-top: 1px solid var(--border);
 }
 
+.import-status-line {
+  color: var(--text3);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+.import-fallback-msg {
+  color: var(--text3);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+@keyframes fadeOut {
+  0%, 60% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.import-success-msg {
+  color: var(--green);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 8px;
+  animation: fadeOut 2s ease forwards;
+}
+
 /* ================================================
    THIS WEEK
    ================================================ */

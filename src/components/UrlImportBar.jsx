@@ -1,152 +1,57 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Stars from './Stars'
+import { callGemini } from '../utils/recipeAgent'
 
 const ALLOWED_TAGS = [
   'protein','pasta','seafood','vegetarian','sides','easy','weeknight',
   'weekend','crowd-pleaser','healthy','brunch','italian','japanese','greek'
 ]
 
-// Parse ISO 8601 duration (PT30M, PT1H30M, etc.) → total minutes
-function parseMinutes(iso) {
-  if (!iso) return null
-  const h = iso.match(/(\d+)H/)
-  const m = iso.match(/(\d+)M/)
-  const total = (h ? parseInt(h[1]) * 60 : 0) + (m ? parseInt(m[1]) : 0)
-  return total > 0 ? total : null
+const STATUS_MESSAGES = [
+  'Fetching recipe…',
+  'Reading page…',
+  'Asking Gemini…',
+  'Building preview…',
+]
+
+function extractText(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  doc.querySelectorAll('script, style, nav, footer, header, aside').forEach(el => el.remove())
+  const text = (doc.body?.textContent || '').replace(/\s+/g, ' ').trim()
+  return text.slice(0, 6000)
 }
 
-function generateTags(name, ingredients, description, cookTimeRaw, servingsRaw) {
-  const ingStr = ingredients.join(' ').toLowerCase()
-  const descStr = (description + ' ' + name).toLowerCase()
-  const minutes = parseMinutes(cookTimeRaw)
-  const servings = parseInt(servingsRaw) || 0
-  const tags = []
-
-  if (/chicken|beef|pork|lamb|steak|turkey/.test(ingStr)) tags.push('protein')
-  if (/salmon|cod|shrimp|fish|tuna|seafood|scallop/.test(ingStr)) tags.push('seafood')
-  if (/pasta|orzo|rigatoni|spaghetti|penne|noodle/.test(ingStr)) tags.push('pasta')
-  if (!tags.includes('protein') && !tags.includes('seafood')) tags.push('vegetarian')
-  if ((minutes && minutes < 30) || /easy|quick/.test(descStr)) tags.push('easy')
-  if (minutes && minutes < 45 && !tags.includes('easy')) tags.push('weeknight')
-  if ((minutes && minutes > 60) || /slow|braise/.test(descStr)) tags.push('weekend')
-  if (/italian|pasta|risotto|parmesan/.test(descStr)) tags.push('italian')
-  if (/miso|mirin|sake|soy sauce|sesame/.test(ingStr)) tags.push('japanese')
-  if (/feta|tzatziki|oregano/.test(ingStr) || /lamb/.test(ingStr)) tags.push('greek')
-  if (/healthy|light|fresh|low.cal/.test(descStr)) tags.push('healthy')
-  if (/brunch|breakfast|frittata/.test(descStr) || /\begg\b/.test(ingStr)) tags.push('brunch')
-  if (servings >= 6) tags.push('crowd-pleaser')
-
-  return [...new Set(tags)].filter(t => ALLOWED_TAGS.includes(t))
-}
-
-function cleanIngredient(raw) {
-  let s = raw.trim()
-  s = s.replace(/^[\d¼½¾⅓⅔⅛⅜⅝⅞]+[\s/\d-]*\s*/u, '')
-  s = s.replace(/^(cup|cups|tablespoon|tablespoons|tbsp|teaspoon|teaspoons|tsp|oz|ounce|ounces|pound|pounds|lb|lbs|gram|grams|g|kg|ml|liter|liters|pinch|handful|dash|can|cans|clove|cloves|slice|slices|bunch|bunches|package|packages|stick|sticks|head|heads|medium|large|small|fresh|dried|chopped|minced|diced|sliced|whole|ground)\s+/i, '')
-  s = s.replace(/\s*\(.*?\)\s*/g, '')
-  s = s.replace(/[,;.]+$/, '').trim()
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''
-}
-
-async function scrapeRecipe(url) {
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
-  const resp = await fetch(proxyUrl)
-  if (!resp.ok) throw new Error('Proxy request failed')
-  const json = await resp.json()
-  const html = json.contents
-
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-
-  // Try JSON-LD first
-  const scripts = doc.querySelectorAll('script[type="application/ld+json"]')
-  for (const script of scripts) {
-    try {
-      let data = JSON.parse(script.textContent)
-      if (data['@graph']) {
-        data = data['@graph'].find(n =>
-          n['@type'] === 'Recipe' ||
-          (Array.isArray(n['@type']) && n['@type'].includes('Recipe'))
-        )
-      }
-      if (!data) continue
-      const isRecipe = data['@type'] === 'Recipe' ||
-        (Array.isArray(data['@type']) && data['@type'].includes('Recipe'))
-      if (!isRecipe) continue
-
-      const ingredients = (data.recipeIngredient || []).map(cleanIngredient).filter(Boolean)
-      const name = data.name || ''
-      const rawDesc = data.description || ''
-      const notes = rawDesc.slice(0, 500)
-      const cookTime = data.totalTime || data.cookTime || ''
-      const servingsRaw = data.recipeYield
-        ? (Array.isArray(data.recipeYield) ? data.recipeYield[0] : data.recipeYield)
-        : ''
-      const keywords = data.keywords
-        ? (typeof data.keywords === 'string'
-            ? data.keywords.split(',').map(k => k.trim().toLowerCase())
-            : [])
-        : []
-      const autoTags = generateTags(name, ingredients, rawDesc, cookTime, String(servingsRaw))
-      const allTags = [...new Set([...autoTags, ...keywords.filter(k => ALLOWED_TAGS.includes(k))])]
-
-      return { name, notes, ingredients, cookTime, servings: String(servingsRaw), tags: allTags, source: url }
-    } catch { /* skip */ }
-  }
-
-  // Fallback: OpenGraph + itemprop/CSS selectors
-  const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content') || ''
-  const metaDesc = (
-    doc.querySelector('meta[name="description"]')?.getAttribute('content') ||
-    doc.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
-    ''
-  ).slice(0, 500)
-
-  const ingSelectors = [
-    '[itemprop="recipeIngredient"]',
-    '.recipe-ingredients li',
-    '.ingredients li',
-    '.ingredients-list li',
-    '.wprm-recipe-ingredient',
-    '.recipe-ingredient',
-    '.ingredient',
-  ]
-  let ingredients = []
-  for (const sel of ingSelectors) {
-    const els = doc.querySelectorAll(sel)
-    if (els.length > 0) {
-      ingredients = Array.from(els).map(el => cleanIngredient(el.textContent)).filter(Boolean)
-      break
-    }
-  }
-
-  let name = ogTitle
-  if (!name) {
-    try {
-      const path = new URL(url).pathname
-      name = path.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'Imported Recipe'
-      name = name.charAt(0).toUpperCase() + name.slice(1)
-    } catch { name = 'Imported Recipe' }
-  }
-
-  return {
-    name,
-    notes: metaDesc,
-    ingredients,
-    cookTime: '',
-    servings: '',
-    tags: generateTags(name, ingredients, metaDesc, '', ''),
-    source: url,
+function slugToName(url) {
+  try {
+    const path = new URL(url).pathname
+    const slug = path.split('/').filter(Boolean).pop() || ''
+    const name = slug.replace(/[-_]/g, ' ').trim()
+    return name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Imported Recipe'
+  } catch {
+    return 'Imported Recipe'
   }
 }
 
 export default function UrlImportBar({ onImport }) {
   const [url, setUrl] = useState('')
-  const [status, setStatus] = useState('idle')
+  const [status, setStatus] = useState('idle') // 'idle' | 'loading' | 'preview'
+  const [statusMsg, setStatusMsg] = useState('')
   const [preview, setPreview] = useState(null)
+  const [fallbackMsg, setFallbackMsg] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [ingInput, setIngInput] = useState('')
+
+  const intervalRef = useRef(null)
+  const successTimerRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      if (successTimerRef.current) clearTimeout(successTimerRef.current)
+    }
+  }, [])
 
   const setField = (key, val) => setPreview(p => ({ ...p, [key]: val }))
 
@@ -168,23 +73,67 @@ export default function UrlImportBar({ onImport }) {
       : [...preview.tags, tag]
     )
 
+  const startStatusCycle = () => {
+    setStatusMsg(STATUS_MESSAGES[0])
+    let idx = 0
+    intervalRef.current = setInterval(() => {
+      idx = (idx + 1) % STATUS_MESSAGES.length
+      setStatusMsg(STATUS_MESSAGES[idx])
+    }, 1500)
+  }
+
+  const stopStatusCycle = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    setStatusMsg('')
+  }
+
   const handleImport = async () => {
     if (!url.trim()) return
     setStatus('loading')
     setSaveError('')
+    setFallbackMsg('')
+    setSuccessMsg('')
+    startStatusCycle()
+
     try {
-      const result = await scrapeRecipe(url.trim())
-      setPreview({ ...result, rating: 3 })
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url.trim())}`
+      const resp = await fetch(proxyUrl)
+      if (!resp.ok) throw new Error('Proxy request failed')
+      const json = await resp.json()
+      const rawText = extractText(json.contents)
+
+      const result = await callGemini(rawText, url.trim())
+
+      stopStatusCycle()
+      setPreview({
+        name: result.name || slugToName(url.trim()),
+        ingredients: Array.isArray(result.ingredients) ? result.ingredients : [],
+        notes: result.notes || '',
+        tags: Array.isArray(result.tags)
+          ? result.tags.filter(t => ALLOWED_TAGS.includes(t))
+          : [],
+        cookTime: result.cookTime || '',
+        servings: result.servings || '',
+        source: url.trim(),
+        rating: 3,
+      })
       setStatus('preview')
     } catch {
-      try {
-        const path = new URL(url.trim()).pathname
-        let name = path.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'Imported Recipe'
-        name = name.charAt(0).toUpperCase() + name.slice(1)
-        setPreview({ name, notes: '', ingredients: [], cookTime: '', servings: '', tags: [], source: url.trim(), rating: 3 })
-      } catch {
-        setPreview({ name: '', notes: '', ingredients: [], cookTime: '', servings: '', tags: [], source: url.trim(), rating: 3 })
-      }
+      stopStatusCycle()
+      setPreview({
+        name: slugToName(url.trim()),
+        ingredients: [],
+        notes: '',
+        tags: [],
+        cookTime: '',
+        servings: '',
+        source: url.trim(),
+        rating: 3,
+      })
+      setFallbackMsg("Couldn't auto-extract — fill in the details below.")
       setStatus('preview')
     }
   }
@@ -208,6 +157,9 @@ export default function UrlImportBar({ onImport }) {
       setPreview(null)
       setStatus('idle')
       setIngInput('')
+      setFallbackMsg('')
+      setSuccessMsg('Saved to Rolodex!')
+      successTimerRef.current = setTimeout(() => setSuccessMsg(''), 2000)
     } catch (err) {
       setSaveError(err.message || 'Failed to save. Please try again.')
     } finally {
@@ -221,6 +173,8 @@ export default function UrlImportBar({ onImport }) {
     setStatus('idle')
     setIngInput('')
     setSaveError('')
+    setFallbackMsg('')
+    stopStatusCycle()
   }
 
   return (
@@ -245,6 +199,15 @@ export default function UrlImportBar({ onImport }) {
             {status === 'loading' ? 'Importing…' : 'Import'}
           </button>
         </div>
+        {status === 'loading' && statusMsg && (
+          <div className="import-status-line">{statusMsg}</div>
+        )}
+        {status !== 'loading' && fallbackMsg && (
+          <div className="import-fallback-msg">{fallbackMsg}</div>
+        )}
+        {successMsg && (
+          <div className="import-success-msg">{successMsg}</div>
+        )}
       </div>
 
       {status === 'preview' && preview && (
@@ -263,11 +226,17 @@ export default function UrlImportBar({ onImport }) {
           </div>
 
           {/* Meta row */}
-          <div className="import-preview-meta">
-            {preview.cookTime && <span>⏱ {preview.cookTime}</span>}
-            {preview.servings && <span>👥 {preview.servings} servings</span>}
-            <a href={preview.source} target="_blank" rel="noopener noreferrer" className="source-link">↗ Original</a>
-          </div>
+          {(preview.cookTime || preview.servings || preview.source) && (
+            <div className="import-preview-meta">
+              {preview.cookTime && <span>⏱ {preview.cookTime}</span>}
+              {preview.servings && <span>👥 {preview.servings}</span>}
+              {preview.source && (
+                <a href={preview.source} target="_blank" rel="noopener noreferrer" className="source-link">
+                  ↗ Original recipe
+                </a>
+              )}
+            </div>
+          )}
 
           {/* Editable ingredients */}
           <div className="import-section">
