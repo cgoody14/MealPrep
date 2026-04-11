@@ -1747,6 +1747,13 @@ button {
   font-weight: 600;
 }
 
+.send-consolidating {
+  font-size: 0.82rem;
+  color: var(--text3);
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
 .send-preview {
   background: var(--bg2);
   border: 1px solid var(--border);

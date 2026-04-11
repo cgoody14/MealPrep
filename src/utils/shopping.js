@@ -78,6 +78,55 @@ Return a JSON array of the same ingredients with realistic quantities added.`
   }
 }
 
+export async function consolidateQuantities(categoryItems, mealNames) {
+  try {
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY
+    const endpoint = 'https://api.groq.com/openai/v1/chat/completions'
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.1,
+        max_tokens: 800,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a grocery list consolidator. Given a list of ingredients that may appear across multiple recipes, return ONLY a valid JSON array with no preamble, no markdown, no backticks.
+
+Each item in the array should be a string combining the ingredient name with a realistic total quantity needed across all the recipes provided.
+
+If the same ingredient appears multiple times sum the quantities.
+Example: "butter" appears in 3 recipes needing 2 tbsp, 3 tbsp, 1 tbsp → "6 tbsp butter"
+
+Keep units consistent. Convert to larger units when sensible (e.g. 16 tbsp → 1 cup).`
+          },
+          {
+            role: 'user',
+            content: `Recipes this week: ${mealNames.join(', ')}
+
+Ingredients to consolidate: ${JSON.stringify(categoryItems)}
+
+Return a JSON array of strings with total quantities.`
+          }
+        ]
+      })
+    })
+
+    const data = await response.json()
+    const text = data.choices?.[0]?.message?.content ?? '[]'
+    const clean = text.replace(/```json|```/g, '').trim()
+    const match = clean.match(/\[[\s\S]*\]/)
+    return match ? JSON.parse(match[0]) : categoryItems
+  } catch {
+    return categoryItems
+  }
+}
+
 export async function categorizeIngredient(ingredient) {
   try {
     const apiKey = import.meta.env.VITE_GROQ_API_KEY
