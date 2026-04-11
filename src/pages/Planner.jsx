@@ -79,8 +79,13 @@ export default function Planner({ meals, addToWeek, weekMeals }) {
               type="number"
               min="1"
               max={meals.length || 10}
+              inputMode="numeric"
               value={count}
-              onChange={e => setCount(Number(e.target.value))}
+              onChange={e => {
+                const val = parseInt(e.target.value, 10)
+                if (!isNaN(val) && val >= 1 && val <= (meals.length || 10)) setCount(val)
+              }}
+              style={{ MozAppearance: 'textfield' }}
             />
           </div>
           <div className="form-group">

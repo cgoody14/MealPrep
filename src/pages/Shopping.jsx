@@ -197,14 +197,16 @@ export default function Shopping({ weekMeals, loading }) {
             {' · '}{getWeekRange()}
           </div>
         </div>
-        <div className="page-header-actions">
-          <button className="btn btn-secondary" onClick={() => setShowSend(true)} disabled={totalItems === 0}>
-            📤 Send / Share
-          </button>
-          <button className="btn btn-secondary" onClick={handleCopyAll} disabled={totalItems === 0}>
-            {copied ? '✓ Copied' : 'Copy All'}
-          </button>
-        </div>
+      </div>
+
+      {/* Action buttons — always below header, 50/50 on mobile */}
+      <div className="shop-action-row">
+        <button className="btn btn-secondary" onClick={() => setShowSend(true)} disabled={totalItems === 0}>
+          📤 Send / Share
+        </button>
+        <button className="btn btn-secondary" onClick={handleCopyAll} disabled={totalItems === 0}>
+          {copied ? '✓ Copied' : 'Copy All'}
+        </button>
       </div>
 
       {/* Manual ingredient input */}

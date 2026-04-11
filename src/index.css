@@ -1645,6 +1645,74 @@ button {
 }
 
 /* ================================================
+   RANDOMIZE MODAL RESULTS
+   ================================================ */
+
+.modal-rand {
+  max-width: 560px;
+}
+
+.rand-results {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.rand-results-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 12px;
+}
+
+.rand-result-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.rand-result-card:last-of-type {
+  border-bottom: none;
+}
+
+.rand-result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rand-result-name {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.rand-result-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.rand-result-cook {
+  font-size: 12px;
+  color: var(--text3);
+}
+
+/* Shopping action button row */
+.shop-action-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* ================================================
    SEND MODAL
    ================================================ */
 
@@ -1824,6 +1892,7 @@ button {
    ================================================ */
 
 @media (max-width: 640px) {
+  /* ── Sidebar / Bottom tabs ── */
   .sidebar {
     display: none;
   }
@@ -1834,6 +1903,7 @@ button {
     bottom: 0;
     left: 0;
     right: 0;
+    height: 60px;
     background: var(--text);
     border-top: 1px solid rgba(255,255,255,0.1);
     z-index: 200;
@@ -1846,7 +1916,7 @@ button {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px 4px;
+    padding: 6px 4px;
     text-decoration: none;
     color: rgba(255,255,255,0.5);
     font-size: 10px;
@@ -1871,7 +1941,7 @@ button {
 
   .tab-badge {
     position: absolute;
-    top: 6px;
+    top: 4px;
     right: calc(50% - 16px);
     background: var(--accent);
     color: #fff;
@@ -1883,39 +1953,64 @@ button {
     text-align: center;
   }
 
+  /* ── Page layout ── */
+  .main-content {
+    padding-bottom: 80px;
+  }
+
   .page {
     padding: 20px 16px 100px;
   }
 
   .page-title {
-    font-size: 26px;
+    font-size: 1.4rem;
+  }
+
+  /* ── Full-screen modals ── */
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 0;
   }
 
   .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
     max-width: 100%;
-    max-height: 95vh;
-    border-radius: var(--radius) var(--radius) 0 0;
+    border-radius: 0;
     padding: 20px;
-  }
-
-  .modal-overlay {
-    align-items: flex-end;
-    padding: 0;
+    overflow-y: auto;
   }
 
   .modal-sm,
   .modal-send,
   .modal-detail,
-  .modal-form {
+  .modal-form,
+  .modal-rand {
     max-width: 100%;
   }
 
-  .form-row {
-    grid-template-columns: 1fr;
+  /* Detail modal sticky bar still works in full-screen */
+  .detail-sticky-bar {
+    border-radius: 0;
   }
 
-  .controls-bar {
-    flex-wrap: wrap;
+  /* ── Inputs: prevent iOS auto-zoom ── */
+  .form-input,
+  .form-textarea,
+  .form-select,
+  .search-input,
+  .manual-add-input,
+  .import-name-input {
+    font-size: 16px;
+  }
+
+  /* ── Grid layouts ── */
+  .form-row {
+    grid-template-columns: 1fr;
   }
 
   .meal-grid {
@@ -1926,10 +2021,54 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .by-recipe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* ── Controls bar ── */
+  .controls-bar {
+    flex-wrap: wrap;
+  }
+
+  /* ── Tag filter — horizontal scroll with right fade ── */
+  .tag-filter-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    -webkit-mask-image: linear-gradient(to right, black 88%, transparent 100%);
+    mask-image: linear-gradient(to right, black 88%, transparent 100%);
+  }
+
+  /* ── This Week ── */
   .week-actions {
     flex-direction: column;
   }
 
+  .week-card {
+    width: 100%;
+  }
+
+  /* ── Shopping action row: 50/50 buttons ── */
+  .shop-action-row {
+    gap: 6px;
+  }
+
+  .shop-action-row .btn {
+    flex: 1;
+    font-size: 0.9rem;
+    padding: 10px 8px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* ── Header action buttons wrap ── */
+  .page-header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  /* ── Stat boxes ── */
   .detail-stats {
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
@@ -1939,7 +2078,13 @@ button {
     font-size: 18px;
   }
 
+  /* ── URL import ── */
   .url-import-row {
     flex-direction: column;
+  }
+
+  /* ── Manual add row ── */
+  .manual-add-row {
+    flex-wrap: nowrap;
   }
 }
