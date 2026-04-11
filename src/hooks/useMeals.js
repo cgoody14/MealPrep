@@ -176,20 +176,23 @@ export function useMeals() {
   const addMeal = async (meal) => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) throw new Error('Not authenticated')
+    const payload = {
+      user_id: session.user.id,
+      name: meal.name,
+      rating: meal.rating ?? 3,
+      last_made: meal.last_made ?? null,
+      times_made: meal.times_made ?? 0,
+      ingredients: meal.ingredients ?? [],
+      notes: meal.notes ?? '',
+      tags: meal.tags ?? [],
+      source: meal.source ?? ''
+    }
+    console.log('[addMeal] inserting payload:', payload)
     const { data, error: addError } = await supabase
       .from('meals')
-      .insert([{
-        user_id: session.user.id,
-        name: meal.name,
-        rating: meal.rating ?? 3,
-        last_made: meal.last_made ?? null,
-        times_made: meal.times_made ?? 0,
-        ingredients: meal.ingredients ?? [],
-        notes: meal.notes ?? '',
-        tags: meal.tags ?? [],
-        source: meal.source ?? ''
-      }])
+      .insert([payload])
       .select()
+    console.log('[addMeal] response — data:', data, '  error:', addError)
     if (addError) throw addError
     await fetchMeals()
     return data[0]
