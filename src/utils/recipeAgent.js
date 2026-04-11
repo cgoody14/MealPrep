@@ -28,7 +28,7 @@ Exactly this shape:
   "tags": [],
   "cookTime": "e.g. 30 mins",
   "servings": "e.g. 4 servings",
-  "instructions": "1. First step.\n2. Second step.\n3. Third step."
+  "instructions": "1. First step | 2. Second step | 3. Third step"
 }
 
 Ingredient rules — strip ALL quantities and measurements:
@@ -41,9 +41,10 @@ protein, pasta, seafood, vegetarian, sides, easy, weeknight, weekend,
 crowd-pleaser, healthy, brunch, italian, japanese, greek
 
 Instructions rules:
-- Write clear numbered steps, one per line using \\n between steps
+- Write all steps as a single string
+- Separate steps with ' | ' (space pipe space) — NOT newlines or \\n
+- Example: "1. Preheat oven to 425F | 2. Season chicken | 3. Sear 4 min per side"
 - Include all key cooking actions: prep, cook, plate
-- Keep each step concise and actionable
 
 Never return null. Return empty arrays for ingredients and tags if unknown.
 Return empty string for other fields if unknown.`
@@ -64,8 +65,21 @@ Return empty string for other fields if unknown.`
     const text = aiData.choices?.[0]?.message?.content ?? '{}'
     console.log('[groq] extracted text:', text)
 
-    const clean = text.replace(/```json|```/g, '').trim()
-    const result = JSON.parse(clean)
+    const clean = text
+      .replace(/```json|```/g, '')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '')
+      .trim()
+
+    let result
+    try {
+      result = JSON.parse(clean)
+    } catch {
+      // Second attempt: extract just the JSON object
+      const match = clean.match(/\{[\s\S]*\}/)
+      result = match ? JSON.parse(match[0]) : buildFallback(url)
+    }
+
     console.log('[groq] parsed result:', result)
     return result
 

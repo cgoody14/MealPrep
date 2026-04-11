@@ -101,6 +101,16 @@ export default function MealForm({ initial, onSave, onClose }) {
             <Stars rating={form.rating} onRate={r => set('rating', r)} size="lg" />
           </div>
 
+          <div className="form-group">
+            <label className="form-label">Cook Time</label>
+            <input
+              className="form-input"
+              value={form.cook_time}
+              onChange={e => set('cook_time', e.target.value)}
+              placeholder="e.g. 45 mins"
+            />
+          </div>
+
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Last Made</label>
@@ -121,16 +131,6 @@ export default function MealForm({ initial, onSave, onClose }) {
                 onChange={e => set('times_made', e.target.value)}
               />
             </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Cook Time</label>
-            <input
-              className="form-input"
-              value={form.cook_time}
-              onChange={e => set('cook_time', e.target.value)}
-              placeholder="e.g. 45 mins"
-            />
           </div>
 
           <div className="form-group">
@@ -181,6 +181,7 @@ export default function MealForm({ initial, onSave, onClose }) {
               placeholder={"1. Preheat oven to 425°F.\n2. Season and sear the protein.\n3. Finish in oven…"}
               rows={6}
             />
+            <div className="form-hint">Tip: each step on its own line.</div>
           </div>
 
           <div className="form-group">

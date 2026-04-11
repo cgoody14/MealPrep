@@ -64,12 +64,25 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek }) {
           </div>
         )}
 
-        {meal.instructions && (
-          <div className="detail-section">
-            <div className="detail-section-label">Instructions</div>
-            <div className="instructions-text">{meal.instructions}</div>
-          </div>
-        )}
+        <div className="detail-section">
+          <div className="detail-section-label">Instructions</div>
+          {meal.instructions ? (
+            <ol className="instruction-list">
+              {meal.instructions
+                .split(/ \| |\n/)
+                .map(s => s.replace(/^\d+\.\s*/, '').trim())
+                .filter(Boolean)
+                .map((step, i) => (
+                  <li key={i} className="instruction-step">
+                    <span className="instruction-num">{i + 1}</span>
+                    <span className="instruction-step-text">{step}</span>
+                  </li>
+                ))}
+            </ol>
+          ) : (
+            <p className="instruction-empty">No instructions saved yet.</p>
+          )}
+        </div>
 
         {meal.notes && (
           <div className="detail-section">

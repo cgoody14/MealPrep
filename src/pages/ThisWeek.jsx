@@ -4,19 +4,25 @@ import RandomizeModal from '../components/RandomizeModal'
 import SendModal from '../components/SendModal'
 import { getWeekRange, daysSince } from '../utils/format'
 
+function parseSteps(instructions) {
+  return (instructions || '')
+    .split(/ \| |\n/)
+    .map(s => s.replace(/^\d+\.\s*/, '').trim())
+    .filter(Boolean)
+}
+
 export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeFromWeek, clearWeek, markMadeToday }) {
   const [showRandomize, setShowRandomize] = useState(false)
   const [showSend, setShowSend] = useState(false)
   const [clearing, setClearing] = useState(false)
   const [markingId, setMarkingId] = useState(null)
-  const [expandedIng, setExpandedIng] = useState(new Set())
-  const [expandedInstr, setExpandedInstr] = useState(new Set())
+  // openPanel[wm.id] = 'ing' | 'instr' | undefined (only one open per card)
+  const [openPanel, setOpenPanel] = useState({})
 
-  const toggleSet = (setter, id) => setter(prev => {
-    const next = new Set(prev)
-    if (next.has(id)) next.delete(id); else next.add(id)
-    return next
-  })
+  const togglePanel = (id, panel) => setOpenPanel(prev => ({
+    ...prev,
+    [id]: prev[id] === panel ? undefined : panel
+  }))
 
   const handleClearWeek = async () => {
     setClearing(true)
@@ -64,8 +70,8 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
             if (!m) return null
             const days = daysSince(m.last_made)
             const daysText = m.last_made ? (days === 0 ? 'Today' : `${days}d ago`) : 'Never made'
-            const ingOpen = expandedIng.has(wm.id)
-            const instrOpen = expandedInstr.has(wm.id)
+            const panel = openPanel[wm.id]
+            const steps = parseSteps(m.instructions)
 
             return (
               <div key={wm.id} className="week-card fade-up" style={{ animationDelay: `${i * 60}ms` }}>
@@ -95,30 +101,30 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
                     </div>
                   )}
 
-                  {/* Expand toggles */}
-                  {(m.ingredients?.length > 0 || m.instructions) && (
+                  {/* Toggle buttons — only show if there's content to expand */}
+                  {(m.ingredients?.length > 0 || steps.length > 0) && (
                     <div className="week-card-expand-btns">
                       {m.ingredients?.length > 0 && (
                         <button
-                          className={`week-card-expand-btn ${ingOpen ? 'active' : ''}`}
-                          onClick={() => toggleSet(setExpandedIng, wm.id)}
+                          className={`week-card-expand-btn ${panel === 'ing' ? 'active' : ''}`}
+                          onClick={() => togglePanel(wm.id, 'ing')}
                         >
-                          {ingOpen ? '▲ Ingredients' : '▼ Ingredients'}
+                          🧂 Ingredients
                         </button>
                       )}
-                      {m.instructions && (
+                      {steps.length > 0 && (
                         <button
-                          className={`week-card-expand-btn ${instrOpen ? 'active' : ''}`}
-                          onClick={() => toggleSet(setExpandedInstr, wm.id)}
+                          className={`week-card-expand-btn ${panel === 'instr' ? 'active' : ''}`}
+                          onClick={() => togglePanel(wm.id, 'instr')}
                         >
-                          {instrOpen ? '▲ Instructions' : '▼ Instructions'}
+                          📋 Instructions
                         </button>
                       )}
                     </div>
                   )}
 
                   {/* Expanded: all ingredients */}
-                  {ingOpen && m.ingredients?.length > 0 && (
+                  {panel === 'ing' && m.ingredients?.length > 0 && (
                     <div className="week-card-expandable">
                       <div className="chip-row">
                         {m.ingredients.map(ing => (
@@ -129,9 +135,16 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
                   )}
 
                   {/* Expanded: step-by-step instructions */}
-                  {instrOpen && m.instructions && (
+                  {panel === 'instr' && steps.length > 0 && (
                     <div className="week-card-expandable">
-                      <div className="week-card-instr-text">{m.instructions}</div>
+                      <ol className="week-instr-list">
+                        {steps.map((step, idx) => (
+                          <li key={idx} className="week-instr-step">
+                            <span className="instruction-num">{idx + 1}</span>
+                            <span className="instruction-step-text">{step}</span>
+                          </li>
+                        ))}
+                      </ol>
                     </div>
                   )}
 

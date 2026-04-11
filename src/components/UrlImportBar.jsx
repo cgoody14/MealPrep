@@ -98,7 +98,7 @@ export default function UrlImportBar({ onImport }) {
         : [],
       cookTime: result.cookTime || '',
       servings: result.servings || '',
-      instructions: result.instructions || '',
+      instructions: (result.instructions || '').split(' | ').map(s => s.trim()).filter(Boolean).join('\n'),
       source: url.trim(),
       rating: 3,
     })

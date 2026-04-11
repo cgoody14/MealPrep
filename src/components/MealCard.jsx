@@ -37,8 +37,11 @@ export default function MealCard({ meal, onOpen, onToggleWeek, inWeek, weekLoadi
           <h3 className="meal-name">{meal.name}</h3>
           <Stars rating={meal.rating} size="sm" />
         </div>
+        {meal.cook_time && (
+          <div className="meal-cook-time">⏱ {meal.cook_time}</div>
+        )}
         <div className="meal-meta">
-          {daysText} · <strong>{meal.times_made}×</strong> cooked{meal.cook_time ? ` · ${meal.cook_time}` : ''}
+          {daysText} · <strong>{meal.times_made}×</strong> cooked
         </div>
         {visibleIngredients.length > 0 && (
           <div className="chip-row">
