@@ -62,22 +62,26 @@ Return empty string for other fields if unknown.`
 
     if (aiData.error) throw new Error(aiData.error.message)
 
-    const text = aiData.choices?.[0]?.message?.content ?? '{}'
+    const text = aiData.choices?.[0]?.message?.content ?? ''
     console.log('[groq] extracted text:', text)
 
-    const clean = text
-      .replace(/```json|```/g, '')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '')
-      .trim()
+    // Strip markdown code fences if present
+    let clean = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
+
+    // Extract just the JSON object in case there is any preamble
+    const jsonMatch = clean.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('No JSON object found in response')
+    clean = jsonMatch[0]
 
     let result
     try {
       result = JSON.parse(clean)
     } catch {
-      // Second attempt: extract just the JSON object
-      const match = clean.match(/\{[\s\S]*\}/)
-      result = match ? JSON.parse(match[0]) : buildFallback(url)
+      // Last resort: sanitize control characters and retry
+      const sanitized = clean
+        .replace(/[\u0000-\u001F\u007F]/g, ' ')
+        .replace(/\s+/g, ' ')
+      result = JSON.parse(sanitized)
     }
 
     console.log('[groq] parsed result:', result)
