@@ -1,6 +1,43 @@
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY
 const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
 
+async function fetchWithProxy(url) {
+  const proxies = [
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+  ]
+
+  for (const proxyUrl of proxies) {
+    try {
+      console.log('[gemini] trying proxy:', proxyUrl)
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) })
+      if (!res.ok) continue
+
+      const raw = await res.text()
+      // allorigins wraps in { contents }, others return html text directly
+      let html
+      try {
+        const parsed = JSON.parse(raw)
+        html = parsed.contents ?? raw
+      } catch {
+        html = raw
+      }
+
+      if (typeof html === 'string' && html.length > 500) {
+        console.log('[gemini] proxy success, html length:', html.length)
+        return html
+      }
+    } catch (err) {
+      console.warn('[gemini] proxy failed:', proxyUrl, err.message)
+      continue
+    }
+  }
+  throw new Error('All proxies failed')
+}
+
+export { fetchWithProxy }
+
 export async function callGemini(rawText, url) {
   const prompt = `You are a recipe parser. Extract structured recipe data from the text below and return ONLY a valid JSON object. No preamble, no markdown, no backticks — raw JSON only.
 

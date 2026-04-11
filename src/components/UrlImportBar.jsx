@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Stars from './Stars'
-import { callGemini } from '../utils/recipeAgent'
+import { fetchWithProxy, callGemini } from '../utils/recipeAgent'
 
 const ALLOWED_TAGS = [
   'protein','pasta','seafood','vegetarian','sides','easy','weeknight',
@@ -8,8 +8,8 @@ const ALLOWED_TAGS = [
 ]
 
 const STATUS_MESSAGES = [
-  'Fetching recipe…',
-  'Reading page…',
+  'Trying to fetch recipe…',
+  'Reading page content…',
   'Asking Gemini…',
   'Building preview…',
 ]
@@ -99,11 +99,8 @@ export default function UrlImportBar({ onImport }) {
     startStatusCycle()
 
     try {
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url.trim())}`
-      const resp = await fetch(proxyUrl)
-      if (!resp.ok) throw new Error('Proxy request failed')
-      const json = await resp.json()
-      const rawText = extractText(json.contents)
+      const html = await fetchWithProxy(url.trim())
+      const rawText = extractText(html)
 
       const result = await callGemini(rawText, url.trim())
 
@@ -133,7 +130,7 @@ export default function UrlImportBar({ onImport }) {
         source: url.trim(),
         rating: 3,
       })
-      setFallbackMsg("Couldn't auto-extract — fill in the details below.")
+      setFallbackMsg("Couldn't reach that recipe site — fill in the details below.")
       setStatus('preview')
     }
   }
