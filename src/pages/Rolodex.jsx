@@ -113,7 +113,10 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="page-title">Rolodex</h1>
+        <div className="page-title-row">
+          <h1 className="page-title">Rolodex</h1>
+          <span className="meal-count-pill">{meals.length} recipe{meals.length !== 1 ? 's' : ''}</span>
+        </div>
         <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Add Meal</button>
       </div>
       <p className="page-subtitle">Your personal recipe archive. Add meals manually or import from any recipe URL. Search, filter by tag, and track how often you cook each dish.</p>

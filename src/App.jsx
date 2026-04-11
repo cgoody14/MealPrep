@@ -154,6 +154,7 @@ function AppShell() {
               <Shopping
                 weekMeals={weekMeals}
                 loading={weekLoading}
+                clearWeek={clearWeek}
               />
             }
           />

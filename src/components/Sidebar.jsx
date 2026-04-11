@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 
 const NAV = [
-  { path: '/', icon: '⊞', label: 'Rolodex', countKey: 'meals' },
+  { path: '/', icon: '⊞', label: 'Rolodex', countKey: null },
   { path: '/week', icon: '📅', label: 'This Week', countKey: 'week' },
   { path: '/randomizer', icon: '◈', label: 'Meal Randomizer', countKey: null },
   { path: '/shopping', icon: '🛒', label: 'Shopping List', countKey: null },

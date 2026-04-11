@@ -1878,6 +1878,78 @@ button {
 }
 
 /* ================================================
+   MEAL COUNT PILL (Rolodex page)
+   ================================================ */
+
+.page-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.meal-count-pill {
+  background: var(--bg2);
+  color: var(--text2);
+  font-size: 0.85rem;
+  border-radius: 20px;
+  padding: 4px 12px;
+  display: inline-block;
+  vertical-align: middle;
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* ================================================
+   SHOPPING — COPY NOTE
+   ================================================ */
+
+.shop-copy-note {
+  color: var(--text3);
+  font-size: 0.8rem;
+  font-style: italic;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
+/* ================================================
+   SHOPPING — CLEAR ALL CONFIRMATION
+   ================================================ */
+
+.shop-clear-confirm {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shop-clear-text {
+  font-size: 0.9rem;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+.shop-clear-btns {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ================================================
+   SHOPPING — CATEGORY QUANTITIES LOADING DOT
+   ================================================ */
+
+.cat-qty-dot {
+  color: var(--text3);
+  font-style: italic;
+}
+
+/* ================================================
    TABLET (< 900px)
    ================================================ */
 
@@ -2086,5 +2158,11 @@ button {
   /* ── Manual add row ── */
   .manual-add-row {
     flex-wrap: nowrap;
+  }
+
+  /* ── Shopping action row: 3 equal buttons on mobile ── */
+  .shop-action-row .btn {
+    font-size: 0.82rem;
+    padding: 10px 6px;
   }
 }

@@ -5,26 +5,35 @@ import { buildShoppingList } from '../utils/shopping'
 import { daysSince } from '../utils/format'
 
 export default function Planner({ meals, addToWeek, weekMeals }) {
-  const [count, setCount] = useState(5)
-  const [cooldown, setCooldown] = useState(7)
+  const [countInput, setCountInput] = useState('5')
+  const [cooldown, setCooldown] = useState(1)
   const [ingInput, setIngInput] = useState('')
   const [results, setResults] = useState([])
   const [generated, setGenerated] = useState(false)
   const [addedIds, setAddedIds] = useState(new Set())
   const [copied, setCopied] = useState(false)
+  const [countError, setCountError] = useState('')
 
   const weekMealIds = new Set((weekMeals || []).map(wm => wm.meal_id))
 
   const handleGenerate = () => {
+    const count = parseInt(countInput, 10) || 0
+    if (count === 0) {
+      setCountError('Enter a number of meals to generate')
+      return
+    }
+    setCountError('')
+
     const keywords = ingInput
       .split(',')
       .map(s => s.trim().toLowerCase())
       .filter(Boolean)
 
+    const cooldownDays = cooldown * 7
     const now = new Date()
     const eligible = meals.filter(m => {
       const days = m.last_made ? Math.floor((now - new Date(m.last_made)) / 86400000) : 999
-      return days >= cooldown
+      return days >= cooldownDays
     })
 
     const scored = eligible.map(m => ({
@@ -76,33 +85,37 @@ export default function Planner({ meals, addToWeek, weekMeals }) {
             <label className="form-label">Number of meals</label>
             <input
               className="form-input"
-              type="number"
-              min="1"
-              max={meals.length || 10}
+              type="text"
               inputMode="numeric"
-              value={count}
+              value={countInput}
               onChange={e => {
-                const val = parseInt(e.target.value, 10)
-                if (!isNaN(val) && val >= 1 && val <= (meals.length || 10)) setCount(val)
+                const raw = e.target.value.replace(/[^0-9]/g, '')
+                setCountInput(raw)
               }}
-              style={{ MozAppearance: 'textfield' }}
+              onBlur={e => {
+                if (e.target.value === '' || e.target.value === '0') setCountInput('0')
+              }}
+              placeholder="0"
             />
+            {countError && <div className="form-error" style={{ marginTop: 6 }}>{countError}</div>}
           </div>
           <div className="form-group">
             <label className="form-label">
-              Skip meals made within <strong>{cooldown} days</strong>
+              {cooldown === 0
+                ? 'No cooldown — all meals eligible'
+                : `Skip meals made within the last ${cooldown} week${cooldown === 1 ? '' : 's'}`}
             </label>
             <input
               className="range-input"
               type="range"
               min="0"
-              max="90"
+              max="13"
               value={cooldown}
               onChange={e => setCooldown(Number(e.target.value))}
             />
             <div className="range-labels">
-              <span>0 days</span>
-              <span>90 days</span>
+              <span>0 weeks</span>
+              <span>13 weeks</span>
             </div>
           </div>
         </div>
