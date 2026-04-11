@@ -8,7 +8,7 @@ const ALL_TAGS = [
 
 const emptyMeal = {
   name: '',
-  rating: 0,
+  rating: 3,
   last_made: new Date().toISOString().split('T')[0],
   ingredients: [],
   notes: '',
@@ -21,6 +21,7 @@ export default function MealForm({ initial, onSave, onClose }) {
   const [form, setForm] = useState({ ...emptyMeal, ...initial })
   const [ingInput, setIngInput] = useState('')
   const [saving, setSaving] = useState(false)
+  const [nameError, setNameError] = useState('')
   const [error, setError] = useState('')
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
@@ -47,13 +48,17 @@ export default function MealForm({ initial, onSave, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.name.trim()) { setError('Name is required'); return }
+    if (!form.name.trim()) {
+      setNameError('Name is required.')
+      return
+    }
+    setNameError('')
     setSaving(true)
     setError('')
     try {
       await onSave({
         name: form.name.trim(),
-        rating: form.rating || null,
+        rating: form.rating ?? 3,
         last_made: form.last_made || null,
         times_made: Number(form.times_made) || 1,
         ingredients: form.ingredients,
@@ -78,12 +83,13 @@ export default function MealForm({ initial, onSave, onClose }) {
           <div className="form-group">
             <label className="form-label">Name <span className="required">*</span></label>
             <input
-              className="form-input"
+              className={`form-input ${nameError ? 'input-error' : ''}`}
               value={form.name}
-              onChange={e => set('name', e.target.value)}
+              onChange={e => { set('name', e.target.value); if (nameError) setNameError('') }}
               placeholder="e.g. Lemon Herb Chicken"
               autoFocus
             />
+            {nameError && <div className="field-error">{nameError}</div>}
           </div>
 
           <div className="form-group">
@@ -184,7 +190,7 @@ export default function MealForm({ initial, onSave, onClose }) {
           <div className="form-footer">
             <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Saving…' : initial?.id ? 'Save Changes' : 'Add to Rolodex'}
+              {saving ? 'Saving…' : initial?.id ? 'Save Changes' : 'Add Meal'}
             </button>
           </div>
         </form>

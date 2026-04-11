@@ -206,7 +206,7 @@ export function useMeals() {
       .select()
       .single()
     if (updateError) throw updateError
-    setMeals(prev => prev.map(m => m.id === id ? data : m))
+    await fetchMeals()
     return data
   }
 
