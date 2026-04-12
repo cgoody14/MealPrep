@@ -67,10 +67,11 @@ export function useHousehold() {
 
     if (e1 || !householdId) throw new Error('Invite code not found — check the code and try again.')
 
+    // Use RPC so SECURITY DEFINER bypasses the SELECT policy which PostgreSQL
+    // applies as an implicit WITH CHECK on UPDATE — it would block setting
+    // household_id to a value the user can't yet "see" via the SELECT policy.
     const { error: e2 } = await supabase
-      .from('user_households')
-      .update({ household_id: householdId, joined_at: new Date().toISOString() })
-      .eq('user_id', user.id)
+      .rpc('join_household_by_id', { target_household_id: householdId })
 
     if (e2) throw e2
     await fetchHousehold()
