@@ -15,6 +15,7 @@ function AuthPage() {
   const [mode, setMode] = useState('login') // login | signup
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
@@ -33,6 +34,10 @@ function AuthPage() {
       } else {
         const { error: authError } = await supabase.auth.signUp({ email, password })
         if (authError) throw authError
+        // Save invite code so it's processed automatically after sign-in
+        if (inviteCode.trim()) {
+          localStorage.setItem('pending_invite', inviteCode.trim().toUpperCase())
+        }
         setInfo('Check your email to confirm your account, then sign in.')
         setMode('login')
       }
@@ -94,18 +99,31 @@ function AuthPage() {
               minLength={6}
             />
           </div>
+          {mode === 'signup' && (
+            <div className="form-group">
+              <label className="form-label auth-optional-label">
+                Household invite code
+                <span className="auth-optional-badge">optional</span>
+              </label>
+              <input
+                className="form-input auth-invite-input"
+                type="text"
+                value={inviteCode}
+                onChange={e => setInviteCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                placeholder="e.g. CEA326"
+                maxLength={6}
+                spellCheck={false}
+                autoComplete="off"
+              />
+              <span className="auth-field-hint">Got a code from a partner or family member? Add it here to share their meal library automatically.</span>
+            </div>
+          )}
           {error && <div className="form-error">{error}</div>}
           {info && <div className="form-info">{info}</div>}
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
-
-        {mode === 'signup' && (
-          <p className="auth-fine-print">
-            A confirmation email will be sent to verify your address.
-          </p>
-        )}
       </div>
     </div>
   )

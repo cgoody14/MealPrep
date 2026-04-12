@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../supabase'
 
 export function useHousehold() {
@@ -7,6 +7,7 @@ export function useHousehold() {
   const [currentUserId, setCurrentUserId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const autoJoinRef = useRef(false)
 
   const fetchHousehold = useCallback(async () => {
     setLoading(true)
@@ -52,6 +53,25 @@ export function useHousehold() {
   }, [])
 
   useEffect(() => { fetchHousehold() }, [fetchHousehold])
+
+  // Auto-join a household if an invite code was saved during sign-up
+  useEffect(() => {
+    if (!household || autoJoinRef.current) return
+    const code = localStorage.getItem('pending_invite')
+    if (!code) return
+    autoJoinRef.current = true
+    localStorage.removeItem('pending_invite')
+    // Only auto-join if still in a solo household (just signed up)
+    if (members.length > 1) return
+    supabase.rpc('find_household_by_invite', { code })
+      .then(({ data: hid }) => {
+        if (!hid) return
+        return supabase.rpc('join_household_by_id', { target_household_id: hid })
+      })
+      .then(() => fetchHousehold())
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [household])
 
   // Join an existing household via its 6-character invite code
   const joinHousehold = async (code) => {
