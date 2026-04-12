@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './supabase'
 import Sidebar from './components/Sidebar'
 import HouseholdModal from './components/HouseholdModal'
+import OnboardingModal from './components/OnboardingModal'
 import Rolodex from './pages/Rolodex'
 import ThisWeek from './pages/ThisWeek'
 import Planner from './pages/Planner'
@@ -34,7 +35,8 @@ function AuthPage() {
       } else {
         const { error: authError } = await supabase.auth.signUp({ email, password })
         if (authError) throw authError
-        // Save invite code so it's processed automatically after sign-in
+        // Save flags so the welcome screen appears after first sign-in
+        localStorage.setItem('new_account', '1')
         if (inviteCode.trim()) {
           localStorage.setItem('pending_invite', inviteCode.trim().toUpperCase())
         }
@@ -132,8 +134,9 @@ function AuthPage() {
 function AppShell() {
   const { meals, loading: mealsLoading, addMeal, updateMeal, deleteMeal, markMadeToday } = useMeals()
   const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek } = useWeekMeals()
-  const { household, members, currentUserId, joinHousehold, leaveHousehold } = useHousehold()
+  const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold } = useHousehold()
   const [showSettings, setShowSettings] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(() => !!localStorage.getItem('new_account'))
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -208,6 +211,14 @@ function AppShell() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+
+      {showOnboarding && !householdLoading && (
+        <OnboardingModal
+          household={household}
+          onJoin={joinHousehold}
+          onDone={() => setShowOnboarding(false)}
+        />
+      )}
 
       {showSettings && (
         <HouseholdModal
