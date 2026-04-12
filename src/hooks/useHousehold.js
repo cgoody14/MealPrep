@@ -60,17 +60,16 @@ export function useHousehold() {
 
     const cleanCode = code.trim().toUpperCase()
 
-    const { data: target, error: e1 } = await supabase
-      .from('households')
-      .select('id')
-      .eq('invite_code', cleanCode)
-      .single()
+    // Use RPC so SECURITY DEFINER bypasses the household RLS policy —
+    // without it, the SELECT is blocked because the user isn't a member yet.
+    const { data: householdId, error: e1 } = await supabase
+      .rpc('find_household_by_invite', { code: cleanCode })
 
-    if (e1 || !target) throw new Error('Invite code not found — check the code and try again.')
+    if (e1 || !householdId) throw new Error('Invite code not found — check the code and try again.')
 
     const { error: e2 } = await supabase
       .from('user_households')
-      .update({ household_id: target.id, joined_at: new Date().toISOString() })
+      .update({ household_id: householdId, joined_at: new Date().toISOString() })
       .eq('user_id', user.id)
 
     if (e2) throw e2

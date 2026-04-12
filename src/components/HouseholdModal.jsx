@@ -22,6 +22,22 @@ export default function HouseholdModal({
     } catch { /* ignore */ }
   }
 
+  const handleShare = async () => {
+    if (!household?.invite_code) return
+    const text = `Join my household on Mise en Place!\n\nOpen the app → Settings → Join a Household → enter code: ${household.invite_code}`
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Mise en Place Invite', text }) }
+      catch { /* user cancelled */ }
+    } else {
+      // Fallback: copy the full message
+      try {
+        await navigator.clipboard.writeText(text)
+        setCodeCopied(true)
+        setTimeout(() => setCodeCopied(false), 2000)
+      } catch { /* ignore */ }
+    }
+  }
+
   const handleJoin = async () => {
     if (!joinCode.trim()) return
     setJoining(true)
@@ -71,6 +87,9 @@ export default function HouseholdModal({
                   <span className="hh-code">{household.invite_code}</span>
                   <button className="btn btn-secondary btn-sm" onClick={handleCopyCode}>
                     {codeCopied ? '✓ Copied' : 'Copy'}
+                  </button>
+                  <button className="btn btn-primary btn-sm" onClick={handleShare}>
+                    Share
                   </button>
                 </div>
                 <span className="hh-code-hint">Share this 6-character code with anyone you want to share your meal library with.</span>
