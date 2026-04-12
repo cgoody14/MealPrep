@@ -70,8 +70,9 @@ export function useHousehold() {
     // Use RPC so SECURITY DEFINER bypasses the SELECT policy which PostgreSQL
     // applies as an implicit WITH CHECK on UPDATE — it would block setting
     // household_id to a value the user can't yet "see" via the SELECT policy.
+    // Also deduplicates meals by name to avoid showing the same meal twice.
     const { error: e2 } = await supabase
-      .rpc('join_household_by_id', { target_household_id: householdId })
+      .rpc('join_household_and_deduplicate', { target_household_id: householdId })
 
     if (e2) throw e2
     await fetchHousehold()

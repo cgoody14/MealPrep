@@ -24,7 +24,7 @@ export default function HouseholdModal({
 
   const handleShare = async () => {
     if (!household?.invite_code) return
-    const text = `Join my household on Mise en Place!\n\nOpen the app → Settings → Join a Household → enter code: ${household.invite_code}`
+    const text = `Join me on Mise en Place — our shared meal planner!\n\nhttps://meal-prep-lac.vercel.app/\n\nCreate an account, then go to Settings → Join a Household and enter code: ${household.invite_code}`
     if (navigator.share) {
       try { await navigator.share({ title: 'Mise en Place Invite', text }) }
       catch { /* user cancelled */ }

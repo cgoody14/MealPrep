@@ -33,7 +33,11 @@ function AuthPage() {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
         if (authError) throw authError
       } else {
-        const { error: authError } = await supabase.auth.signUp({ email, password })
+        const { error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: 'https://meal-prep-lac.vercel.app/' }
+        })
         if (authError) throw authError
         // Save flags so the welcome screen appears after first sign-in
         localStorage.setItem('new_account', '1')
