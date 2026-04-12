@@ -41,7 +41,7 @@ export function useHousehold() {
       // Get all members in the household (RLS filters to same household)
       const { data: memberRows } = await supabase
         .from('user_households')
-        .select('user_id, joined_at')
+        .select('user_id, joined_at, display_name')
 
       setMembers(memberRows || [])
     } catch (err) {
@@ -78,6 +78,26 @@ export function useHousehold() {
     await fetchHousehold()
   }
 
+  // Update the current user's display name
+  const updateDisplayName = async (name) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+    const { error } = await supabase
+      .from('user_households')
+      .update({ display_name: name.trim() || null })
+      .eq('user_id', user.id)
+    if (error) throw error
+    await fetchHousehold()
+  }
+
+  // Remove another member from the household (moves them to a new solo household)
+  const removeMember = async (memberUserId) => {
+    const { error } = await supabase
+      .rpc('remove_household_member', { member_user_id: memberUserId })
+    if (error) throw error
+    await fetchHousehold()
+  }
+
   // Leave current household and create a new solo household
   const leaveHousehold = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -100,5 +120,5 @@ export function useHousehold() {
     await fetchHousehold()
   }
 
-  return { household, members, currentUserId, loading, error, fetchHousehold, joinHousehold, leaveHousehold }
+  return { household, members, currentUserId, loading, error, fetchHousehold, joinHousehold, leaveHousehold, updateDisplayName, removeMember }
 }

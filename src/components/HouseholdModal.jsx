@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 export default function HouseholdModal({
   household, members, currentUserId,
-  onJoin, onLeave, onClose, onSignOut
+  onJoin, onLeave, onUpdateDisplayName, onRemoveMember, onClose, onSignOut
 }) {
   const [joinCode, setJoinCode] = useState('')
   const [joining, setJoining] = useState(false)
@@ -10,6 +10,13 @@ export default function HouseholdModal({
   const [joinError, setJoinError] = useState('')
   const [codeCopied, setCodeCopied] = useState(false)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+  const [removingId, setRemovingId] = useState(null)
+
+  // Display name editing
+  const myMember = members.find(m => m.user_id === currentUserId)
+  const [editingName, setEditingName] = useState(false)
+  const [nameValue, setNameValue] = useState(myMember?.display_name || '')
+  const [savingName, setSavingName] = useState(false)
 
   const isSolo = members.length <= 1
 
@@ -29,7 +36,6 @@ export default function HouseholdModal({
       try { await navigator.share({ title: 'Mise en Place Invite', text }) }
       catch { /* user cancelled */ }
     } else {
-      // Fallback: copy the full message
       try {
         await navigator.clipboard.writeText(text)
         setCodeCopied(true)
@@ -64,11 +70,64 @@ export default function HouseholdModal({
     }
   }
 
+  const handleSaveName = async () => {
+    setSavingName(true)
+    try {
+      await onUpdateDisplayName(nameValue)
+      setEditingName(false)
+    } catch { /* ignore */ } finally {
+      setSavingName(false)
+    }
+  }
+
+  const handleRemove = async (memberId) => {
+    setRemovingId(memberId)
+    try {
+      await onRemoveMember(memberId)
+    } catch { /* ignore */ } finally {
+      setRemovingId(null)
+    }
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal-settings slide-up" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>✕</button>
         <h2 className="modal-title">Settings</h2>
+
+        {/* ── Display name ── */}
+        {household && (
+          <div className="settings-section">
+            <h3 className="settings-section-title">Your Name</h3>
+            {editingName ? (
+              <div className="hh-name-edit-row">
+                <input
+                  className="form-input"
+                  value={nameValue}
+                  onChange={e => setNameValue(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false) }}
+                  placeholder="Enter your name"
+                  maxLength={40}
+                  autoFocus
+                />
+                <button className="btn btn-primary btn-sm" onClick={handleSaveName} disabled={savingName}>
+                  {savingName ? 'Saving…' : 'Save'}
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => { setEditingName(false); setNameValue(myMember?.display_name || '') }}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="hh-name-row">
+                <span className="hh-name-display">{myMember?.display_name || <em className="hh-name-empty">Not set</em>}</span>
+                <button className="btn btn-secondary btn-sm" onClick={() => setEditingName(true)}>
+                  Edit
+                </button>
+              </div>
+            )}
+            <span className="hh-code-hint">This name is visible to other members of your household.</span>
+          </div>
+        )}
 
         {/* ── Household section ── */}
         {household ? (
@@ -106,18 +165,27 @@ export default function HouseholdModal({
                       <span className="hh-member-avatar">👤</span>
                       <span className="hh-member-info">
                         <span className="hh-member-name">
-                          {m.user_id === currentUserId ? 'You' : 'Member'}
+                          {m.display_name || (m.user_id === currentUserId ? 'You' : 'Member')}
+                          {m.user_id === currentUserId && ' (you)'}
                         </span>
                         <span className="hh-member-since">
                           Joined {new Date(m.joined_at).toLocaleDateString()}
                         </span>
                       </span>
-                      {m.user_id === currentUserId && (
+                      {m.user_id === currentUserId ? (
                         <button
                           className="btn btn-ghost btn-sm"
                           onClick={() => setShowLeaveConfirm(true)}
                         >
                           Leave
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => handleRemove(m.user_id)}
+                          disabled={removingId === m.user_id}
+                        >
+                          {removingId === m.user_id ? 'Removing…' : 'Remove'}
                         </button>
                       )}
                     </li>

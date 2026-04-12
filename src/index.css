@@ -2091,6 +2091,37 @@ button {
   gap: 8px;
 }
 
+.hh-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.hh-name-display {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text1);
+}
+
+.hh-name-empty {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--text3);
+}
+
+.hh-name-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.hh-name-edit-row .form-input {
+  flex: 1;
+}
+
 .hh-join-row {
   display: flex;
   gap: 8px;

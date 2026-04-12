@@ -12,15 +12,15 @@ export function formatDate(dateStr) {
 
 export function getWeekStart() {
   const d = new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const day = d.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const diff = d.getDate() - day; // subtract day index to land on Sunday
   return new Date(new Date().setDate(diff)).toISOString().split('T')[0];
 }
 
 export function getWeekRange() {
-  const monday = new Date(getWeekStart() + 'T12:00:00');
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
+  const sunday = new Date(getWeekStart() + 'T12:00:00');
+  const saturday = new Date(sunday);
+  saturday.setDate(sunday.getDate() + 6);
   const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return `${fmt(monday)} – ${fmt(sunday)}`;
+  return `${fmt(sunday)} – ${fmt(saturday)}`;
 }

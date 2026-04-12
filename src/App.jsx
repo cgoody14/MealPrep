@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { supabase } from './supabase'
 import Sidebar from './components/Sidebar'
 import HouseholdModal from './components/HouseholdModal'
@@ -135,10 +135,16 @@ function AuthPage() {
   )
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
+
 function AppShell() {
   const { meals, loading: mealsLoading, addMeal, updateMeal, deleteMeal, markMadeToday } = useMeals()
   const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek } = useWeekMeals()
-  const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold } = useHousehold()
+  const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName, removeMember } = useHousehold()
   const [showSettings, setShowSettings] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(() => !!localStorage.getItem('new_account'))
 
@@ -152,6 +158,7 @@ function AppShell() {
 
   return (
     <div className="app-layout">
+      <ScrollToTop />
       <Sidebar
         mealCount={meals.length}
         weekCount={weekMeals.length}
@@ -231,6 +238,8 @@ function AppShell() {
           currentUserId={currentUserId}
           onJoin={joinHousehold}
           onLeave={leaveHousehold}
+          onUpdateDisplayName={updateDisplayName}
+          onRemoveMember={removeMember}
           onClose={() => setShowSettings(false)}
           onSignOut={handleSignOut}
         />
