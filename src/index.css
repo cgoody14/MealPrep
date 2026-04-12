@@ -2139,6 +2139,9 @@ button {
   .controls-bar {
     flex-wrap: wrap;
   }
+  .controls-bar .search-input {
+    flex-basis: 100%;
+  }
 
   /* ── Tag filter — horizontal scroll with right fade ── */
   .tag-filter-row {
