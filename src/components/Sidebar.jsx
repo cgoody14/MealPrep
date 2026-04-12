@@ -7,7 +7,7 @@ const NAV = [
   { path: '/shopping', icon: '🛒', label: 'Shopping List', countKey: null },
 ]
 
-export default function Sidebar({ mealCount, weekCount }) {
+export default function Sidebar({ mealCount, weekCount, onOpenSettings }) {
   const counts = { meals: mealCount, week: weekCount }
 
   return (
@@ -35,6 +35,13 @@ export default function Sidebar({ mealCount, weekCount }) {
             </li>
           ))}
         </ul>
+        <div className="sidebar-spacer" />
+        <div className="sidebar-bottom">
+          <button className="sidebar-settings-btn" onClick={onOpenSettings}>
+            <span className="sidebar-icon">⚙</span>
+            <span className="sidebar-label">Settings</span>
+          </button>
+        </div>
       </nav>
 
       {/* Mobile bottom tab bar */}
@@ -53,6 +60,10 @@ export default function Sidebar({ mealCount, weekCount }) {
             )}
           </NavLink>
         ))}
+        <button className="tab-item tab-btn" onClick={onOpenSettings}>
+          <span className="tab-icon">⚙</span>
+          <span className="tab-label">Settings</span>
+        </button>
       </nav>
     </>
   )

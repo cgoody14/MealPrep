@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './supabase'
 import Sidebar from './components/Sidebar'
+import HouseholdModal from './components/HouseholdModal'
 import Rolodex from './pages/Rolodex'
 import ThisWeek from './pages/ThisWeek'
 import Planner from './pages/Planner'
 import Shopping from './pages/Shopping'
 import { useMeals } from './hooks/useMeals'
 import { useWeekMeals } from './hooks/useWeekMeals'
+import { useHousehold } from './hooks/useHousehold'
 
 function AuthPage() {
   const [mode, setMode] = useState('login') // login | signup
@@ -16,6 +18,8 @@ function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
+
+  const switchMode = (next) => { setMode(next); setError(''); setInfo('') }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -29,7 +33,7 @@ function AuthPage() {
       } else {
         const { error: authError } = await supabase.auth.signUp({ email, password })
         if (authError) throw authError
-        setInfo('Check your email to confirm your account, then log in.')
+        setInfo('Check your email to confirm your account, then sign in.')
         setMode('login')
       }
     } catch (err) {
@@ -45,7 +49,24 @@ function AuthPage() {
         <div className="auth-brand">
           <span className="auth-brand-icon">🍽️</span>
           <h1 className="auth-title">Mise en Place</h1>
-          <p className="auth-subtitle">Your personal meal journal & planner</p>
+          <p className="auth-subtitle">Your personal meal journal &amp; planner</p>
+        </div>
+
+        <div className="auth-tabs">
+          <button
+            type="button"
+            className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
+            onClick={() => switchMode('login')}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            className={`auth-tab ${mode === 'signup' ? 'active' : ''}`}
+            onClick={() => switchMode('signup')}
+          >
+            Create Account
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -80,13 +101,11 @@ function AuthPage() {
           </button>
         </form>
 
-        <div className="auth-toggle">
-          {mode === 'login' ? (
-            <>Don't have an account? <button className="link-btn" onClick={() => { setMode('signup'); setError(''); setInfo('') }}>Sign up</button></>
-          ) : (
-            <>Already have an account? <button className="link-btn" onClick={() => { setMode('login'); setError(''); setInfo('') }}>Sign in</button></>
-          )}
-        </div>
+        {mode === 'signup' && (
+          <p className="auth-fine-print">
+            A confirmation email will be sent to verify your address.
+          </p>
+        )}
       </div>
     </div>
   )
@@ -95,6 +114,12 @@ function AuthPage() {
 function AppShell() {
   const { meals, loading: mealsLoading, addMeal, updateMeal, deleteMeal, markMadeToday } = useMeals()
   const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek } = useWeekMeals()
+  const { household, members, currentUserId, joinHousehold, leaveHousehold } = useHousehold()
+  const [showSettings, setShowSettings] = useState(false)
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+  }
 
   const handleMarkMadeShared = async (id) => {
     return markMadeToday(id)
@@ -102,7 +127,11 @@ function AppShell() {
 
   return (
     <div className="app-layout">
-      <Sidebar mealCount={meals.length} weekCount={weekMeals.length} />
+      <Sidebar
+        mealCount={meals.length}
+        weekCount={weekMeals.length}
+        onOpenSettings={() => setShowSettings(true)}
+      />
       <main className="main-content">
         <Routes>
           <Route
@@ -161,6 +190,18 @@ function AppShell() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+
+      {showSettings && (
+        <HouseholdModal
+          household={household}
+          members={members}
+          currentUserId={currentUserId}
+          onJoin={joinHousehold}
+          onLeave={leaveHousehold}
+          onClose={() => setShowSettings(false)}
+          onSignOut={handleSignOut}
+        />
+      )}
     </div>
   )
 }

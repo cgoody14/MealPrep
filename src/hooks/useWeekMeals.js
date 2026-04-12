@@ -18,7 +18,6 @@ export function useWeekMeals() {
       const { data, error: fetchError } = await supabase
         .from('week_meals')
         .select('*, meals(*)')
-        .eq('user_id', user.id)
         .eq('week_start', weekStart)
         .order('added_at', { ascending: true })
 
@@ -55,11 +54,11 @@ export function useWeekMeals() {
   }
 
   const clearWeek = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    // No user_id filter — clears all household members' entries for the week.
+    // RLS prevents deleting rows outside the household.
     const { error: clearError } = await supabase
       .from('week_meals')
       .delete()
-      .eq('user_id', user.id)
       .eq('week_start', weekStart)
     if (clearError) throw clearError
     setWeekMeals([])

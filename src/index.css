@@ -1835,6 +1835,247 @@ button {
   color: var(--text2);
 }
 
+/* Auth tabs (Sign In / Create Account) */
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  background: var(--bg2);
+  color: var(--text2);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.auth-tab:first-child {
+  border-right: 1px solid var(--border);
+}
+
+.auth-tab.active {
+  background: var(--text);
+  color: #fff;
+}
+
+.auth-tab:hover:not(.active) {
+  background: var(--border);
+  color: var(--text);
+}
+
+.auth-fine-print {
+  margin-top: 12px;
+  font-size: 11.5px;
+  color: var(--text3);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ================================================
+   SIDEBAR BOTTOM / SETTINGS BUTTON
+   ================================================ */
+
+.sidebar-spacer {
+  flex: 1;
+}
+
+.sidebar-bottom {
+  padding: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-settings-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+}
+
+.sidebar-settings-btn:hover {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.9);
+}
+
+/* ================================================
+   SETTINGS / HOUSEHOLD MODAL
+   ================================================ */
+
+.modal-settings {
+  max-width: 480px;
+}
+
+.settings-section {
+  padding: 18px 0;
+  border-top: 1px solid var(--border);
+}
+
+.settings-section:first-of-type {
+  border-top: none;
+  padding-top: 4px;
+}
+
+.settings-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text3);
+  margin: 0 0 10px;
+}
+
+.settings-desc {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.55;
+  margin: 0 0 14px;
+}
+
+.settings-desc code {
+  font-size: 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.hh-code-block {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+
+.hh-code-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+
+.hh-code-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.hh-code {
+  font-family: 'Courier New', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--text);
+}
+
+.hh-code-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.4;
+}
+
+.hh-members {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hh-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.hh-member-avatar {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.hh-member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hh-member-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.hh-member-since {
+  font-size: 11.5px;
+  color: var(--text3);
+}
+
+.hh-leave-confirm {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #fff8f0;
+  border: 1px solid #f5c6a0;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.hh-leave-confirm p {
+  margin: 0 0 10px;
+}
+
+.hh-leave-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.hh-join-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.hh-join-input {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.settings-signout {
+  padding-bottom: 4px;
+}
+
 /* ================================================
    LOADING / EMPTY
    ================================================ */
@@ -2037,6 +2278,13 @@ button {
 
   .tab-item.active {
     color: #fff;
+  }
+
+  /* Settings button in mobile tab bar */
+  .tab-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
   }
 
   .tab-icon {
