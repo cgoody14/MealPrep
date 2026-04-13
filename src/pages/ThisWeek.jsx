@@ -10,6 +10,15 @@ function parseSteps(instructions) {
     .filter(Boolean)
 }
 
+function renderStepText(text) {
+  const parts = text.split(/(If desired[,.]?|[Oo]ptional[,:]?)/g)
+  return parts.map((part, i) =>
+    /^(If desired[,.]?|[Oo]ptional[,:]?)$/.test(part)
+      ? <em key={i} className="step-optional">{part}</em>
+      : part
+  )
+}
+
 function CooldownBar({ lastMade }) {
   const days = daysSince(lastMade)
   let color = 'var(--green)'
@@ -151,7 +160,7 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
                         {steps.map((step, idx) => (
                           <li key={idx} className="week-instr-step">
                             <span className="instruction-num">{idx + 1}</span>
-                            <span className="instruction-step-text">{step}</span>
+                            <span className="instruction-step-text">{renderStepText(step)}</span>
                           </li>
                         ))}
                       </ol>

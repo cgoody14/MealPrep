@@ -2,12 +2,30 @@ import { useState } from 'react'
 import Stars from './Stars'
 import { daysSince, formatDate } from '../utils/format'
 
-export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelete, onEdit }) {
+function renderStepText(text) {
+  const parts = text.split(/(If desired[,.]?|[Oo]ptional[,:]?)/g)
+  return parts.map((part, i) =>
+    /^(If desired[,.]?|[Oo]ptional[,:]?)$/.test(part)
+      ? <em key={i} className="step-optional">{part}</em>
+      : part
+  )
+}
+
+function parseSteps(instructions) {
+  return (instructions || '')
+    .split(/ \| |\n/)
+    .map(s => s.replace(/^\d+\.\s*/, '').trim())
+    .filter(Boolean)
+}
+
+export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelete, onEdit, onReimport }) {
   const [adding, setAdding] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   const days = daysSince(meal.last_made)
+  const steps = parseSteps(meal.instructions)
+  const instructionsShort = meal.instructions && meal.instructions.length < 100
 
   const handleAddToWeek = async () => {
     setAdding(true)
@@ -94,19 +112,30 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
 
           <div className="detail-section">
             <div className="detail-section-label">Instructions</div>
-            {meal.instructions ? (
-              <ol className="instruction-list">
-                {meal.instructions
-                  .split(/ \| |\n/)
-                  .map(s => s.replace(/^\d+\.\s*/, '').trim())
-                  .filter(Boolean)
-                  .map((step, i) => (
+            {steps.length > 0 ? (
+              <>
+                <ol className="instruction-list">
+                  {steps.map((step, i) => (
                     <li key={i} className="instruction-step">
                       <span className="instruction-num">{i + 1}</span>
-                      <span className="instruction-step-text">{step}</span>
+                      <span className="instruction-step-text">{renderStepText(step)}</span>
                     </li>
                   ))}
-              </ol>
+                </ol>
+                {instructionsShort && (
+                  <div className="reimport-hint">
+                    These instructions look brief — try re-importing the recipe for more detail.
+                    {meal.source && onReimport && (
+                      <button
+                        className="reimport-btn"
+                        onClick={() => { onClose(); onReimport(meal.source) }}
+                      >
+                        Re-import
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
             ) : (
               <p className="instruction-empty">No instructions saved yet.</p>
             )}

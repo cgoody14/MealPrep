@@ -15,7 +15,7 @@ const STATUS_MESSAGES = [
 ]
 
 
-export default function UrlImportBar({ onImport }) {
+export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed }) {
   const [url, setUrl] = useState('')
   const [status, setStatus] = useState('idle') // 'idle' | 'loading' | 'preview'
   const [statusMsg, setStatusMsg] = useState('')
@@ -35,6 +35,20 @@ export default function UrlImportBar({ onImport }) {
       if (successTimerRef.current) clearTimeout(successTimerRef.current)
     }
   }, [])
+
+  // Pre-fill URL when triggered by Re-import button in MealDetail
+  useEffect(() => {
+    if (reimportUrl) {
+      setUrl(reimportUrl)
+      setPreview(null)
+      setStatus('idle')
+      setFallbackMsg('')
+      setSuccessMsg('')
+      onReimportConsumed?.()
+      // Scroll to the import bar
+      document.querySelector('.url-import-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [reimportUrl])
 
   const setField = (key, val) => setPreview(p => ({ ...p, [key]: val }))
 

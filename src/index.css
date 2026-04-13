@@ -1256,23 +1256,24 @@ button {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
 }
 
 .instruction-step {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
+  padding-bottom: 12px;
 }
 
 .instruction-num {
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
-  font-size: 0.72rem;
+  font-size: 0.85rem;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -1281,15 +1282,50 @@ button {
 }
 
 .instruction-step-text {
-  font-size: 13.5px;
+  font-size: 0.95rem;
   line-height: 1.6;
   color: var(--text);
+  padding-left: 0;
+}
+
+.step-optional {
+  font-style: italic;
+  color: var(--text3);
 }
 
 .instruction-empty {
   font-size: 13px;
   color: var(--text3);
   font-style: italic;
+}
+
+.reimport-hint {
+  margin-top: 10px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reimport-btn {
+  font-size: 12px;
+  font-style: normal;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.reimport-btn:hover {
+  background: var(--accent);
+  color: #fff;
 }
 
 /* Form helper text */
@@ -1382,14 +1418,18 @@ button {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
 }
 
 .week-instr-step {
   display: flex;
-  gap: 9px;
+  gap: 12px;
   align-items: flex-start;
-  font-size: 13px;
+  padding-bottom: 12px;
+}
+
+.week-instr-step .instruction-step-text {
+  font-size: 0.9rem;
   color: var(--text2);
   line-height: 1.6;
 }

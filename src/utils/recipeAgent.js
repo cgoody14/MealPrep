@@ -14,7 +14,7 @@ export async function scrapeRecipeWithAI(url) {
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         temperature: 0.1,
-        max_tokens: 1500,
+        max_tokens: 2500,
         messages: [
           {
             role: 'system',
@@ -41,17 +41,23 @@ protein, pasta, seafood, vegetarian, sides, easy, weeknight, weekend,
 crowd-pleaser, healthy, brunch, italian, japanese, greek
 
 Instructions rules:
-- Write all steps as a single string
-- Separate steps with ' | ' (space pipe space) — NOT newlines or \\n
-- Example: "1. Preheat oven to 425F | 2. Season chicken | 3. Sear 4 min per side"
-- Include all key cooking actions: prep, cook, plate
+- Write all steps as a single string separated by ' | ' (space pipe space) — NOT newlines or \\n
+- Each step must include specific temperatures (e.g. 375°F, medium-high heat), specific times (e.g. 15-20 minutes), exact techniques (e.g. toss to coat, spread onto a rimmed sheet pan), and quantities within the step where relevant
+- Mark optional steps clearly (e.g. If desired, turn oven to broil for 3 minutes for light char)
+- Include serving and assembly instructions as the final step
+- Do NOT summarize steps — write each step exactly as a recipe author would write it
+- Aim for 15-25 words per step
+- Bad: '1. Cook chicken' — Good: '1. Season chicken thighs with 1 tsp cumin and lime juice, then spread on a rimmed sheet pan with bell peppers and onion'
+- Bad: '2. Bake until done' — Good: '2. Bake at 375°F for 15-20 minutes until chicken is cooked through. If desired, broil for 3 additional minutes for light char'
 
 Never return null. Return empty arrays for ingredients and tags if unknown.
 Return empty string for other fields if unknown.`
           },
           {
             role: 'user',
-            content: `Extract the recipe data for this URL: ${url}`
+            content: `Extract the full detailed recipe data for this URL: ${url}
+
+For the instructions field, write each step in full detail exactly as the recipe author would write it — include temperatures, times, quantities, and techniques. Do not summarize or shorten any step. This is going into a meal planning app where users will cook directly from these instructions.`
           }
         ]
       })

@@ -28,6 +28,7 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
   const [importError, setImportError] = useState('')
   const [showRandomize, setShowRandomize] = useState(false)
   const [randomizeSuccess, setRandomizeSuccess] = useState('')
+  const [reimportUrl, setReimportUrl] = useState('')
 
   const weekMealIds = new Set((weekMeals || []).map(wm => wm.meal_id))
 
@@ -121,7 +122,7 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
       </div>
       <p className="page-subtitle">Your personal recipe archive. Add meals manually or import from any recipe URL. Search, filter by tag, and track how often you cook each dish.</p>
 
-      <UrlImportBar onImport={handleUrlImport} />
+      <UrlImportBar onImport={handleUrlImport} reimportUrl={reimportUrl} onReimportConsumed={() => setReimportUrl('')} />
 
       <div className="controls-bar">
         <input
@@ -199,6 +200,7 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
           onAddToWeek={handleAddToWeekFromDetail}
           onDelete={async (id) => { await deleteMeal(id); setDetailMeal(null) }}
           onEdit={(meal) => { setDetailMeal(null); setEditMeal(meal) }}
+          onReimport={(url) => { setDetailMeal(null); setReimportUrl(url) }}
         />
       )}
 
