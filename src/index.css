@@ -2451,6 +2451,10 @@ button {
   .tab-icon {
     font-size: 20px;
     line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
   }
 
   .tab-label {

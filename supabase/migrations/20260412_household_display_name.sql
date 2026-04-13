@@ -7,7 +7,15 @@
 ALTER TABLE public.user_households
   ADD COLUMN IF NOT EXISTS display_name TEXT;
 
--- 2. Function: remove a member from the household and move them to a new solo household
+-- 2. Function: update current user's display name (SECURITY DEFINER avoids RLS WITH CHECK edge cases)
+CREATE OR REPLACE FUNCTION public.update_display_name(new_name TEXT)
+RETURNS VOID AS $$
+  UPDATE public.user_households
+  SET display_name = NULLIF(trim(new_name), '')
+  WHERE user_id = auth.uid();
+$$ LANGUAGE SQL SECURITY DEFINER;
+
+-- 3. Function: remove a member from the household and move them to a new solo household
 CREATE OR REPLACE FUNCTION public.remove_household_member(member_user_id UUID)
 RETURNS VOID AS $$
 DECLARE

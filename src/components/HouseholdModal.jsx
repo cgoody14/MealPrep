@@ -17,6 +17,7 @@ export default function HouseholdModal({
   const [editingName, setEditingName] = useState(false)
   const [nameValue, setNameValue] = useState(myMember?.display_name || '')
   const [savingName, setSavingName] = useState(false)
+  const [nameError, setNameError] = useState('')
 
   const isSolo = members.length <= 1
 
@@ -72,10 +73,13 @@ export default function HouseholdModal({
 
   const handleSaveName = async () => {
     setSavingName(true)
+    setNameError('')
     try {
       await onUpdateDisplayName(nameValue)
       setEditingName(false)
-    } catch { /* ignore */ } finally {
+    } catch (err) {
+      setNameError(err.message || 'Failed to save name')
+    } finally {
       setSavingName(false)
     }
   }
@@ -125,6 +129,7 @@ export default function HouseholdModal({
                 </button>
               </div>
             )}
+            {nameError && <div className="form-error" style={{ marginTop: 6 }}>{nameError}</div>}
             <span className="hh-code-hint">This name is visible to other members of your household.</span>
           </div>
         )}
