@@ -78,10 +78,14 @@ export function useHousehold() {
     await fetchHousehold()
   }
 
-  // Update the current user's display name via SECURITY DEFINER to bypass RLS edge cases
+  // Update the current user's display name via direct update (uh_update policy allows own-row changes)
   const updateDisplayName = async (name) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
     const { error } = await supabase
-      .rpc('update_display_name', { new_name: name })
+      .from('user_households')
+      .update({ display_name: name.trim() || null })
+      .eq('user_id', user.id)
     if (error) throw error
     await fetchHousehold()
   }
