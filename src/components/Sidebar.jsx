@@ -34,7 +34,11 @@ export default function Sidebar({ mealCount, weekCount, onOpenSettings }) {
       {/* Desktop sidebar */}
       <nav className="sidebar">
         <div className="sidebar-brand">
-          <span className="sidebar-brand-icon">🍽️</span>
+          <img
+            src="/logo.png"
+            alt="Mise en Place"
+            className="sidebar-brand-logo"
+          />
           <span className="sidebar-brand-text">Mise en Place</span>
         </div>
         <ul className="sidebar-nav">

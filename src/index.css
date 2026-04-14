@@ -90,6 +90,14 @@ body {
   font-size: 22px;
 }
 
+.sidebar-brand-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
 .sidebar-brand-text {
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: 17px;
