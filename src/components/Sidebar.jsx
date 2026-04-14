@@ -38,6 +38,7 @@ export default function Sidebar({ mealCount, weekCount, onOpenSettings }) {
             src="/logo.png"
             alt="Mise en Place"
             className="sidebar-brand-logo"
+            onError={e => { e.currentTarget.style.display = 'none' }}
           />
           <span className="sidebar-brand-text">Mise en Place</span>
         </div>
