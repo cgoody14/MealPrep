@@ -28,6 +28,116 @@
   --radius-sm: 6px;
 }
 
+/* ── Dark mode overrides ── */
+[data-theme="dark"] {
+  --bg: #18161A;
+  --bg2: #221F26;
+  --card: #27242B;
+  --border: #3A3540;
+  --border2: #4A4555;
+  --text: #F0EBE3;
+  --text2: #B8AFA6;
+  --text3: #786E6A;
+  --shadow: 0 2px 12px rgba(0,0,0,0.30);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.40);
+}
+
+/* ── Skeleton loading ── */
+@keyframes shimmer {
+  0% { background-position: -400px 0 }
+  100% { background-position: 400px 0 }
+}
+
+.skeleton-line {
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--border) 25%, var(--bg2) 50%, var(--border) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-title { height: 18px; width: 70%; margin-bottom: 10px; }
+.skeleton-stars { height: 12px; width: 80px; margin-bottom: 8px; }
+.skeleton-meta  { height: 11px; width: 120px; margin-bottom: 12px; }
+.skeleton-chips { display: flex; gap: 6px; margin-bottom: 10px; }
+.skeleton-chip  { height: 24px; width: 60px; border-radius: 20px;
+  background: linear-gradient(90deg, var(--border) 25%, var(--bg2) 50%, var(--border) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+.skeleton-btn   { height: 30px; width: 100px; border-radius: var(--radius-sm); }
+
+/* ── Nutrition grid ── */
+.nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.nutrition-box {
+  background: var(--bg2);
+  border-radius: var(--radius-sm);
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.nutrition-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.nutrition-label {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* ── Settings appearance toggle ── */
+.settings-appearance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.theme-toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: none;
+  background: var(--border2);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.theme-toggle.active {
+  background: var(--accent);
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  display: block;
+}
+
+.theme-toggle.active .theme-toggle-thumb {
+  transform: translateX(20px);
+}
+
 html, body {
   height: 100%;
 }

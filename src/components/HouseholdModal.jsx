@@ -2,7 +2,8 @@ import { useState } from 'react'
 
 export default function HouseholdModal({
   household, members, currentUserId,
-  onJoin, onLeave, onUpdateDisplayName, onRemoveMember, onClose, onSignOut
+  onJoin, onLeave, onUpdateDisplayName, onRemoveMember, onClose, onSignOut,
+  isDark, onToggleDark
 }) {
   const [joinCode, setJoinCode] = useState('')
   const [joining, setJoining] = useState(false)
@@ -248,6 +249,17 @@ export default function HouseholdModal({
             </p>
           </div>
         )}
+
+        {/* ── Appearance ── */}
+        <div className="settings-section">
+          <h3 className="settings-section-title">Appearance</h3>
+          <div className="settings-appearance-row">
+            <span className="settings-desc" style={{ margin: 0 }}>Dark mode</span>
+            <button className={`theme-toggle ${isDark ? 'active' : ''}`} onClick={onToggleDark}>
+              <span className="theme-toggle-thumb" />
+            </button>
+          </div>
+        </div>
 
         {/* ── Sign out ── */}
         <div className="settings-section settings-signout">

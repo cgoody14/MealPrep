@@ -99,6 +99,40 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
             </a>
           )}
 
+          {(meal.calories || meal.protein_g || meal.carbs_g || meal.fat_g) && (
+            <div className="detail-section">
+              <div className="detail-section-label">
+                Nutrition{meal.servings ? ` · per serving (serves ${meal.servings})` : ' · per serving'}
+              </div>
+              <div className="nutrition-grid">
+                {meal.calories != null && (
+                  <div className="nutrition-box">
+                    <div className="nutrition-value">{meal.calories}</div>
+                    <div className="nutrition-label">Calories</div>
+                  </div>
+                )}
+                {meal.protein_g != null && (
+                  <div className="nutrition-box">
+                    <div className="nutrition-value">{meal.protein_g}g</div>
+                    <div className="nutrition-label">Protein</div>
+                  </div>
+                )}
+                {meal.carbs_g != null && (
+                  <div className="nutrition-box">
+                    <div className="nutrition-value">{meal.carbs_g}g</div>
+                    <div className="nutrition-label">Carbs</div>
+                  </div>
+                )}
+                {meal.fat_g != null && (
+                  <div className="nutrition-box">
+                    <div className="nutrition-value">{meal.fat_g}g</div>
+                    <div className="nutrition-label">Fat</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {meal.ingredients?.length > 0 && (
             <div className="detail-section">
               <div className="detail-section-label">Ingredients</div>

@@ -17,6 +17,11 @@ const emptyMeal = {
   source: '',
   times_made: 1,
   cook_time: '',
+  servings: '',
+  calories: '',
+  protein_g: '',
+  carbs_g: '',
+  fat_g: '',
 }
 
 export default function MealForm({ initial, onSave, onClose, existingMeals = [] }) {
@@ -79,6 +84,11 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
         tags: form.tags,
         source: form.source.trim(),
         cook_time: form.cook_time.trim(),
+        servings: form.servings ? Number(form.servings) : null,
+        calories: form.calories ? Number(form.calories) : null,
+        protein_g: form.protein_g ? Number(form.protein_g) : null,
+        carbs_g: form.carbs_g ? Number(form.carbs_g) : null,
+        fat_g: form.fat_g ? Number(form.fat_g) : null,
       })
       onClose()
     } catch (err) {
@@ -119,14 +129,43 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
             <Stars rating={form.rating} onRate={r => set('rating', r)} size="lg" />
           </div>
 
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Cook Time</label>
+              <input
+                className="form-input"
+                value={form.cook_time}
+                onChange={e => set('cook_time', e.target.value)}
+                placeholder="e.g. 45 mins"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Servings</label>
+              <input
+                className="form-input"
+                type="number"
+                min="1"
+                value={form.servings}
+                onChange={e => set('servings', e.target.value)}
+                placeholder="e.g. 4"
+              />
+            </div>
+          </div>
+
           <div className="form-group">
-            <label className="form-label">Cook Time</label>
-            <input
-              className="form-input"
-              value={form.cook_time}
-              onChange={e => set('cook_time', e.target.value)}
-              placeholder="e.g. 45 mins"
-            />
+            <label className="form-label">
+              Nutrition <span className="auth-optional-badge">optional · per serving</span>
+            </label>
+            <div className="form-row">
+              <input className="form-input" type="number" min="0" placeholder="Calories"
+                value={form.calories} onChange={e => set('calories', e.target.value)} />
+              <input className="form-input" type="number" min="0" placeholder="Protein (g)"
+                value={form.protein_g} onChange={e => set('protein_g', e.target.value)} />
+              <input className="form-input" type="number" min="0" placeholder="Carbs (g)"
+                value={form.carbs_g} onChange={e => set('carbs_g', e.target.value)} />
+              <input className="form-input" type="number" min="0" placeholder="Fat (g)"
+                value={form.fat_g} onChange={e => set('fat_g', e.target.value)} />
+            </div>
           </div>
 
           <div className="form-row">

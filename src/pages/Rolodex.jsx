@@ -4,6 +4,7 @@ import MealDetail from '../components/MealDetail'
 import MealForm from '../components/MealForm'
 import UrlImportBar from '../components/UrlImportBar'
 import RandomizeModal from '../components/RandomizeModal'
+import SkeletonCard from '../components/SkeletonCard'
 
 const ALL_TAGS = [
   'protein','pasta','seafood','vegetarian','sides','easy','weeknight',
@@ -17,7 +18,7 @@ const SORT_OPTIONS = [
   { value: 'az', label: 'A–Z' },
 ]
 
-export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMadeToday, weekMeals, addToWeek, removeFromWeek }) {
+export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMeal, markMadeToday, weekMeals, addToWeek, removeFromWeek }) {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('rating')
   const [activeTag, setActiveTag] = useState('All')
@@ -169,7 +170,11 @@ export default function Rolodex({ meals, addMeal, updateMeal, deleteMeal, markMa
         </div>
       )}
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="meal-grid">
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} delay={i * 60} />)}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">🍽️</div>
           <div className="empty-text">

@@ -154,6 +154,14 @@ function AppShell() {
   const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName, removeMember } = useHousehold()
   const [showSettings, setShowSettings] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(() => !!localStorage.getItem('new_account'))
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark')
+
+  const toggleDark = () => {
+    const next = !isDark
+    setIsDark(next)
+    localStorage.setItem('theme', next ? 'dark' : 'light')
+    document.documentElement.setAttribute('data-theme', next ? 'dark' : '')
+  }
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -176,20 +184,17 @@ function AppShell() {
           <Route
             path="/"
             element={
-              mealsLoading ? (
-                <div className="page"><div className="spinner-wrap"><div className="spinner" /></div></div>
-              ) : (
-                <Rolodex
-                  meals={meals}
-                  addMeal={addMeal}
-                  updateMeal={updateMeal}
-                  deleteMeal={deleteMeal}
-                  markMadeToday={handleMarkMadeShared}
-                  weekMeals={weekMeals}
-                  addToWeek={addToWeek}
-                  removeFromWeek={removeFromWeek}
-                />
-              )
+              <Rolodex
+                meals={meals}
+                loading={mealsLoading}
+                addMeal={addMeal}
+                updateMeal={updateMeal}
+                deleteMeal={deleteMeal}
+                markMadeToday={handleMarkMadeShared}
+                weekMeals={weekMeals}
+                addToWeek={addToWeek}
+                removeFromWeek={removeFromWeek}
+              />
             }
           />
           <Route
@@ -249,6 +254,8 @@ function AppShell() {
           onRemoveMember={removeMember}
           onClose={() => setShowSettings(false)}
           onSignOut={handleSignOut}
+          isDark={isDark}
+          onToggleDark={toggleDark}
         />
       )}
     </div>
