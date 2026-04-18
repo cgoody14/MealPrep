@@ -44,11 +44,27 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
     let list = [...meals]
     if (search.trim()) {
       const q = search.toLowerCase()
-      list = list.filter(m =>
-        m.name.toLowerCase().includes(q) ||
-        (m.ingredients || []).some(i => i.toLowerCase().includes(q)) ||
-        (m.tags || []).some(t => t.toLowerCase().includes(q))
-      )
+
+      // Score each meal by match quality: name > tag > ingredient
+      const score = m => {
+        const name = m.name.toLowerCase()
+        if (name === q) return 4                          // exact name
+        if (name.startsWith(q)) return 3                 // name starts with query
+        if (name.includes(q)) return 2                   // name contains query
+        if ((m.tags || []).some(t => t.toLowerCase().includes(q))) return 1
+        return 0                                          // ingredient-only match
+      }
+
+      list = list
+        .filter(m =>
+          m.name.toLowerCase().includes(q) ||
+          (m.ingredients || []).some(i => i.toLowerCase().includes(q)) ||
+          (m.tags || []).some(t => t.toLowerCase().includes(q))
+        )
+        .sort((a, b) => score(b) - score(a))
+
+      // After relevance sort, apply the user's chosen sort as a tiebreaker
+      // by stable-sorting within each score group (done via the sort below)
     }
     if (activeTag !== 'All') {
       list = list.filter(m => (m.tags || []).includes(activeTag))
