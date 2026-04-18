@@ -2583,7 +2583,7 @@ button {
     left: 0;
     right: 0;
     height: 60px;
-    background: var(--text);
+    background: #1E1B18;
     border-top: 1px solid rgba(255,255,255,0.1);
     z-index: 200;
     padding-bottom: env(safe-area-inset-bottom, 0);
