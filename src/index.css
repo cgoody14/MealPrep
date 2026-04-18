@@ -1857,6 +1857,15 @@ button {
   margin-bottom: 10px;
 }
 
+.auth-brand-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 14px;
+  margin: 0 auto 12px;
+  display: block;
+}
+
 .auth-title {
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: 32px;

@@ -39,12 +39,19 @@ function AuthPage() {
           options: { emailRedirectTo: 'https://meal-prep-lac.vercel.app/' }
         })
         if (authError) throw authError
+
         // Save flags so the welcome screen appears after first sign-in
         localStorage.setItem('new_account', '1')
         if (inviteCode.trim()) {
           localStorage.setItem('pending_invite', inviteCode.trim().toUpperCase())
         }
-        setInfo('Check your email to confirm your account, then sign in.')
+
+        // If email confirmation is disabled in Supabase, sign in immediately
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        if (!signInError) return // onAuthStateChange handles the rest
+
+        // Email confirmation is required — tell the user
+        setInfo('Almost there! Check your email for a confirmation link, then come back and sign in.')
         setMode('login')
       }
     } catch (err) {
@@ -58,7 +65,7 @@ function AuthPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="auth-brand-icon">🍽️</span>
+          <img src="/logo.png" alt="" className="auth-brand-logo" onError={e => { e.currentTarget.style.display = 'none' }} />
           <h1 className="auth-title">Mise en Place</h1>
           <p className="auth-subtitle">Your personal meal journal &amp; planner</p>
         </div>
