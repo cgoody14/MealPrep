@@ -31,7 +31,7 @@ function CooldownBar({ lastMade }) {
   )
 }
 
-export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeFromWeek, clearWeek, markMadeToday }) {
+export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeFromWeek, clearWeek, markMadeToday, onRefresh }) {
   const [clearing, setClearing] = useState(false)
   const [markingId, setMarkingId] = useState(null)
   const [openPanel, setOpenPanel] = useState({})
@@ -62,6 +62,7 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
           <p className="page-subtitle">Your meals for the week. Add from the Rolodex or use the Randomizer. Tap a card to view details.</p>
           <div className="week-header-meta">{getWeekRange()} · {weekMeals.length} meal{weekMeals.length !== 1 ? 's' : ''}</div>
         </div>
+        {onRefresh && <button className="btn btn-ghost refresh-btn" onClick={onRefresh} title="Refresh">↻</button>}
       </div>
 
       <div className="week-actions">

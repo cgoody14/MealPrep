@@ -2081,6 +2081,47 @@ button {
   line-height: 1.5;
 }
 
+.auth-link {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 13.5px;
+  text-align: center;
+  cursor: pointer;
+  padding: 4px 0;
+  font-family: var(--font-body);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.auth-link:hover { opacity: 0.8; }
+
+.auth-forgot-hint {
+  color: var(--text2);
+  font-size: 14px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.auth-forgot-sent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-info-box {
+  padding: 12px 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-sm);
+  color: var(--green);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
 /* ================================================
    SIDEBAR BOTTOM / SETTINGS BUTTON
    ================================================ */
@@ -2429,6 +2470,26 @@ button {
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
+}
+
+.spinner-sm {
+  width: 22px;
+  height: 22px;
+  border-width: 2px;
+}
+
+.pull-indicator {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 4px;
+  animation: fade-in 0.15s ease;
+}
+
+.refresh-btn {
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 6px 10px;
+  min-width: 36px;
 }
 
 .empty-state {

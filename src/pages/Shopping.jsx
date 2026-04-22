@@ -243,7 +243,7 @@ function ShoppingShareModal({ categories, manualItems, mealObjects, quantities, 
   )
 }
 
-export default function Shopping({ weekMeals, loading, clearWeek }) {
+export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
   const weekStart = getWeekStart()
   const storageKey = `shop-checked-${weekStart}`
   const manualKey = `shop-manual-${weekStart}`
@@ -402,6 +402,7 @@ export default function Shopping({ weekMeals, loading, clearWeek }) {
             {' · '}{getWeekRange()}
           </div>
         </div>
+        {onRefresh && <button className="btn btn-ghost refresh-btn" onClick={onRefresh} title="Refresh">↻</button>}
       </div>
 
       {/* Action buttons */}

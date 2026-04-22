@@ -11,7 +11,8 @@ export default function HouseholdModal({
   const [joinError, setJoinError] = useState('')
   const [codeCopied, setCodeCopied] = useState(false)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
-  const [removingId, setRemovingId] = useState(null)
+  const [removeConfirmId, setRemoveConfirmId] = useState(null)
+  const [removeError, setRemoveError] = useState('')
 
   // Display name editing
   const myMember = members.find(m => m.user_id === currentUserId)
@@ -85,12 +86,13 @@ export default function HouseholdModal({
     }
   }
 
-  const handleRemove = async (memberId) => {
-    setRemovingId(memberId)
+  const handleConfirmRemove = async (memberId) => {
+    setRemoveError('')
     try {
       await onRemoveMember(memberId)
-    } catch { /* ignore */ } finally {
-      setRemovingId(null)
+      setRemoveConfirmId(null)
+    } catch (err) {
+      setRemoveError(err.message || 'Failed to remove member')
     }
   }
 
@@ -188,10 +190,10 @@ export default function HouseholdModal({
                       ) : (
                         <button
                           className="btn btn-ghost btn-sm"
-                          onClick={() => handleRemove(m.user_id)}
-                          disabled={removingId === m.user_id}
+                          onClick={() => { setRemoveConfirmId(m.user_id); setRemoveError('') }}
+                          disabled={removeConfirmId === m.user_id}
                         >
-                          {removingId === m.user_id ? 'Removing…' : 'Remove'}
+                          Remove
                         </button>
                       )}
                     </li>
@@ -209,6 +211,21 @@ export default function HouseholdModal({
                         Cancel
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {removeConfirmId && (
+                  <div className="hh-leave-confirm">
+                    <p>Remove this member? They'll keep their meals but leave this household.</p>
+                    <div className="hh-leave-btns">
+                      <button className="btn btn-primary btn-sm" onClick={() => handleConfirmRemove(removeConfirmId)}>
+                        Yes, Remove
+                      </button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => { setRemoveConfirmId(null); setRemoveError('') }}>
+                        Cancel
+                      </button>
+                    </div>
+                    {removeError && <div className="form-error" style={{ marginTop: 6 }}>{removeError}</div>}
                   </div>
                 )}
               </div>

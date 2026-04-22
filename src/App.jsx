@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { supabase } from './supabase'
 import Sidebar from './components/Sidebar'
@@ -11,9 +11,81 @@ import Shopping from './pages/Shopping'
 import { useMeals } from './hooks/useMeals'
 import { useWeekMeals } from './hooks/useWeekMeals'
 import { useHousehold } from './hooks/useHousehold'
+import { usePullToRefresh } from './hooks/usePullToRefresh'
+
+function ResetPasswordPage({ onDone }) {
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (password !== confirm) { setError("Passwords don't match."); return }
+    setLoading(true)
+    setError('')
+    try {
+      const { error: err } = await supabase.auth.updateUser({ password })
+      if (err) throw err
+      setSuccess(true)
+      setTimeout(() => onDone(), 1500)
+    } catch (err) {
+      setError(err.message)
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-brand">
+          <img src="/logo.png" alt="" className="auth-brand-logo" onError={e => { e.currentTarget.style.display = 'none' }} />
+          <h1 className="auth-title">Mise en Place</h1>
+          <p className="auth-subtitle">Set a new password</p>
+        </div>
+        {success ? (
+          <div className="form-info auth-info-box">Password updated! Signing you in…</div>
+        ) : (
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-group">
+              <label className="form-label">New Password</label>
+              <input
+                className="form-input"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={6}
+                autoFocus
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Confirm Password</label>
+              <input
+                className="form-input"
+                type="password"
+                value={confirm}
+                onChange={e => setConfirm(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={6}
+              />
+            </div>
+            {error && <div className="form-error">{error}</div>}
+            <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+              {loading ? 'Saving…' : 'Set New Password'}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function AuthPage() {
-  const [mode, setMode] = useState('login') // login | signup
+  const [mode, setMode] = useState('login') // login | signup | forgot
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [inviteCode, setInviteCode] = useState('')
@@ -32,7 +104,7 @@ function AuthPage() {
       if (mode === 'login') {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
         if (authError) throw authError
-      } else {
+      } else if (mode === 'signup') {
         const { error: authError } = await supabase.auth.signUp({
           email,
           password,
@@ -53,12 +125,63 @@ function AuthPage() {
         // Email confirmation is required — tell the user
         setInfo('Almost there! Check your email for a confirmation link, then come back and sign in.')
         setMode('login')
+      } else if (mode === 'forgot') {
+        const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: 'https://meal-prep-lac.vercel.app/'
+        })
+        if (err) throw err
+        setInfo('Check your email for a password reset link.')
       }
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
+  }
+
+  if (mode === 'forgot') {
+    return (
+      <div className="auth-page">
+        <div className="auth-card">
+          <div className="auth-brand">
+            <img src="/logo.png" alt="" className="auth-brand-logo" onError={e => { e.currentTarget.style.display = 'none' }} />
+            <h1 className="auth-title">Mise en Place</h1>
+            <p className="auth-subtitle">Reset your password</p>
+          </div>
+          {info ? (
+            <div className="auth-forgot-sent">
+              <div className="auth-info-box">{info}</div>
+              <button type="button" className="auth-link" onClick={() => switchMode('login')}>
+                ← Back to Sign In
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="auth-form">
+              <p className="auth-forgot-hint">Enter your email and we'll send you a link to reset your password.</p>
+              <div className="form-group">
+                <label className="form-label">Email</label>
+                <input
+                  className="form-input"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoFocus
+                />
+              </div>
+              {error && <div className="form-error">{error}</div>}
+              <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+                {loading ? 'Sending…' : 'Send Reset Link'}
+              </button>
+              <button type="button" className="auth-link" onClick={() => switchMode('login')}>
+                ← Back to Sign In
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -136,6 +259,11 @@ function AuthPage() {
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
+          {mode === 'login' && (
+            <button type="button" className="auth-link" onClick={() => switchMode('forgot')}>
+              Forgot password?
+            </button>
+          )}
         </form>
       </div>
     </div>
@@ -149,12 +277,14 @@ function ScrollToTop() {
 }
 
 function AppShell() {
-  const { meals, loading: mealsLoading, addMeal, updateMeal, deleteMeal, markMadeToday } = useMeals()
-  const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek } = useWeekMeals()
+  const { meals, loading: mealsLoading, addMeal, updateMeal, deleteMeal, markMadeToday, fetchMeals } = useMeals()
+  const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek, fetchWeekMeals } = useWeekMeals()
   const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName, removeMember } = useHousehold()
   const [showSettings, setShowSettings] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(() => !!localStorage.getItem('new_account'))
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark')
+  const [refreshing, setRefreshing] = useState(false)
+  const mainRef = useRef(null)
 
   const toggleDark = () => {
     const next = !isDark
@@ -162,6 +292,18 @@ function AppShell() {
     localStorage.setItem('theme', next ? 'dark' : 'light')
     document.documentElement.setAttribute('data-theme', next ? 'dark' : '')
   }
+
+  const handleRefresh = async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    try {
+      await Promise.all([fetchMeals(), fetchWeekMeals()])
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  const { isPulling } = usePullToRefresh(mainRef, handleRefresh)
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -179,7 +321,12 @@ function AppShell() {
         weekCount={weekMeals.length}
         onOpenSettings={() => setShowSettings(true)}
       />
-      <main className="main-content">
+      <main className="main-content" ref={mainRef}>
+        {(isPulling || refreshing) && (
+          <div className="pull-indicator">
+            <div className="spinner spinner-sm" />
+          </div>
+        )}
         <Routes>
           <Route
             path="/"
@@ -194,6 +341,7 @@ function AppShell() {
                 weekMeals={weekMeals}
                 addToWeek={addToWeek}
                 removeFromWeek={removeFromWeek}
+                onRefresh={handleRefresh}
               />
             }
           />
@@ -208,6 +356,7 @@ function AppShell() {
                 removeFromWeek={removeFromWeek}
                 clearWeek={clearWeek}
                 markMadeToday={handleMarkMadeShared}
+                onRefresh={handleRefresh}
               />
             }
           />
@@ -218,6 +367,7 @@ function AppShell() {
                 meals={meals}
                 addToWeek={addToWeek}
                 weekMeals={weekMeals}
+                onRefresh={handleRefresh}
               />
             }
           />
@@ -228,6 +378,7 @@ function AppShell() {
                 weekMeals={weekMeals}
                 loading={weekLoading}
                 clearWeek={clearWeek}
+                onRefresh={handleRefresh}
               />
             }
           />
@@ -264,13 +415,21 @@ function AppShell() {
 
 export default function App() {
   const [session, setSession] = useState(undefined) // undefined = loading
+  const [isResetting, setIsResetting] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsResetting(true)
+      } else {
+        setSession(session)
+        if (event === 'USER_UPDATED') {
+          setIsResetting(false)
+        }
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -281,6 +440,10 @@ export default function App() {
         <div className="spinner" />
       </div>
     )
+  }
+
+  if (isResetting) {
+    return <ResetPasswordPage onDone={() => setIsResetting(false)} />
   }
 
   return session ? <AppShell /> : <AuthPage />
