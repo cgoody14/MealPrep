@@ -90,10 +90,13 @@ export function useHousehold() {
     await fetchHousehold()
   }
 
-  // Remove another member from the household (moves them to a new solo household)
+  // Remove another member from the household.
+  // A DB trigger automatically creates a new solo household for them.
   const removeMember = async (memberUserId) => {
     const { error } = await supabase
-      .rpc('remove_household_member', { member_user_id: memberUserId })
+      .from('user_households')
+      .delete()
+      .eq('user_id', memberUserId)
     if (error) throw error
     await fetchHousehold()
   }
