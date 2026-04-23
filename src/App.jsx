@@ -279,7 +279,7 @@ function ScrollToTop() {
 function AppShell() {
   const { meals, loading: mealsLoading, addMeal, updateMeal, deleteMeal, markMadeToday, fetchMeals } = useMeals()
   const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek, fetchWeekMeals } = useWeekMeals()
-  const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName, removeMember } = useHousehold()
+  const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName } = useHousehold()
   const [showSettings, setShowSettings] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(() => !!localStorage.getItem('new_account'))
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark')
@@ -402,7 +402,6 @@ function AppShell() {
           onJoin={joinHousehold}
           onLeave={leaveHousehold}
           onUpdateDisplayName={updateDisplayName}
-          onRemoveMember={removeMember}
           onClose={() => setShowSettings(false)}
           onSignOut={handleSignOut}
           isDark={isDark}
