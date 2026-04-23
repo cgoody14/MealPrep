@@ -92,21 +92,9 @@ export function useHousehold() {
 
   // Remove another member from the household (moves them to a new solo household)
   const removeMember = async (memberUserId) => {
-    // Create a new solo household for the removed member
-    const { data: newHousehold, error: hhErr } = await supabase
-      .from('households')
-      .insert({ created_by: memberUserId })
-      .select('id')
-      .single()
-    if (hhErr) throw hhErr
-
-    // Move the removed member into their new household
-    const { error: uhErr } = await supabase
-      .from('user_households')
-      .update({ household_id: newHousehold.id, joined_at: new Date().toISOString() })
-      .eq('user_id', memberUserId)
-    if (uhErr) throw uhErr
-
+    const { error } = await supabase
+      .rpc('remove_household_member', { member_user_id: memberUserId })
+    if (error) throw error
     await fetchHousehold()
   }
 
