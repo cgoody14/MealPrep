@@ -148,6 +148,7 @@ export function useMeals() {
       const { data, error: fetchError } = await supabase
         .from('meals')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
