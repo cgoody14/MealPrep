@@ -257,7 +257,6 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             id="recipe-photo-input"
             className="photo-file-input"
             onChange={handlePhotoSelect}
