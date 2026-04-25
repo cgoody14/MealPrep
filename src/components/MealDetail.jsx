@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Stars from './Stars'
 import { daysSince, formatDate } from '../utils/format'
+import { isImageUrl } from '../utils/storage'
 
 function renderStepText(text) {
   const parts = text.split(/(If desired[,.]?|[Oo]ptional[,:]?)/g)
@@ -97,6 +98,21 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
             <a href={meal.source} target="_blank" rel="noopener noreferrer" className="source-link">
               ↗ View original recipe
             </a>
+          )}
+
+          {meal.photo_url && (
+            <div className="recipe-attachment">
+              {isImageUrl(meal.photo_url) ? (
+                <a href={meal.photo_url} target="_blank" rel="noopener noreferrer" className="recipe-photo-link">
+                  <img src={meal.photo_url} alt="Recipe photo" className="recipe-photo-thumb" />
+                  <span className="recipe-photo-label">View recipe photo</span>
+                </a>
+              ) : (
+                <a href={meal.photo_url} target="_blank" rel="noopener noreferrer" className="recipe-attachment-link">
+                  📎 View recipe attachment
+                </a>
+              )}
+            </div>
           )}
 
           {(meal.calories || meal.protein_g || meal.carbs_g || meal.fat_g) && (

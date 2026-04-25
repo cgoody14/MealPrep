@@ -187,7 +187,8 @@ export function useMeals() {
       tags: meal.tags ?? [],
       source: meal.source ?? '',
       cook_time: meal.cook_time ?? '',
-      instructions: meal.instructions ?? ''
+      instructions: meal.instructions ?? '',
+      photo_url: meal.photo_url ?? null,
     }
     console.log('[addMeal] inserting payload:', payload)
     const { data, error: addError } = await supabase

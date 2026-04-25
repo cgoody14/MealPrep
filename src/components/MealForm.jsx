@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Stars from './Stars'
+import { uploadRecipeAttachment, isImageUrl } from '../utils/storage'
 
 const ALL_TAGS = [
   'protein','pasta','seafood','vegetarian','sides','easy','weeknight',
@@ -22,6 +23,7 @@ const emptyMeal = {
   protein_g: '',
   carbs_g: '',
   fat_g: '',
+  photo_url: '',
 }
 
 export default function MealForm({ initial, onSave, onClose, existingMeals = [] }) {
@@ -31,6 +33,9 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
   const [nameError, setNameError] = useState('')
   const [dupWarning, setDupWarning] = useState('')
   const [error, setError] = useState('')
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoObjectUrl, setPhotoObjectUrl] = useState(null)
+  const photoInputRef = useRef(null)
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
@@ -63,6 +68,21 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
     )
   }
 
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (photoObjectUrl) URL.revokeObjectURL(photoObjectUrl)
+    setPhotoFile(file)
+    setPhotoObjectUrl(URL.createObjectURL(file))
+  }
+
+  const clearPhoto = () => {
+    setPhotoFile(null)
+    if (photoObjectUrl) { URL.revokeObjectURL(photoObjectUrl); setPhotoObjectUrl(null) }
+    set('photo_url', '')
+    if (photoInputRef.current) photoInputRef.current.value = ''
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.name.trim()) {
@@ -73,6 +93,14 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
     setSaving(true)
     setError('')
     try {
+      let photo_url = form.photo_url || null
+      if (photoFile) {
+        try {
+          photo_url = await uploadRecipeAttachment(photoFile)
+        } catch (uploadErr) {
+          console.warn('Photo upload failed:', uploadErr.message)
+        }
+      }
       await onSave({
         name: form.name.trim(),
         rating: form.rating ?? 3,
@@ -89,6 +117,7 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
         protein_g: form.protein_g ? Number(form.protein_g) : null,
         carbs_g: form.carbs_g ? Number(form.carbs_g) : null,
         fat_g: form.fat_g ? Number(form.fat_g) : null,
+        photo_url,
       })
       onClose()
     } catch (err) {
@@ -266,6 +295,42 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
               onChange={e => set('source', e.target.value)}
               placeholder="https://…"
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Recipe Photo (optional)</label>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              id="meal-form-photo"
+              className="photo-file-input"
+              onChange={handlePhotoSelect}
+            />
+            {(photoFile || form.photo_url) ? (
+              <div className="photo-selected-row">
+                {(photoObjectUrl || (form.photo_url && isImageUrl(form.photo_url))) ? (
+                  <img
+                    src={photoObjectUrl || form.photo_url}
+                    alt="recipe"
+                    className="photo-thumb"
+                  />
+                ) : (
+                  <span className="photo-thumb-placeholder">📎</span>
+                )}
+                <span className="photo-filename">
+                  {photoFile ? photoFile.name : 'Current photo'}
+                </span>
+                <label htmlFor="meal-form-photo" className="btn btn-ghost btn-sm" style={{ cursor: 'pointer' }}>
+                  Replace
+                </label>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={clearPhoto}>✕</button>
+              </div>
+            ) : (
+              <label htmlFor="meal-form-photo" className="photo-upload-btn">
+                📷 Add Recipe Photo
+              </label>
+            )}
           </div>
 
           {error && <div className="form-error">{error}</div>}

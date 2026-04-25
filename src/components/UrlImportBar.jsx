@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Stars from './Stars'
 import { scrapeRecipeWithAI, scrapeRecipeFromImage } from '../utils/recipeAgent'
+import { uploadRecipeAttachment } from '../utils/storage'
 
 const ALLOWED_TAGS = [
   'protein','pasta','seafood','vegetarian','sides','easy','weeknight',
@@ -183,6 +184,16 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     setSaving(true)
     setSaveError('')
     try {
+      // Upload photo if one was used for import (non-fatal if it fails)
+      let photo_url = null
+      if (photoFile) {
+        try {
+          photo_url = await uploadRecipeAttachment(photoFile)
+        } catch (uploadErr) {
+          console.warn('Photo upload failed, saving without attachment:', uploadErr.message)
+        }
+      }
+
       await onImport({
         name: preview.name.trim() || 'Imported Recipe',
         rating: preview.rating ?? 3,
@@ -194,6 +205,7 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
         cook_time: preview.cookTime || '',
         tags: preview.tags,
         source: preview.source,
+        photo_url,
       })
       setUrl('')
       setPreview(null)
