@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Stars from './Stars'
-import { scrapeRecipeWithAI } from '../utils/recipeAgent'
+import { scrapeRecipeWithAI, scrapeRecipeFromImage } from '../utils/recipeAgent'
 
 const ALLOWED_TAGS = [
   'protein','pasta','seafood','vegetarian','sides','easy','weeknight',
@@ -15,6 +15,13 @@ const STATUS_MESSAGES = [
 ]
 
 
+const PHOTO_STATUS_MESSAGES = [
+  'Reading photo…',
+  'Scanning ingredients…',
+  'Extracting steps…',
+  'Building preview…',
+]
+
 export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed }) {
   const [url, setUrl] = useState('')
   const [status, setStatus] = useState('idle') // 'idle' | 'loading' | 'preview'
@@ -25,14 +32,19 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [ingInput, setIngInput] = useState('')
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoObjectUrl, setPhotoObjectUrl] = useState(null)
+  const [photoError, setPhotoError] = useState('')
 
   const intervalRef = useRef(null)
   const successTimerRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
       if (successTimerRef.current) clearTimeout(successTimerRef.current)
+      if (photoObjectUrl) URL.revokeObjectURL(photoObjectUrl)
     }
   }, [])
 
@@ -85,6 +97,53 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
       intervalRef.current = null
     }
     setStatusMsg('')
+  }
+
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoError('')
+    if (photoObjectUrl) URL.revokeObjectURL(photoObjectUrl)
+    setPhotoFile(file)
+    setPhotoObjectUrl(URL.createObjectURL(file))
+    setPreview(null)
+    setStatus('idle')
+  }
+
+  const handlePhotoImport = async () => {
+    if (!photoFile) return
+    setStatus('loading')
+    setPhotoError('')
+    setFallbackMsg('')
+    setSuccessMsg('')
+
+    setStatusMsg(PHOTO_STATUS_MESSAGES[0])
+    let idx = 0
+    intervalRef.current = setInterval(() => {
+      idx = (idx + 1) % PHOTO_STATUS_MESSAGES.length
+      setStatusMsg(PHOTO_STATUS_MESSAGES[idx])
+    }, 1800)
+
+    try {
+      const result = await scrapeRecipeFromImage(photoFile)
+      stopStatusCycle()
+      setPreview({
+        name: result.name || '',
+        ingredients: Array.isArray(result.ingredients) ? result.ingredients : [],
+        notes: result.notes || '',
+        tags: Array.isArray(result.tags) ? result.tags.filter(t => ALLOWED_TAGS.includes(t)) : [],
+        cookTime: result.cookTime || '',
+        servings: result.servings || '',
+        instructions: (result.instructions || '').split(' | ').map(s => s.trim()).filter(Boolean).join('\n'),
+        source: '',
+        rating: 3,
+      })
+      setStatus('preview')
+    } catch (err) {
+      stopStatusCycle()
+      setPhotoError(err.message || 'Could not read this photo. Try a clearer image.')
+      setStatus('idle')
+    }
   }
 
   const handleImport = async () => {
@@ -157,6 +216,10 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     setIngInput('')
     setSaveError('')
     setFallbackMsg('')
+    setPhotoFile(null)
+    setPhotoError('')
+    if (photoObjectUrl) { URL.revokeObjectURL(photoObjectUrl); setPhotoObjectUrl(null) }
+    if (fileInputRef.current) fileInputRef.current.value = ''
     stopStatusCycle()
   }
 
@@ -164,6 +227,8 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     <div className="url-import-section">
       <div className="url-import-bar">
         <span className="url-import-label">Import Recipe</span>
+
+        {/* URL row */}
         <div className="url-import-row">
           <input
             className="form-input url-import-input"
@@ -179,12 +244,58 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
             onClick={handleImport}
             disabled={status === 'loading' || !url.trim()}
           >
-            {status === 'loading' ? 'Importing…' : 'Import'}
+            {status === 'loading' && !photoFile ? 'Importing…' : 'Import'}
           </button>
         </div>
+
+        {/* Divider */}
+        <div className="import-divider"><span>or</span></div>
+
+        {/* Photo upload row */}
+        <div className="photo-upload-row">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            id="recipe-photo-input"
+            className="photo-file-input"
+            onChange={handlePhotoSelect}
+            disabled={status === 'loading'}
+          />
+          {!photoFile ? (
+            <label htmlFor="recipe-photo-input" className="photo-upload-btn">
+              📷 Upload Recipe Photo
+            </label>
+          ) : (
+            <div className="photo-selected-row">
+              <img src={photoObjectUrl} alt="recipe" className="photo-thumb" />
+              <span className="photo-filename">{photoFile.name}</span>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={handlePhotoImport}
+                disabled={status === 'loading'}
+              >
+                {status === 'loading' && photoFile ? 'Scanning…' : 'Extract Recipe'}
+              </button>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setPhotoFile(null)
+                  if (photoObjectUrl) { URL.revokeObjectURL(photoObjectUrl); setPhotoObjectUrl(null) }
+                  if (fileInputRef.current) fileInputRef.current.value = ''
+                  setPhotoError('')
+                }}
+                disabled={status === 'loading'}
+              >✕</button>
+            </div>
+          )}
+        </div>
+
         {status === 'loading' && statusMsg && (
           <div className="import-status-line">{statusMsg}</div>
         )}
+        {photoError && <div className="import-fallback-msg">{photoError}</div>}
         {status !== 'loading' && fallbackMsg && (
           <div className="import-fallback-msg">{fallbackMsg}</div>
         )}
