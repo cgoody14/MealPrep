@@ -414,7 +414,10 @@ function AppShell() {
 
 export default function App() {
   const [session, setSession] = useState(undefined) // undefined = loading
-  const [isResetting, setIsResetting] = useState(false)
+  const [isResetting, setIsResetting] = useState(() => !!sessionStorage.getItem('pwd_recovery'))
+
+  const enterReset = () => { sessionStorage.setItem('pwd_recovery', '1'); setIsResetting(true) }
+  const exitReset  = () => { sessionStorage.removeItem('pwd_recovery'); setIsResetting(false) }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -422,11 +425,11 @@ export default function App() {
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
-        setIsResetting(true)
+        enterReset()
       } else {
         setSession(session)
         if (event === 'USER_UPDATED') {
-          setIsResetting(false)
+          exitReset()
         }
       }
     })
@@ -442,7 +445,7 @@ export default function App() {
   }
 
   if (isResetting) {
-    return <ResetPasswordPage onDone={() => setIsResetting(false)} />
+    return <ResetPasswordPage onDone={exitReset} />
   }
 
   return session ? <AppShell /> : <AuthPage />
