@@ -1923,7 +1923,7 @@ button {
   color: var(--text2);
 }
 .shop-section-chevron {
-  font-size: 10px;
+  font-size: 14px;
   color: var(--text3);
   transition: transform 0.15s;
 }

@@ -48,14 +48,16 @@ export async function enrichIngredientsWithQuantities(mealName, ingredients) {
         messages: [
           {
             role: 'system',
-            content: `You are a recipe assistant. Given a recipe name and a list of ingredients without quantities, return ONLY a valid JSON array with no preamble, no markdown, no backticks. Each item in the array should be a string with a realistic quantity prepended.
+            content: `You are a recipe assistant. Given a recipe name and a list of ingredients, return ONLY a valid JSON array with no preamble, no markdown, no backticks.
 
-Example input: recipe "Garlic Shrimp Scampi", ingredients ["shrimp","butter","garlic","lemon"]
-Example output: ["1 lb shrimp","3 tbsp butter","4 cloves garlic","1 lemon"]
+Rules:
+- If an ingredient already has a quantity or measurement (e.g. "4 chicken breasts", "2 cups flour", "1 lemon"), return it exactly as-is — do NOT change the unit or convert to weight
+- If an ingredient has no quantity, prepend a realistic one for a standard home recipe serving 4
+- NEVER convert count-based quantities to weight (e.g. keep "4 chicken breasts" as "4 chicken breasts", not "1.5 lbs chicken breast")
+- Return the same number of items as the input array in the same order
+- Never return null
 
-Keep quantities realistic for a standard home recipe serving 4.
-Return the same number of items as the input array in the same order.
-Never return null.`
+Example: ["4 chicken breasts","butter","garlic"] → ["4 chicken breasts","3 tbsp butter","4 cloves garlic"]`
           },
           {
             role: 'user',
@@ -100,10 +102,13 @@ export async function consolidateQuantities(categoryItems, mealNames) {
 
 Each item in the array should be a string combining the ingredient name with a realistic total quantity needed across all the recipes provided.
 
-If the same ingredient appears multiple times sum the quantities.
-Example: "butter" appears in 3 recipes needing 2 tbsp, 3 tbsp, 1 tbsp → "6 tbsp butter"
+Rules:
+- If an ingredient already has a quantity, keep the same unit type — NEVER convert counts to weight (e.g. "4 chicken breasts" stays as count, not lbs)
+- If the same ingredient appears multiple times, sum the quantities using the same unit
+- Only convert units when combining same-unit quantities at large amounts (e.g. 16 tbsp → 1 cup)
+- Keep count-based items as counts: "4 chicken breasts", "3 eggs", "2 lemons"
 
-Keep units consistent. Convert to larger units when sensible (e.g. 16 tbsp → 1 cup).`
+Example: "butter" in 3 recipes needing 2 tbsp, 3 tbsp, 1 tbsp → "6 tbsp butter"`
           },
           {
             role: 'user',
