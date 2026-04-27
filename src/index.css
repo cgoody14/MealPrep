@@ -2217,6 +2217,33 @@ button {
   line-height: 1.5;
 }
 
+.password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.password-input-wrap .form-input {
+  padding-right: 44px;
+  width: 100%;
+}
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 16px;
+  color: var(--text3);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.password-toggle:hover {
+  color: var(--text2);
+}
+
 .auth-link {
   display: block;
   width: 100%;

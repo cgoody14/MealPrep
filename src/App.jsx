@@ -19,6 +19,7 @@ function ResetPasswordPage({ onDone }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -50,28 +51,41 @@ function ResetPasswordPage({ onDone }) {
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
               <label className="form-label">New Password</label>
-              <input
-                className="form-input"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                minLength={6}
-                autoFocus
-              />
+              <div className="password-input-wrap">
+                <input
+                  className="form-input"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(v => !v)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? '🙈' : '👁'}
+                </button>
+              </div>
             </div>
             <div className="form-group">
               <label className="form-label">Confirm Password</label>
-              <input
-                className="form-input"
-                type="password"
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                placeholder="••••••••"
-                required
-                minLength={6}
-              />
+              <div className="password-input-wrap">
+                <input
+                  className="form-input"
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirm}
+                  onChange={e => setConfirm(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                />
+              </div>
             </div>
             {error && <div className="form-error">{error}</div>}
             <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
@@ -92,8 +106,9 @@ function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
-  const switchMode = (next) => { setMode(next); setError(''); setInfo('') }
+  const switchMode = (next) => { setMode(next); setError(''); setInfo(''); setShowPassword(false) }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -225,15 +240,26 @@ function AuthPage() {
           </div>
           <div className="form-group">
             <label className="form-label">Password</label>
-            <input
-              className="form-input"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              minLength={6}
-            />
+            <div className="password-input-wrap">
+              <input
+                className="form-input"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(v => !v)}
+                tabIndex={-1}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? '🙈' : '👁'}
+              </button>
+            </div>
           </div>
           {mode === 'signup' && (
             <div className="form-group">
