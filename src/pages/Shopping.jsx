@@ -256,6 +256,7 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
     try { return JSON.parse(localStorage.getItem('shop-collapsed') || '{}') }
     catch { return {} }
   })
+  const [collapsedRecipes, setCollapsedRecipes] = useState(new Set())
   const [copied, setCopied] = useState(false)
   const [quantities, setQuantities] = useState({})
   const [showSend, setShowSend] = useState(false)
@@ -330,6 +331,15 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
     setCollapsed(prev => {
       const next = { ...prev, [key]: !prev[key] }
       localStorage.setItem('shop-collapsed', JSON.stringify(next))
+      return next
+    })
+  }
+
+  const toggleRecipe = (id) => {
+    setCollapsedRecipes(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -483,24 +493,31 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
                   const isLoading = qData === 'loading'
                   const enriched = Array.isArray(qData) ? qData : (meal.ingredients || [])
 
+                  const isRecipeCollapsed = collapsedRecipes.has(meal.id)
                   return (
                     <div key={meal.id} className="by-recipe-card card">
-                      <div className="by-recipe-card-header">
+                      <button
+                        className="by-recipe-card-header by-recipe-card-toggle"
+                        onClick={() => toggleRecipe(meal.id)}
+                      >
                         <span className="by-recipe-card-name">{meal.name}</span>
-                        {isLoading && <span className="qty-loading">Adding quantities…</span>}
-                      </div>
-                      <ul className="shop-item-list">
-                        {enriched.map(ing => (
-                          <li
-                            key={ing}
-                            className={`shop-item ${checked.has(ing) ? 'checked' : ''}`}
-                            onClick={() => toggleChecked(ing)}
-                          >
-                            <span className="shop-checkbox">{checked.has(ing) ? '✓' : ''}</span>
-                            <span className="shop-item-label">{ing}</span>
-                          </li>
-                        ))}
-                      </ul>
+                        <span className="shop-section-chevron">{isRecipeCollapsed ? '▸' : '▾'}</span>
+                      </button>
+                      {!isRecipeCollapsed && (
+                        <ul className="shop-item-list">
+                          {isLoading && <li className="shop-item"><span className="qty-loading">Adding quantities…</span></li>}
+                          {enriched.map(ing => (
+                            <li
+                              key={ing}
+                              className={`shop-item ${checked.has(ing) ? 'checked' : ''}`}
+                              onClick={() => toggleChecked(ing)}
+                            >
+                              <span className="shop-checkbox">{checked.has(ing) ? '✓' : ''}</span>
+                              <span className="shop-item-label">{ing}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   )
                 })}

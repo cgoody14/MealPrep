@@ -1940,10 +1940,24 @@ button {
 
 .by-recipe-card-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   margin-bottom: 10px;
   flex-wrap: wrap;
+}
+
+.by-recipe-card-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  font-family: var(--font-body);
+  justify-content: space-between;
+}
+.by-recipe-card-toggle:hover .by-recipe-card-name {
+  color: var(--accent);
 }
 
 .by-recipe-card-name {
