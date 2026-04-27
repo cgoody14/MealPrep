@@ -1907,6 +1907,27 @@ button {
   margin-bottom: 14px;
 }
 
+.shop-section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.shop-section-toggle:hover {
+  color: var(--text2);
+}
+.shop-section-chevron {
+  font-size: 10px;
+  color: var(--text3);
+  transition: transform 0.15s;
+}
+
 .by-recipe-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

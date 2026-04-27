@@ -252,6 +252,10 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
     try { return new Set(JSON.parse(localStorage.getItem(storageKey) || '[]')) }
     catch { return new Set() }
   })
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('shop-collapsed') || '{}') }
+    catch { return {} }
+  })
   const [copied, setCopied] = useState(false)
   const [quantities, setQuantities] = useState({})
   const [showSend, setShowSend] = useState(false)
@@ -321,6 +325,14 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryIngsKey])
+
+  const toggleSection = (key) => {
+    setCollapsed(prev => {
+      const next = { ...prev, [key]: !prev[key] }
+      localStorage.setItem('shop-collapsed', JSON.stringify(next))
+      return next
+    })
+  }
 
   const toggleChecked = (item) => {
     setChecked(prev => {
@@ -458,11 +470,14 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
         </div>
       ) : (
         <>
-          {/* By Recipe — always expanded at top */}
+          {/* By Recipe */}
           {mealObjects.length > 0 && (
             <div className="shop-section">
-              <div className="shop-section-title">By Recipe</div>
-              <div className="by-recipe-grid">
+              <button className="shop-section-title shop-section-toggle" onClick={() => toggleSection('byRecipe')}>
+                By Recipe
+                <span className="shop-section-chevron">{collapsed.byRecipe ? '▸' : '▾'}</span>
+              </button>
+              {!collapsed.byRecipe && <div className="by-recipe-grid">
                 {mealObjects.map(meal => {
                   const qData = quantities[meal.id]
                   const isLoading = qData === 'loading'
@@ -489,14 +504,17 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
                     </div>
                   )
                 })}
-              </div>
+              </div>}
             </div>
           )}
 
           {/* All Items by Category */}
           <div className="shop-section">
-            <div className="shop-section-title">All Items by Category</div>
-            <div className="shop-grid">
+            <button className="shop-section-title shop-section-toggle" onClick={() => toggleSection('byCategory')}>
+              All Items by Category
+              <span className="shop-section-chevron">{collapsed.byCategory ? '▸' : '▾'}</span>
+            </button>
+            {!collapsed.byCategory && <div className="shop-grid">
               {allCategoryKeys.map(cat => {
                 const autoItems = categories[cat] || []
                 const manualForCat = manualItems.filter(m => m.category === cat)
@@ -560,7 +578,7 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
                   </ul>
                 </div>
               )}
-            </div>
+            </div>}
           </div>
         </>
       )}
