@@ -248,7 +248,7 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
   const storageKey = `shop-checked-${weekStart}`
   const manualKey = `shop-manual-${weekStart}`
 
-  const [checked, setChecked] = useState(() => {
+  const [recipeChecked, setRecipeChecked] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem(storageKey) || '[]')) }
     catch { return new Set() }
   })
@@ -295,8 +295,8 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
   const totalCategories = allCategoryKeys.length + (pendingItems.length > 0 ? 1 : 0)
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify([...checked]))
-  }, [checked, storageKey])
+    localStorage.setItem(storageKey, JSON.stringify([...recipeChecked]))
+  }, [recipeChecked, storageKey])
 
   // Fetch By Recipe quantities once per meal
   useEffect(() => {
@@ -344,14 +344,85 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
     })
   }
 
-  const toggleChecked = (item) => {
-    setChecked(prev => {
+  // Normalize ingredient name for cross-section matching
+  const normIng = (s) => s.toLowerCase().trim()
+
+  // Key for a recipe-specific ingredient check
+  const recipeKey = (mealId, ing) => `${mealId}|||${ing}`
+
+  // Is a specific recipe's ingredient checked?
+  const isRecipeIngChecked = (mealId, origIng) =>
+    recipeChecked.has(recipeKey(mealId, origIng))
+
+  // Is a category ingredient fully checked? (all meals that contain it are checked)
+  const isCategoryIngChecked = (ing) => {
+    const norm = normIng(ing)
+    const meals = mealObjects.filter(m =>
+      (m.ingredients || []).some(i => normIng(i) === norm)
+    )
+    if (meals.length === 0) return false
+    return meals.every(m => {
+      const orig = (m.ingredients || []).find(i => normIng(i) === norm)
+      return orig && recipeChecked.has(recipeKey(m.id, orig))
+    })
+  }
+
+  const isManualChecked = (name) => recipeChecked.has(`manual|||${name}`)
+
+  // Toggle a single recipe ingredient
+  const toggleRecipeIng = (mealId, origIng) => {
+    setRecipeChecked(prev => {
       const next = new Set(prev)
-      if (next.has(item)) next.delete(item)
-      else next.add(item)
+      const key = recipeKey(mealId, origIng)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
       return next
     })
   }
+
+  // Toggle a category ingredient: check all meals if not all checked, else uncheck all
+  const toggleCategoryIng = (ing) => {
+    const norm = normIng(ing)
+    const meals = mealObjects.filter(m =>
+      (m.ingredients || []).some(i => normIng(i) === norm)
+    )
+    const allChecked = meals.every(m => {
+      const orig = (m.ingredients || []).find(i => normIng(i) === norm)
+      return orig && recipeChecked.has(recipeKey(m.id, orig))
+    })
+    setRecipeChecked(prev => {
+      const next = new Set(prev)
+      meals.forEach(m => {
+        const orig = (m.ingredients || []).find(i => normIng(i) === norm)
+        if (!orig) return
+        const key = recipeKey(m.id, orig)
+        if (allChecked) next.delete(key)
+        else next.add(key)
+      })
+      return next
+    })
+  }
+
+  const toggleManual = (name) => {
+    setRecipeChecked(prev => {
+      const next = new Set(prev)
+      const key = `manual|||${name}`
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  // Derive a flat "fully checked" set for copy/share functions
+  const effectiveChecked = useMemo(() => {
+    const result = new Set()
+    Object.values(categories).flat().forEach(ing => {
+      if (isCategoryIngChecked(ing)) result.add(ing)
+    })
+    manualItems.forEach(m => { if (isManualChecked(m.name)) result.add(m.name) })
+    return result
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories, manualItems, recipeChecked, mealObjects])
 
   const handleAddManual = () => {
     const val = manualInput.trim()
@@ -382,7 +453,7 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
       await clearWeek()
       localStorage.removeItem(storageKey)
       localStorage.removeItem(manualKey)
-      setChecked(new Set())
+      setRecipeChecked(new Set())
       setManualItems([])
       setCatQuantities(null)
       catFetchedRef.current.clear()
@@ -393,8 +464,9 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
   }
 
   const allItemsText = useMemo(
-    () => buildCopyAllText(categories, manualItems, mealObjects, checked, catQuantities),
-    [categories, manualItems, mealObjects, checked, catQuantities]
+    () => buildCopyAllText(categories, manualItems, mealObjects, effectiveChecked, catQuantities),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [categories, manualItems, mealObjects, effectiveChecked, catQuantities]
   )
 
   const handleCopyAll = async () => {
@@ -494,6 +566,7 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
                   const enriched = Array.isArray(qData) ? qData : (meal.ingredients || [])
 
                   const isRecipeCollapsed = collapsedRecipes.has(meal.id)
+                  const origIngredients = meal.ingredients || []
                   return (
                     <div key={meal.id} className="by-recipe-card card">
                       <button
@@ -506,16 +579,20 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
                       {!isRecipeCollapsed && (
                         <ul className="shop-item-list">
                           {isLoading && <li className="shop-item"><span className="qty-loading">Adding quantities…</span></li>}
-                          {enriched.map(ing => (
-                            <li
-                              key={ing}
-                              className={`shop-item ${checked.has(ing) ? 'checked' : ''}`}
-                              onClick={() => toggleChecked(ing)}
-                            >
-                              <span className="shop-checkbox">{checked.has(ing) ? '✓' : ''}</span>
-                              <span className="shop-item-label">{ing}</span>
-                            </li>
-                          ))}
+                          {origIngredients.map((origIng, i) => {
+                            const label = Array.isArray(qData) && qData[i] ? qData[i] : origIng
+                            const isChecked = isRecipeIngChecked(meal.id, origIng)
+                            return (
+                              <li
+                                key={origIng + i}
+                                className={`shop-item ${isChecked ? 'checked' : ''}`}
+                                onClick={() => toggleRecipeIng(meal.id, origIng)}
+                              >
+                                <span className="shop-checkbox">{isChecked ? '✓' : ''}</span>
+                                <span className="shop-item-label">{label}</span>
+                              </li>
+                            )
+                          })}
                         </ul>
                       )}
                     </div>
@@ -544,13 +621,14 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
                         const displayLabel = catQuantities && catQuantities !== 'loading' && catQuantities[item]
                           ? catQuantities[item]
                           : item
+                        const isChecked = isCategoryIngChecked(item)
                         return (
                           <li
                             key={item}
-                            className={`shop-item ${checked.has(item) ? 'checked' : ''}`}
-                            onClick={() => toggleChecked(item)}
+                            className={`shop-item ${isChecked ? 'checked' : ''}`}
+                            onClick={() => toggleCategoryIng(item)}
                           >
-                            <span className="shop-checkbox">{checked.has(item) ? '✓' : ''}</span>
+                            <span className="shop-checkbox">{isChecked ? '✓' : ''}</span>
                             <span className="shop-item-label">
                               {displayLabel}
                               {catQuantities === 'loading' && (
@@ -563,10 +641,10 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
                       {manualForCat.map(item => (
                         <li
                           key={item.name}
-                          className={`shop-item shop-item-manual ${checked.has(item.name) ? 'checked' : ''}`}
-                          onClick={() => toggleChecked(item.name)}
+                          className={`shop-item shop-item-manual ${isManualChecked(item.name) ? 'checked' : ''}`}
+                          onClick={() => toggleManual(item.name)}
                         >
-                          <span className="shop-checkbox">{checked.has(item.name) ? '✓' : ''}</span>
+                          <span className="shop-checkbox">{isManualChecked(item.name) ? '✓' : ''}</span>
                           <span className="shop-item-label">{item.name}</span>
                           <span className="badge-added">+ added</span>
                           <button
@@ -606,7 +684,7 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
           manualItems={manualItems}
           mealObjects={mealObjects}
           quantities={quantities}
-          checked={checked}
+          checked={effectiveChecked}
           onClose={() => setShowSend(false)}
         />
       )}
