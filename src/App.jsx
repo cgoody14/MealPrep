@@ -438,8 +438,23 @@ function AppShell() {
   )
 }
 
+// Read the Supabase session from localStorage synchronously so returning
+// users skip the loading spinner entirely. getSession() still runs to verify.
+function readCachedSession() {
+  if (sessionStorage.getItem('pwd_recovery')) return undefined
+  try {
+    const key = Object.keys(localStorage).find(
+      k => k.startsWith('sb-') && k.endsWith('-auth-token')
+    )
+    if (!key) return undefined
+    const parsed = JSON.parse(localStorage.getItem(key) || 'null')
+    if (parsed?.access_token) return parsed
+  } catch { /* ignore */ }
+  return undefined
+}
+
 export default function App() {
-  const [session, setSession] = useState(undefined) // undefined = loading
+  const [session, setSession] = useState(() => readCachedSession())
   const [isResetting, setIsResetting] = useState(() => !!sessionStorage.getItem('pwd_recovery'))
 
   const enterReset = () => { sessionStorage.setItem('pwd_recovery', '1'); setIsResetting(true) }
@@ -447,7 +462,7 @@ export default function App() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
+      setSession(session ?? null)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
