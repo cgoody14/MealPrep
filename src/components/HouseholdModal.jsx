@@ -1,5 +1,8 @@
 import { useState } from 'react'
 
+const APP_URL = 'https://meal-prep-lac.vercel.app/'
+const SHARE_TEXT = `Check out Mise en Place — a personal meal planner and recipe journal. ${APP_URL}`
+
 export default function HouseholdModal({
   household, members, currentUserId,
   onJoin, onLeave, onUpdateDisplayName, onClose, onSignOut,
@@ -10,6 +13,7 @@ export default function HouseholdModal({
   const [leaving, setLeaving] = useState(false)
   const [joinError, setJoinError] = useState('')
   const [codeCopied, setCodeCopied] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
   // Display name editing
@@ -27,6 +31,27 @@ export default function HouseholdModal({
       await navigator.clipboard.writeText(household.invite_code)
       setCodeCopied(true)
       setTimeout(() => setCodeCopied(false), 2000)
+    } catch { /* ignore */ }
+  }
+
+  const handleShareApp = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Mise en Place', text: SHARE_TEXT, url: APP_URL }) }
+      catch { /* user cancelled */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(SHARE_TEXT)
+        setLinkCopied(true)
+        setTimeout(() => setLinkCopied(false), 2000)
+      } catch { /* ignore */ }
+    }
+  }
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(APP_URL)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
     } catch { /* ignore */ }
   }
 
@@ -231,6 +256,37 @@ export default function HouseholdModal({
             </p>
           </div>
         )}
+
+        {/* ── Share the app ── */}
+        <div className="settings-section">
+          <h3 className="settings-section-title">Share Mise en Place</h3>
+          <p className="settings-desc">Invite a friend to start their own meal journal.</p>
+          <div className="share-app-row">
+            {navigator.share ? (
+              <button className="btn btn-primary btn-sm" onClick={handleShareApp}>
+                Share…
+              </button>
+            ) : (
+              <>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => window.open(`sms:?body=${encodeURIComponent(SHARE_TEXT)}`)}
+                >
+                  📱 Message
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => window.open(`mailto:?subject=Check out Mise en Place&body=${encodeURIComponent(SHARE_TEXT)}`)}
+                >
+                  ✉️ Email
+                </button>
+              </>
+            )}
+            <button className="btn btn-ghost btn-sm" onClick={handleCopyLink}>
+              {linkCopied ? '✓ Copied!' : 'Copy Link'}
+            </button>
+          </div>
+        </div>
 
         {/* ── Appearance ── */}
         <div className="settings-section">

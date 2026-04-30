@@ -2389,6 +2389,13 @@ button {
   margin: 0 0 14px;
 }
 
+.share-app-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .settings-desc code {
   font-size: 12px;
   background: var(--bg2);
