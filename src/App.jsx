@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 import Sidebar from './components/Sidebar'
 import HouseholdModal from './components/HouseholdModal'
 import OnboardingModal from './components/OnboardingModal'
+import InstallGuideModal from './components/InstallGuideModal'
 import Rolodex from './pages/Rolodex'
 import ThisWeek from './pages/ThisWeek'
 import Planner from './pages/Planner'
@@ -308,6 +309,11 @@ function AppShell() {
   const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName } = useHousehold()
   const [showSettings, setShowSettings] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(() => !!localStorage.getItem('new_account'))
+  const [showInstallGuide, setShowInstallGuide] = useState(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true
+    return !isStandalone && localStorage.getItem('pwa-guide-dismissed') !== '1'
+  })
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark')
   const [refreshing, setRefreshing] = useState(false)
   const mainRef = useRef(null)
@@ -418,6 +424,10 @@ function AppShell() {
           onJoin={joinHousehold}
           onDone={() => setShowOnboarding(false)}
         />
+      )}
+
+      {showInstallGuide && !showOnboarding && (
+        <InstallGuideModal onClose={() => setShowInstallGuide(false)} />
       )}
 
       {showSettings && (
