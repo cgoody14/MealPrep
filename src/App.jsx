@@ -128,6 +128,9 @@ function AuthPage() {
         })
         if (authError) throw authError
 
+        // Notify owner — fire and forget, never blocks signup
+        supabase.functions.invoke('notify-signup', { body: { email } }).catch(() => {})
+
         // Save flags so the welcome screen appears after first sign-in
         localStorage.setItem('new_account', '1')
         if (inviteCode.trim()) {
