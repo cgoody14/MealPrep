@@ -352,6 +352,14 @@ export default function HouseholdModal({
             Sign Out
           </button>
         </div>
+
+        {/* ── Build timestamp ── */}
+        <div className="settings-build-time">
+          Last updated {new Date(__BUILD_TIME__).toLocaleString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+            hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
+          })}
+        </div>
       </div>
     </div>
   )
