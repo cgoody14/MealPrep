@@ -529,17 +529,16 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh, upd
                           <span className="shop-section-chevron">{isRecipeCollapsed ? '▸' : '▾'}</span>
                         </button>
                         {meal.servings && updateServingsOverride && wm && (
-                          <div className="serving-scaler serving-scaler-sm shop-serving-scaler">
-                            <button
-                              className="scaler-btn"
-                              onClick={e => { e.stopPropagation(); updateServingsOverride(wm.id, Math.max(1, effectiveServings - 1)) }}
-                            >−</button>
-                            <span className="scaler-value">{effectiveServings} srv</span>
-                            <button
-                              className="scaler-btn"
-                              onClick={e => { e.stopPropagation(); updateServingsOverride(wm.id, effectiveServings + 1) }}
-                            >+</button>
-                          </div>
+                          <select
+                            className="day-selector servings-select"
+                            value={effectiveServings}
+                            onClick={e => e.stopPropagation()}
+                            onChange={e => { e.stopPropagation(); updateServingsOverride(wm.id, Number(e.target.value)) }}
+                          >
+                            {Array.from({ length: Math.max(12, effectiveServings + 4) }, (_, i) => i + 1).map(n => (
+                              <option key={n} value={n}>{n} {n === 1 ? 'serving' : 'servings'}</option>
+                            ))}
+                          </select>
                         )}
                       </div>
                       {!isRecipeCollapsed && (

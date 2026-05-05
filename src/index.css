@@ -3261,6 +3261,11 @@ button {
   flex-shrink: 0;
 }
 
+.servings-select {
+  flex-shrink: 0;
+  width: auto;
+}
+
 /* ================================================
    FIX 3 — Day-of-Week Calendar
    ================================================ */

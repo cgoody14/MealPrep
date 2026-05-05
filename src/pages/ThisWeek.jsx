@@ -79,18 +79,18 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
           </select>
         </div>
 
-        {/* Servings scaler */}
+        {/* Servings dropdown */}
         {m.servings && (
-          <div className="serving-scaler serving-scaler-sm" onClick={e => e.stopPropagation()}>
-            <button
-              className="scaler-btn"
-              onClick={() => onServingsChange(wm.id, Math.max(1, effectiveServings - 1))}
-            >−</button>
-            <span className="scaler-value">{effectiveServings} srv</span>
-            <button
-              className="scaler-btn"
-              onClick={() => onServingsChange(wm.id, effectiveServings + 1)}
-            >+</button>
+          <div className="day-selector-row" onClick={e => e.stopPropagation()}>
+            <select
+              className="day-selector servings-select"
+              value={effectiveServings}
+              onChange={e => onServingsChange(wm.id, Number(e.target.value))}
+            >
+              {Array.from({ length: Math.max(12, effectiveServings + 4) }, (_, i) => i + 1).map(n => (
+                <option key={n} value={n}>{n} {n === 1 ? 'serving' : 'servings'}</option>
+              ))}
+            </select>
           </div>
         )}
 
