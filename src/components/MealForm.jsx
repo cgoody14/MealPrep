@@ -25,17 +25,28 @@ const emptyMeal = {
   carbs_g: '',
   fat_g: '',
   photo_url: '',
+  photo_urls: [],
+}
+
+function normalizeInitial(initial) {
+  if (!initial) return emptyMeal
+  // Normalize photo_urls: prefer photo_urls array, fall back to [photo_url]
+  const photo_urls = initial.photo_urls?.length > 0
+    ? initial.photo_urls
+    : (initial.photo_url ? [initial.photo_url] : [])
+  return { ...emptyMeal, ...initial, photo_urls }
 }
 
 export default function MealForm({ initial, onSave, onClose, existingMeals = [] }) {
-  const [form, setForm] = useState({ ...emptyMeal, ...initial })
+  const [form, setForm] = useState(() => normalizeInitial(initial))
   const [ingInput, setIngInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [nameError, setNameError] = useState('')
   const [dupWarning, setDupWarning] = useState('')
   const [error, setError] = useState('')
-  const [photoFile, setPhotoFile] = useState(null)
-  const [photoObjectUrl, setPhotoObjectUrl] = useState(null)
+  // New files queued to upload (not yet in DB)
+  const [photoFiles, setPhotoFiles] = useState([])
+  const [photoObjectUrls, setPhotoObjectUrls] = useState([])
   const [nutritionLoading, setNutritionLoading] = useState(false)
   const [nutritionError, setNutritionError] = useState('')
   const photoInputRef = useRef(null)
@@ -77,7 +88,7 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
         carbs_g: result.carbs_g ?? f.carbs_g,
         fat_g: result.fat_g ?? f.fat_g,
       }))
-    } catch (err) {
+    } catch {
       setNutritionError('Could not estimate nutrition. Try again.')
     } finally {
       setNutritionLoading(false)
@@ -92,18 +103,23 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
   }
 
   const handlePhotoSelect = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (photoObjectUrl) URL.revokeObjectURL(photoObjectUrl)
-    setPhotoFile(file)
-    setPhotoObjectUrl(URL.createObjectURL(file))
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    const newUrls = files.map(f => URL.createObjectURL(f))
+    setPhotoFiles(prev => [...prev, ...files])
+    setPhotoObjectUrls(prev => [...prev, ...newUrls])
+    // Reset input so the same file can be selected again later
+    if (photoInputRef.current) photoInputRef.current.value = ''
   }
 
-  const clearPhoto = () => {
-    setPhotoFile(null)
-    if (photoObjectUrl) { URL.revokeObjectURL(photoObjectUrl); setPhotoObjectUrl(null) }
-    set('photo_url', '')
-    if (photoInputRef.current) photoInputRef.current.value = ''
+  const removeExistingPhoto = (idx) => {
+    set('photo_urls', form.photo_urls.filter((_, i) => i !== idx))
+  }
+
+  const removeNewPhoto = (idx) => {
+    URL.revokeObjectURL(photoObjectUrls[idx])
+    setPhotoFiles(prev => prev.filter((_, i) => i !== idx))
+    setPhotoObjectUrls(prev => prev.filter((_, i) => i !== idx))
   }
 
   const handleSubmit = async (e) => {
@@ -116,14 +132,17 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
     setSaving(true)
     setError('')
     try {
-      let photo_url = form.photo_url || null
-      if (photoFile) {
-        try {
-          photo_url = await uploadRecipeAttachment(photoFile)
-        } catch (uploadErr) {
-          console.warn('Photo upload failed:', uploadErr.message)
-        }
+      // Upload new files, collect URLs
+      let photo_urls = [...form.photo_urls]
+      if (photoFiles.length > 0) {
+        const results = await Promise.allSettled(photoFiles.map(f => uploadRecipeAttachment(f)))
+        results.forEach((r, i) => {
+          if (r.status === 'fulfilled') photo_urls.push(r.value)
+          else console.warn(`Photo ${i + 1} upload failed:`, r.reason?.message)
+        })
       }
+      // Backward compat: photo_url = first URL
+      const photo_url = photo_urls[0] ?? null
       await onSave({
         name: form.name.trim(),
         rating: form.rating ?? 3,
@@ -141,6 +160,7 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
         carbs_g: form.carbs_g ? Number(form.carbs_g) : null,
         fat_g: form.fat_g ? Number(form.fat_g) : null,
         photo_url,
+        photo_urls: photo_urls.length > 0 ? photo_urls : null,
       })
       onClose()
     } catch (err) {
@@ -148,6 +168,9 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
       setSaving(false)
     }
   }
+
+  const existingPhotos = form.photo_urls || []
+  const totalPhotoCount = existingPhotos.length + photoObjectUrls.length
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -333,39 +356,58 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
             />
           </div>
 
+          {/* ── Multi-photo upload ── */}
           <div className="form-group">
-            <label className="form-label">Recipe Photo (optional)</label>
+            <label className="form-label">
+              Recipe Photos <span className="auth-optional-badge">optional</span>
+            </label>
             <input
               ref={photoInputRef}
               type="file"
               accept="image/*"
+              multiple
               id="meal-form-photo"
               className="photo-file-input"
               onChange={handlePhotoSelect}
             />
-            {(photoFile || form.photo_url) ? (
-              <div className="photo-selected-row">
-                {(photoObjectUrl || (form.photo_url && isImageUrl(form.photo_url))) ? (
-                  <img
-                    src={photoObjectUrl || form.photo_url}
-                    alt="recipe"
-                    className="photo-thumb"
-                  />
-                ) : (
-                  <span className="photo-thumb-placeholder">📎</span>
-                )}
-                <span className="photo-filename">
-                  {photoFile ? photoFile.name : 'Current photo'}
-                </span>
-                <label htmlFor="meal-form-photo" className="btn btn-ghost btn-sm" style={{ cursor: 'pointer' }}>
-                  Replace
-                </label>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={clearPhoto}>✕</button>
+
+            {/* Thumbnail grid for existing + new photos */}
+            {totalPhotoCount > 0 && (
+              <div className="photo-gallery-grid">
+                {existingPhotos.map((url, i) => (
+                  <div key={`ex-${i}`} className="photo-thumb-wrap">
+                    {isImageUrl(url) ? (
+                      <img src={url} alt={`Photo ${i + 1}`} className="photo-thumb photo-thumb-grid" />
+                    ) : (
+                      <span className="photo-thumb-placeholder photo-thumb-grid">📎</span>
+                    )}
+                    <button
+                      type="button"
+                      className="photo-thumb-remove"
+                      onClick={() => removeExistingPhoto(i)}
+                      title="Remove photo"
+                    >✕</button>
+                  </div>
+                ))}
+                {photoObjectUrls.map((url, i) => (
+                  <div key={`new-${i}`} className="photo-thumb-wrap">
+                    <img src={url} alt={`New photo ${i + 1}`} className="photo-thumb photo-thumb-grid" />
+                    <button
+                      type="button"
+                      className="photo-thumb-remove"
+                      onClick={() => removeNewPhoto(i)}
+                      title="Remove photo"
+                    >✕</button>
+                  </div>
+                ))}
               </div>
-            ) : (
-              <label htmlFor="meal-form-photo" className="photo-upload-btn">
-                📷 Add Recipe Photo
-              </label>
+            )}
+
+            <label htmlFor="meal-form-photo" className="photo-upload-btn">
+              📷 {totalPhotoCount > 0 ? 'Add More Photos' : 'Add Recipe Photo'}
+            </label>
+            {totalPhotoCount > 0 && (
+              <div className="form-hint">{totalPhotoCount} photo{totalPhotoCount !== 1 ? 's' : ''} · tap a thumbnail to remove it</div>
             )}
           </div>
 

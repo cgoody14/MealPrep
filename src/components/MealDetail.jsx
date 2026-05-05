@@ -115,20 +115,42 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
             </a>
           )}
 
-          {meal.photo_url && (
-            <div className="recipe-attachment">
-              {isImageUrl(meal.photo_url) ? (
-                <a href={meal.photo_url} target="_blank" rel="noopener noreferrer" className="recipe-photo-link">
-                  <img src={meal.photo_url} alt="Recipe photo" className="recipe-photo-thumb" />
-                  <span className="recipe-photo-label">View recipe photo</span>
-                </a>
-              ) : (
-                <a href={meal.photo_url} target="_blank" rel="noopener noreferrer" className="recipe-attachment-link">
-                  📎 View recipe attachment
-                </a>
-              )}
-            </div>
-          )}
+          {(() => {
+            const allPhotos = meal.photo_urls?.length > 0
+              ? meal.photo_urls
+              : (meal.photo_url ? [meal.photo_url] : [])
+            if (allPhotos.length === 0) return null
+            return (
+              <div className="recipe-attachment">
+                {allPhotos.length === 1 ? (
+                  isImageUrl(allPhotos[0]) ? (
+                    <a href={allPhotos[0]} target="_blank" rel="noopener noreferrer" className="recipe-photo-link">
+                      <img src={allPhotos[0]} alt="Recipe photo" className="recipe-photo-thumb" />
+                      <span className="recipe-photo-label">View recipe photo</span>
+                    </a>
+                  ) : (
+                    <a href={allPhotos[0]} target="_blank" rel="noopener noreferrer" className="recipe-attachment-link">
+                      📎 View recipe attachment
+                    </a>
+                  )
+                ) : (
+                  <div className="recipe-photo-gallery">
+                    {allPhotos.map((url, i) =>
+                      isImageUrl(url) ? (
+                        <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="recipe-photo-gallery-item">
+                          <img src={url} alt={`Photo ${i + 1}`} className="recipe-photo-gallery-thumb" />
+                        </a>
+                      ) : (
+                        <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="recipe-attachment-link">
+                          📎 {i + 1}
+                        </a>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {(meal.calories || meal.protein_g || meal.carbs_g || meal.fat_g) && (
             <div className="detail-section">
