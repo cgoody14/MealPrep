@@ -45,6 +45,15 @@ export function useWeekMeals() {
     return data
   }
 
+  const updateDayOfWeek = async (id, day) => {
+    const { error } = await supabase
+      .from('week_meals')
+      .update({ day_of_week: day })
+      .eq('id', id)
+    if (error) throw error
+    setWeekMeals(prev => prev.map(wm => wm.id === id ? { ...wm, day_of_week: day } : wm))
+  }
+
   const removeFromWeek = async (id) => {
     const { error: removeError } = await supabase
       .from('week_meals')
@@ -65,5 +74,5 @@ export function useWeekMeals() {
     setWeekMeals([])
   }
 
-  return { weekMeals, loading, error, weekStart, fetchWeekMeals, addToWeek, removeFromWeek, clearWeek }
+  return { weekMeals, loading, error, weekStart, fetchWeekMeals, addToWeek, removeFromWeek, clearWeek, updateDayOfWeek }
 }

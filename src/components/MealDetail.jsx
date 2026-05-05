@@ -2,6 +2,8 @@ import { useState } from 'react'
 import Stars from './Stars'
 import { daysSince, formatDate } from '../utils/format'
 import { isImageUrl } from '../utils/storage'
+import { scaleIngredients } from '../utils/scaleIngredients'
+import CookMode from './CookMode'
 
 function renderStepText(text) {
   const parts = text.split(/(If desired[,.]?|[Oo]ptional[,:]?)/g)
@@ -23,6 +25,13 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
   const [adding, setAdding] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [scaledServings, setScaledServings] = useState(meal.servings || null)
+  const [cookMode, setCookMode] = useState(false)
+
+  const originalServings = meal.servings || null
+  const displayIngredients = scaledServings && originalServings
+    ? scaleIngredients(meal.ingredients || [], originalServings, scaledServings)
+    : (meal.ingredients || [])
 
   const days = daysSince(meal.last_made)
   const steps = parseSteps(meal.instructions)
@@ -55,6 +64,7 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
         <div className="detail-sticky-bar">
           <button className="btn btn-ghost detail-exit-btn" onClick={onClose}>Exit</button>
           <div className="detail-sticky-actions">
+            <button className="btn btn-cook" onClick={() => setCookMode(true)}>👨‍🍳 Cook</button>
             <button className="btn btn-edit" onClick={() => onEdit(meal)}>✏️ Edit</button>
             <button
               className={`btn ${inWeek ? 'btn-in-week' : 'btn-primary'}`}
@@ -151,10 +161,31 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
 
           {meal.ingredients?.length > 0 && (
             <div className="detail-section">
-              <div className="detail-section-label">Ingredients</div>
+              <div className="detail-section-label-row">
+                <span className="detail-section-label">Ingredients</span>
+                {originalServings && (
+                  <div className="serving-scaler">
+                    <button
+                      className="scaler-btn"
+                      onClick={() => setScaledServings(s => Math.max(1, (s || originalServings) - 1))}
+                      disabled={(scaledServings || originalServings) <= 1}
+                    >−</button>
+                    <span className="scaler-value">
+                      {scaledServings || originalServings} srv
+                      {scaledServings && scaledServings !== originalServings
+                        ? <span className="scaler-original"> (orig: {originalServings})</span>
+                        : null}
+                    </span>
+                    <button
+                      className="scaler-btn"
+                      onClick={() => setScaledServings(s => (s || originalServings) + 1)}
+                    >+</button>
+                  </div>
+                )}
+              </div>
               <div className="chip-row">
-                {meal.ingredients.map(ing => (
-                  <span key={ing} className="chip">{ing}</span>
+                {displayIngredients.map((ing, i) => (
+                  <span key={i} className="chip">{ing}</span>
                 ))}
               </div>
             </div>
@@ -229,5 +260,16 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
 
       </div>
     </div>
+
+    {cookMode && (
+      <CookMode
+        meal={meal}
+        scaledIngredients={displayIngredients}
+        scaledServings={scaledServings}
+        originalServings={originalServings}
+        onClose={() => setCookMode(false)}
+      />
+    )}
+  </>
   )
 }

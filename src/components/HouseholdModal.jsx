@@ -5,7 +5,7 @@ const SHARE_TEXT = `Check out Mise en Place — a personal meal planner and reci
 
 export default function HouseholdModal({
   household, members, currentUserId,
-  onJoin, onLeave, onUpdateDisplayName, onClose, onSignOut,
+  onJoin, onLeave, onRemoveMember, onUpdateDisplayName, onClose, onSignOut,
   isDark, onToggleDark
 }) {
   const [joinCode, setJoinCode] = useState('')
@@ -15,6 +15,11 @@ export default function HouseholdModal({
   const [codeCopied, setCodeCopied] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+  const [removeConfirmId, setRemoveConfirmId] = useState(null)
+  const [removingId, setRemovingId] = useState(null)
+  const [removeError, setRemoveError] = useState('')
+
+  const isCreator = household?.created_by === currentUserId
 
   // Display name editing
   const myMember = members.find(m => m.user_id === currentUserId)
@@ -81,6 +86,19 @@ export default function HouseholdModal({
       setJoinError(err.message)
     } finally {
       setJoining(false)
+    }
+  }
+
+  const handleRemove = async (userId) => {
+    setRemovingId(userId)
+    setRemoveError('')
+    try {
+      await onRemoveMember(userId)
+      setRemoveConfirmId(null)
+    } catch (err) {
+      setRemoveError(err.message || 'Failed to remove member. Please try again.')
+    } finally {
+      setRemovingId(null)
     }
   }
 
@@ -193,13 +211,42 @@ export default function HouseholdModal({
                           Joined {new Date(m.joined_at).toLocaleDateString()}
                         </span>
                       </span>
-                      {m.user_id === currentUserId && (
+                      {m.user_id === currentUserId ? (
                         <button
                           className="btn btn-ghost btn-sm"
                           onClick={() => setShowLeaveConfirm(true)}
                         >
                           Leave
                         </button>
+                      ) : isCreator ? (
+                        <button
+                          className="btn btn-ghost btn-sm hh-remove-btn"
+                          onClick={() => { setRemoveConfirmId(m.user_id); setRemoveError('') }}
+                        >
+                          Remove
+                        </button>
+                      ) : null}
+
+                      {removeConfirmId === m.user_id && (
+                        <div className="hh-leave-confirm hh-remove-confirm">
+                          <p>Remove <strong>{m.display_name || 'this member'}</strong> from your household? They'll be moved to their own household and lose access to shared meals.</p>
+                          {removeError && <div className="form-error" style={{ marginTop: 4 }}>{removeError}</div>}
+                          <div className="hh-leave-btns">
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleRemove(m.user_id)}
+                              disabled={removingId === m.user_id}
+                            >
+                              {removingId === m.user_id ? 'Removing…' : 'Yes, Remove'}
+                            </button>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => { setRemoveConfirmId(null); setRemoveError('') }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </li>
                   ))}

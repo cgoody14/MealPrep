@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import Stars from './Stars'
 import { uploadRecipeAttachment, isImageUrl } from '../utils/storage'
+import { estimateNutrition } from '../utils/recipeAgent'
 
 const ALL_TAGS = [
   'protein','pasta','seafood','vegetarian','sides','easy','weeknight',
@@ -35,6 +36,8 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
   const [error, setError] = useState('')
   const [photoFile, setPhotoFile] = useState(null)
   const [photoObjectUrl, setPhotoObjectUrl] = useState(null)
+  const [nutritionLoading, setNutritionLoading] = useState(false)
+  const [nutritionError, setNutritionError] = useState('')
   const photoInputRef = useRef(null)
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
@@ -59,6 +62,26 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
 
   const removeIngredient = (ing) => {
     set('ingredients', form.ingredients.filter(i => i !== ing))
+  }
+
+  const handleAutoFillNutrition = async () => {
+    if (!form.name.trim() && form.ingredients.length === 0) return
+    setNutritionLoading(true)
+    setNutritionError('')
+    try {
+      const result = await estimateNutrition(form.name || 'Recipe', form.ingredients)
+      setForm(f => ({
+        ...f,
+        calories: result.calories ?? f.calories,
+        protein_g: result.protein_g ?? f.protein_g,
+        carbs_g: result.carbs_g ?? f.carbs_g,
+        fat_g: result.fat_g ?? f.fat_g,
+      }))
+    } catch (err) {
+      setNutritionError('Could not estimate nutrition. Try again.')
+    } finally {
+      setNutritionLoading(false)
+    }
   }
 
   const toggleTag = (tag) => {
@@ -182,9 +205,19 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
           </div>
 
           <div className="form-group">
-            <label className="form-label">
-              Nutrition <span className="auth-optional-badge">optional · per serving</span>
-            </label>
+            <div className="nutrition-label-row">
+              <label className="form-label">
+                Nutrition <span className="auth-optional-badge">optional · per serving</span>
+              </label>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm nutrition-autofill-btn"
+                onClick={handleAutoFillNutrition}
+                disabled={nutritionLoading}
+              >
+                {nutritionLoading ? '⏳ Estimating…' : '✨ Auto-fill'}
+              </button>
+            </div>
             <div className="form-row">
               <input className="form-input" type="number" min="0" placeholder="Calories"
                 value={form.calories} onChange={e => set('calories', e.target.value)} />
@@ -195,6 +228,8 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
               <input className="form-input" type="number" min="0" placeholder="Fat (g)"
                 value={form.fat_g} onChange={e => set('fat_g', e.target.value)} />
             </div>
+            {nutritionError && <div className="form-error" style={{ marginTop: 6 }}>{nutritionError}</div>}
+            <div className="form-hint">AI estimates — verify with a nutrition calculator for accuracy.</div>
           </div>
 
           <div className="form-row">
