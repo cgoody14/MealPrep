@@ -57,6 +57,7 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
   }
 
   return (
+    <>
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal-detail slide-up" onClick={e => e.stopPropagation()}>
 
