@@ -21,11 +21,11 @@ function parseSteps(instructions) {
     .filter(Boolean)
 }
 
-export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelete, onEdit, onReimport, onRemoveFromWeek }) {
+export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelete, onEdit, onReimport, onRemoveFromWeek, contextServings }) {
   const [adding, setAdding] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [scaledServings, setScaledServings] = useState(meal.servings || null)
+  const [scaledServings, setScaledServings] = useState(contextServings ?? meal.servings ?? null)
   const [cookMode, setCookMode] = useState(false)
 
   const originalServings = meal.servings || null

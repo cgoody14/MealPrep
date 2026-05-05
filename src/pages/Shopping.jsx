@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { buildShoppingList, enrichIngredientsWithQuantities, categorizeIngredient, consolidateQuantities } from '../utils/shopping'
 import { getWeekRange, getWeekStart } from '../utils/format'
 import { useShoppingItems } from '../hooks/useShoppingItems'
-import { scaleIngredients } from '../utils/scaleIngredients'
+import { scaleIngredients } from '../utils/scaling'
+import { useServingSize } from '../hooks/useServingSize'
 
 const CATEGORY_ORDER = [
   'Proteins & Meat', 'Seafood', 'Produce', 'Dairy & Eggs',
@@ -247,6 +248,7 @@ function ShoppingShareModal({ categories, manualItems, mealObjects, quantities, 
 
 export default function Shopping({ weekMeals, loading, clearWeek, onRefresh, updateServingsOverride }) {
   const weekStart = getWeekStart()
+  const { globalServings } = useServingSize()
 
   const {
     recipeChecked,
@@ -277,13 +279,14 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh, upd
 
   const mealObjects = useMemo(() => weekMeals.map(wm => wm.meals).filter(Boolean), [weekMeals])
 
-  // Meals with ingredients scaled by servings_override (used for shopping categories)
+  // Meals with ingredients scaled — DB override takes priority; falls back to global serving size
   const scaledMealObjects = useMemo(() => weekMeals.map(wm => {
     const m = wm.meals
     if (!m) return null
-    if (!wm.servings_override || !m.servings || wm.servings_override === m.servings) return m
-    return { ...m, ingredients: scaleIngredients(m.ingredients || [], m.servings, wm.servings_override) }
-  }).filter(Boolean), [weekMeals])
+    const target = wm.servings_override ?? (m.servings ? globalServings : null)
+    if (!target || !m.servings || target === m.servings) return m
+    return { ...m, ingredients: scaleIngredients(m.ingredients || [], m.servings, target) }
+  }).filter(Boolean), [weekMeals, globalServings])
 
   const categories = useMemo(() => buildShoppingList(scaledMealObjects), [scaledMealObjects])
 
@@ -436,6 +439,9 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh, upd
         <div>
           <h1 className="page-title">Shopping List</h1>
           <p className="page-subtitle">Auto-generated from this week's meals. Check off items as you shop — your progress saves automatically and resets each new week.</p>
+          <p className="shop-cooking-for-note">
+            Scaled for {globalServings} {globalServings === 1 ? 'person' : 'people'}
+          </p>
           <div className="week-header-meta">
             {totalItems} item{totalItems !== 1 ? 's' : ''} across {totalCategories} categor{totalCategories !== 1 ? 'ies' : 'y'}
             {' · '}{getWeekRange()}
@@ -507,12 +513,12 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh, upd
               {!collapsed.byRecipe && <div className="by-recipe-grid">
                 {mealObjects.map(meal => {
                   const wm = weekMeals.find(w => w.meal_id === meal.id)
-                  const servingsOverride = wm?.servings_override
-                  const effectiveServings = servingsOverride ?? meal.servings
-                  const isScaled = servingsOverride && meal.servings && servingsOverride !== meal.servings
+                  const target = wm?.servings_override ?? (meal.servings ? globalServings : null)
+                  const effectiveServings = target ?? meal.servings
+                  const isScaled = target && meal.servings && target !== meal.servings
                   const origIngredients = meal.ingredients || []
                   const displayIngredients = isScaled
-                    ? scaleIngredients(origIngredients, meal.servings, servingsOverride)
+                    ? scaleIngredients(origIngredients, meal.servings, target)
                     : origIngredients
                   const qData = quantities[meal.id]
                   const isLoading = qData === 'loading'

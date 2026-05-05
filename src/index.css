@@ -3389,6 +3389,176 @@ button {
 }
 
 /* ================================================
+   Global Serving Size Scaler
+   ================================================ */
+
+/* Cooking-for pill */
+.cooking-for-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.cooking-for-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.cooking-for-label {
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.cooking-for-count {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 22px;
+  text-align: center;
+}
+
+.cooking-for-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cooking-for-btn:hover:not(:disabled) {
+  background: var(--border2);
+}
+
+.cooking-for-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .cooking-for-bar {
+    justify-content: stretch;
+  }
+  .cooking-for-pill {
+    width: 100%;
+    justify-content: center;
+  }
+  .cooking-for-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+}
+
+/* Scale badge on meal card */
+.meal-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.scale-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Per-recipe display-only stepper */
+.recipe-override-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.recipe-override-label {
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.recipe-override-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.recipe-override-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.recipe-override-btn:hover {
+  background: var(--border);
+}
+
+.recipe-override-val {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+  color: var(--text);
+}
+
+.recipe-reset-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+  line-height: 1;
+}
+
+.recipe-reset-btn:hover {
+  opacity: 0.7;
+}
+
+.scale-unavailable {
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+
+/* Shopping "cooking for" note */
+.shop-cooking-for-note {
+  font-size: 12px;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+
+/* ================================================
    FIX 4 — Cook Mode
    ================================================ */
 

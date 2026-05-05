@@ -392,7 +392,6 @@ function AppShell() {
                 clearWeek={clearWeek}
                 markMadeToday={handleMarkMadeShared}
                 updateDayOfWeek={updateDayOfWeek}
-                updateServingsOverride={updateServingsOverride}
                 updateMeal={updateMeal}
                 onRefresh={handleRefresh}
               />

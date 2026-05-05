@@ -3,6 +3,8 @@ import Stars from '../components/Stars'
 import MealDetail from '../components/MealDetail'
 import MealForm from '../components/MealForm'
 import { getWeekRange, daysSince, getWeekStart } from '../utils/format'
+import { scaleIngredients, getScaleFactor, formatScaleBadge } from '../utils/scaling'
+import { useServingSize } from '../hooks/useServingSize'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const DAY_FULL_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -35,14 +37,20 @@ function CooldownBar({ lastMade }) {
   )
 }
 
-function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDayChange, onServingsChange }) {
+function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDayChange,
+                        effectiveServings, hasOverride, onOverrideChange, onOverrideReset }) {
   const m = wm.meals
   if (!m) return null
   const [openPanel, setOpenPanel] = useState(undefined)
   const days = daysSince(m.last_made)
   const daysText = m.last_made ? (days === 0 ? 'Today' : `${days}d ago`) : 'Never made'
   const steps = parseSteps(m.instructions)
-  const effectiveServings = wm.servings_override ?? m.servings
+
+  const scaleFactor = m.servings ? getScaleFactor(m.servings, effectiveServings) : null
+  const badge = formatScaleBadge(scaleFactor)
+  const displayIngredients = scaleFactor
+    ? scaleIngredients(m.ingredients || [], m.servings, effectiveServings)
+    : (m.ingredients || [])
 
   const togglePanel = (panel) =>
     setOpenPanel(prev => prev === panel ? undefined : panel)
@@ -52,7 +60,10 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
       {m.source && <span className="url-ribbon">URL</span>}
       <div className="meal-card-body">
         <div className="meal-card-header">
-          <h3 className="meal-name">{m.name}</h3>
+          <div className="meal-name-row">
+            <h3 className="meal-name">{m.name}</h3>
+            {badge && <span className="scale-badge">{badge}</span>}
+          </div>
           <button
             className="btn-icon remove-btn"
             onClick={e => { e.stopPropagation(); onRemove(wm.id) }}
@@ -79,25 +90,31 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
           </select>
         </div>
 
-        {/* Servings dropdown */}
+        {/* Display-only servings stepper */}
         {m.servings && (
-          <div className="day-selector-row" onClick={e => e.stopPropagation()}>
-            <select
-              className="day-selector servings-select"
-              value={effectiveServings}
-              onChange={e => onServingsChange(wm.id, Number(e.target.value))}
-            >
-              {Array.from({ length: Math.max(12, effectiveServings + 4) }, (_, i) => i + 1).map(n => (
-                <option key={n} value={n}>{n} {n === 1 ? 'serving' : 'servings'}</option>
-              ))}
-            </select>
+          <div className="recipe-override-row" onClick={e => e.stopPropagation()}>
+            <span className="recipe-override-label">Servings</span>
+            <div className="recipe-override-stepper">
+              <button
+                className="recipe-override-btn"
+                onClick={() => onOverrideChange(Math.max(1, effectiveServings - 1))}
+              >−</button>
+              <span className="recipe-override-val">{effectiveServings}</span>
+              <button
+                className="recipe-override-btn"
+                onClick={() => onOverrideChange(effectiveServings + 1)}
+              >+</button>
+            </div>
+            {hasOverride && (
+              <button className="recipe-reset-btn" onClick={onOverrideReset} title="Reset to global">↺</button>
+            )}
           </div>
         )}
 
         {m.ingredients?.length > 0 && (
           <div className="chip-row">
-            {m.ingredients.slice(0, 4).map(ing => (
-              <span key={ing} className="chip">{ing}</span>
+            {displayIngredients.slice(0, 4).map((ing, i) => (
+              <span key={i} className="chip">{ing}</span>
             ))}
             {m.ingredients.length > 4 && (
               <span className="chip chip-more">+{m.ingredients.length - 4} more</span>
@@ -132,8 +149,11 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
 
         {openPanel === 'ing' && m.ingredients?.length > 0 && (
           <div className="week-card-expandable" onClick={e => e.stopPropagation()}>
+            {!m.servings && (
+              <p className="scale-unavailable">Set a servings count on this recipe to enable scaling</p>
+            )}
             <div className="chip-row">
-              {m.ingredients.map(ing => <span key={ing} className="chip">{ing}</span>)}
+              {displayIngredients.map((ing, i) => <span key={i} className="chip">{ing}</span>)}
             </div>
           </div>
         )}
@@ -169,11 +189,13 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
   )
 }
 
-export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeFromWeek, clearWeek, markMadeToday, updateDayOfWeek, updateServingsOverride, updateMeal, onRefresh }) {
+export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeFromWeek, clearWeek, markMadeToday, updateDayOfWeek, updateMeal, onRefresh }) {
   const [clearing, setClearing] = useState(false)
   const [markingId, setMarkingId] = useState(null)
   const [detailEntry, setDetailEntry] = useState(null) // { meal, weekMealId }
   const [editingMeal, setEditingMeal] = useState(null)
+
+  const { globalServings, setGlobalServings, perRecipeOverrides, setRecipeOverride, resetRecipeOverride, getEffectiveServings } = useServingSize()
 
   const weekStart = getWeekStart()
 
@@ -189,10 +211,6 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
 
   const handleDayChange = async (weekMealId, day) => {
     try { await updateDayOfWeek(weekMealId, day) } catch { /* ignore */ }
-  }
-
-  const handleServingsChange = async (weekMealId, servings) => {
-    try { await updateServingsOverride(weekMealId, servings) } catch { /* ignore */ }
   }
 
   const handleEditSave = async (data) => {
@@ -217,7 +235,10 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
     markingId,
     onOpenDetail: (m, weekMealId) => setDetailEntry({ meal: m, weekMealId }),
     onDayChange: handleDayChange,
-    onServingsChange: handleServingsChange,
+    effectiveServings: getEffectiveServings(wm.meals),
+    hasOverride: perRecipeOverrides[wm.meals?.id] != null,
+    onOverrideChange: (s) => setRecipeOverride(wm.meals?.id, s),
+    onOverrideReset: () => resetRecipeOverride(wm.meals?.id),
   })
 
   return (
@@ -229,6 +250,25 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
           <div className="week-header-meta">{getWeekRange()} · {weekMeals.length} meal{weekMeals.length !== 1 ? 's' : ''}</div>
         </div>
         {onRefresh && <button className="btn btn-ghost refresh-btn" onClick={onRefresh} title="Refresh">↻</button>}
+      </div>
+
+      {/* Cooking for pill */}
+      <div className="cooking-for-bar">
+        <div className="cooking-for-pill">
+          <span className="cooking-for-label">Cooking for</span>
+          <button
+            className="cooking-for-btn"
+            onClick={() => setGlobalServings(globalServings - 1)}
+            disabled={globalServings <= 1}
+          >−</button>
+          <span className="cooking-for-count">{globalServings}</span>
+          <button
+            className="cooking-for-btn"
+            onClick={() => setGlobalServings(globalServings + 1)}
+            disabled={globalServings >= 12}
+          >+</button>
+          <span className="cooking-for-label">{globalServings === 1 ? 'person' : 'people'}</span>
+        </div>
       </div>
 
       <div className="week-actions">
@@ -275,6 +315,7 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
       {detailEntry && (
         <MealDetail
           meal={detailEntry.meal}
+          contextServings={getEffectiveServings(detailEntry.meal)}
           onClose={() => setDetailEntry(null)}
           inWeek={weekMealIds.has(detailEntry.meal.id)}
           onAddToWeek={addToWeek}
