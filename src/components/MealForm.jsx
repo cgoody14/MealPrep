@@ -201,6 +201,7 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
                 onChange={e => set('servings', e.target.value)}
                 placeholder="e.g. 4"
               />
+              <div className="form-hint">Used for scaling in This Week &amp; Shopping</div>
             </div>
           </div>
 

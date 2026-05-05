@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { buildShoppingList, enrichIngredientsWithQuantities, categorizeIngredient, consolidateQuantities } from '../utils/shopping'
 import { getWeekRange, getWeekStart } from '../utils/format'
 import { useShoppingItems } from '../hooks/useShoppingItems'
+import { scaleIngredients } from '../utils/scaleIngredients'
 
 const CATEGORY_ORDER = [
   'Proteins & Meat', 'Seafood', 'Produce', 'Dairy & Eggs',
@@ -244,7 +245,7 @@ function ShoppingShareModal({ categories, manualItems, mealObjects, quantities, 
   )
 }
 
-export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
+export default function Shopping({ weekMeals, loading, clearWeek, onRefresh, updateServingsOverride }) {
   const weekStart = getWeekStart()
 
   const {
@@ -275,7 +276,16 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
   const catFetchedRef = useRef(new Set())
 
   const mealObjects = useMemo(() => weekMeals.map(wm => wm.meals).filter(Boolean), [weekMeals])
-  const categories = useMemo(() => buildShoppingList(mealObjects), [mealObjects])
+
+  // Meals with ingredients scaled by servings_override (used for shopping categories)
+  const scaledMealObjects = useMemo(() => weekMeals.map(wm => {
+    const m = wm.meals
+    if (!m) return null
+    if (!wm.servings_override || !m.servings || wm.servings_override === m.servings) return m
+    return { ...m, ingredients: scaleIngredients(m.ingredients || [], m.servings, wm.servings_override) }
+  }).filter(Boolean), [weekMeals])
+
+  const categories = useMemo(() => buildShoppingList(scaledMealObjects), [scaledMealObjects])
 
   const categoryIngsKey = useMemo(
     () => Object.values(categories).flat().join('|'),
@@ -496,26 +506,48 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
               </button>
               {!collapsed.byRecipe && <div className="by-recipe-grid">
                 {mealObjects.map(meal => {
+                  const wm = weekMeals.find(w => w.meal_id === meal.id)
+                  const servingsOverride = wm?.servings_override
+                  const effectiveServings = servingsOverride ?? meal.servings
+                  const isScaled = servingsOverride && meal.servings && servingsOverride !== meal.servings
+                  const origIngredients = meal.ingredients || []
+                  const displayIngredients = isScaled
+                    ? scaleIngredients(origIngredients, meal.servings, servingsOverride)
+                    : origIngredients
                   const qData = quantities[meal.id]
                   const isLoading = qData === 'loading'
-                  const enriched = Array.isArray(qData) ? qData : (meal.ingredients || [])
-
                   const isRecipeCollapsed = collapsedRecipes.has(meal.id)
-                  const origIngredients = meal.ingredients || []
+
                   return (
                     <div key={meal.id} className="by-recipe-card card">
-                      <button
-                        className="by-recipe-card-header by-recipe-card-toggle"
-                        onClick={() => toggleRecipe(meal.id)}
-                      >
-                        <span className="by-recipe-card-name">{meal.name}</span>
-                        <span className="shop-section-chevron">{isRecipeCollapsed ? '▸' : '▾'}</span>
-                      </button>
+                      <div className="by-recipe-card-header">
+                        <button
+                          className="by-recipe-card-toggle"
+                          onClick={() => toggleRecipe(meal.id)}
+                        >
+                          <span className="by-recipe-card-name">{meal.name}</span>
+                          <span className="shop-section-chevron">{isRecipeCollapsed ? '▸' : '▾'}</span>
+                        </button>
+                        {meal.servings && updateServingsOverride && wm && (
+                          <div className="serving-scaler serving-scaler-sm shop-serving-scaler">
+                            <button
+                              className="scaler-btn"
+                              onClick={e => { e.stopPropagation(); updateServingsOverride(wm.id, Math.max(1, effectiveServings - 1)) }}
+                            >−</button>
+                            <span className="scaler-value">{effectiveServings} srv</span>
+                            <button
+                              className="scaler-btn"
+                              onClick={e => { e.stopPropagation(); updateServingsOverride(wm.id, effectiveServings + 1) }}
+                            >+</button>
+                          </div>
+                        )}
+                      </div>
                       {!isRecipeCollapsed && (
                         <ul className="shop-item-list">
-                          {isLoading && <li className="shop-item"><span className="qty-loading">Adding quantities…</span></li>}
-                          {origIngredients.map((origIng, i) => {
-                            const label = Array.isArray(qData) && qData[i] ? qData[i] : origIng
+                          {isLoading && !isScaled && <li className="shop-item"><span className="qty-loading">Adding quantities…</span></li>}
+                          {displayIngredients.map((dispIng, i) => {
+                            const origIng = origIngredients[i] || dispIng
+                            const label = (!isScaled && Array.isArray(qData) && qData[i]) ? qData[i] : dispIng
                             const isChecked = isRecipeIngChecked(meal.id, origIng)
                             return (
                               <li

@@ -147,15 +147,16 @@ export default function CookMode({ meal, scaledIngredients, scaledServings, orig
 
   return (
     <div className={`cook-overlay ${darkBg ? 'cook-dark' : 'cook-light'}`}>
-      {/* Top bar */}
+      {/* Recipe title — full width at very top */}
+      <div className="cook-title-row">
+        <span className="cook-meal-name">{meal.name}</span>
+        {scaledServings && originalServings && scaledServings !== originalServings && (
+          <span className="cook-scaled-note">Scaled to {scaledServings} servings</span>
+        )}
+      </div>
+      {/* Control bar */}
       <div className="cook-topbar">
         <button className="cook-close" onClick={onClose}>✕ Exit</button>
-        <div className="cook-topbar-center">
-          <span className="cook-meal-name">{meal.name}</span>
-          {scaledServings && originalServings && scaledServings !== originalServings && (
-            <span className="cook-scaled-note">Scaled to {scaledServings} servings</span>
-          )}
-        </div>
         <div className="cook-topbar-right">
           <button
             className="cook-ing-toggle"

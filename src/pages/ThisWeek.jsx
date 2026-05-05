@@ -1,18 +1,11 @@
 import { useState } from 'react'
 import Stars from '../components/Stars'
 import MealDetail from '../components/MealDetail'
+import MealForm from '../components/MealForm'
 import { getWeekRange, daysSince, getWeekStart } from '../utils/format'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-function getDayDates(weekStart) {
-  const base = new Date(weekStart + 'T00:00:00')
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(base)
-    d.setDate(d.getDate() + i)
-    return d
-  })
-}
+const DAY_FULL_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 function parseSteps(instructions) {
   return (instructions || '')
@@ -42,19 +35,20 @@ function CooldownBar({ lastMade }) {
   )
 }
 
-function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDayChange }) {
+function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDayChange, onServingsChange }) {
   const m = wm.meals
   if (!m) return null
   const [openPanel, setOpenPanel] = useState(undefined)
   const days = daysSince(m.last_made)
   const daysText = m.last_made ? (days === 0 ? 'Today' : `${days}d ago`) : 'Never made'
   const steps = parseSteps(m.instructions)
+  const effectiveServings = wm.servings_override ?? m.servings
 
   const togglePanel = (panel) =>
     setOpenPanel(prev => prev === panel ? undefined : panel)
 
   return (
-    <div className="meal-card fade-up" onClick={() => onOpenDetail(m)}>
+    <div className="meal-card fade-up" onClick={() => onOpenDetail(m, wm.id)}>
       {m.source && <span className="url-ribbon">URL</span>}
       <div className="meal-card-body">
         <div className="meal-card-header">
@@ -84,6 +78,21 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
             ))}
           </select>
         </div>
+
+        {/* Servings scaler */}
+        {m.servings && (
+          <div className="serving-scaler serving-scaler-sm" onClick={e => e.stopPropagation()}>
+            <button
+              className="scaler-btn"
+              onClick={() => onServingsChange(wm.id, Math.max(1, effectiveServings - 1))}
+            >−</button>
+            <span className="scaler-value">{effectiveServings} srv</span>
+            <button
+              className="scaler-btn"
+              onClick={() => onServingsChange(wm.id, effectiveServings + 1)}
+            >+</button>
+          </div>
+        )}
 
         {m.ingredients?.length > 0 && (
           <div className="chip-row">
@@ -160,13 +169,13 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
   )
 }
 
-export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeFromWeek, clearWeek, markMadeToday, updateDayOfWeek, onRefresh }) {
+export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeFromWeek, clearWeek, markMadeToday, updateDayOfWeek, updateServingsOverride, updateMeal, onRefresh }) {
   const [clearing, setClearing] = useState(false)
   const [markingId, setMarkingId] = useState(null)
-  const [detailMeal, setDetailMeal] = useState(null)
+  const [detailEntry, setDetailEntry] = useState(null) // { meal, weekMealId }
+  const [editingMeal, setEditingMeal] = useState(null)
 
   const weekStart = getWeekStart()
-  const dayDates = getDayDates(weekStart)
 
   const handleClearWeek = async () => {
     setClearing(true)
@@ -180,6 +189,15 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
 
   const handleDayChange = async (weekMealId, day) => {
     try { await updateDayOfWeek(weekMealId, day) } catch { /* ignore */ }
+  }
+
+  const handleServingsChange = async (weekMealId, servings) => {
+    try { await updateServingsOverride(weekMealId, servings) } catch { /* ignore */ }
+  }
+
+  const handleEditSave = async (data) => {
+    await updateMeal(editingMeal.id, data)
+    setEditingMeal(null)
   }
 
   const weekMealIds = new Set((weekMeals || []).map(wm => wm.meal_id))
@@ -197,8 +215,9 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
     onRemove: removeFromWeek,
     onMarkMade: handleMarkMade,
     markingId,
-    onOpenDetail: setDetailMeal,
+    onOpenDetail: (m, weekMealId) => setDetailEntry({ meal: m, weekMealId }),
     onDayChange: handleDayChange,
+    onServingsChange: handleServingsChange,
   })
 
   return (
@@ -227,55 +246,50 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
         </div>
       ) : (
         <>
-          {/* 7-day calendar grid */}
-          <div className="week-calendar">
-            {dayDates.map((date, dayIdx) => {
-              const dayMeals = mealsByDay[dayIdx]
-              const isToday = date.toDateString() === new Date().toDateString()
-              return (
-                <div key={dayIdx} className={`week-day-col ${isToday ? 'week-day-today' : ''}`}>
-                  <div className="week-day-header">
-                    <span className="week-day-name">{DAY_NAMES[dayIdx]}</span>
-                    <span className="week-day-date">
-                      {date.getMonth() + 1}/{date.getDate()}
-                    </span>
-                  </div>
-                  <div className="week-day-meals">
-                    {dayMeals.length === 0 ? (
-                      <div className="week-day-empty">—</div>
-                    ) : (
-                      dayMeals.map(wm => (
-                        <WeekMealCard key={wm.id} {...cardProps(wm)} />
-                      ))
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Unassigned pool */}
+          {/* Unassigned at top */}
           {unassigned.length > 0 && (
             <div className="week-unassigned">
               <div className="week-unassigned-label">Unassigned</div>
-              <div className="meal-grid">
+              <div className="week-list">
                 {unassigned.map(wm => (
                   <WeekMealCard key={wm.id} {...cardProps(wm)} />
                 ))}
               </div>
             </div>
           )}
+
+          {/* Day sections */}
+          {DAY_FULL_NAMES.map((fullName, i) => mealsByDay[i].length > 0 && (
+            <div key={i} className="week-day-section">
+              <div className="week-day-section-header">{fullName}</div>
+              <div className="week-list">
+                {mealsByDay[i].map(wm => (
+                  <WeekMealCard key={wm.id} {...cardProps(wm)} />
+                ))}
+              </div>
+            </div>
+          ))}
         </>
       )}
 
-      {detailMeal && (
+      {detailEntry && (
         <MealDetail
-          meal={detailMeal}
-          onClose={() => setDetailMeal(null)}
-          inWeek={weekMealIds.has(detailMeal.id)}
+          meal={detailEntry.meal}
+          onClose={() => setDetailEntry(null)}
+          inWeek={weekMealIds.has(detailEntry.meal.id)}
           onAddToWeek={addToWeek}
-          onEdit={() => {}}
+          onRemoveFromWeek={() => { removeFromWeek(detailEntry.weekMealId); setDetailEntry(null) }}
+          onEdit={(m) => { setDetailEntry(null); setEditingMeal(m) }}
           onDelete={() => {}}
+        />
+      )}
+
+      {editingMeal && (
+        <MealForm
+          initial={editingMeal}
+          existingMeals={meals}
+          onSave={handleEditSave}
+          onClose={() => setEditingMeal(null)}
         />
       )}
     </div>

@@ -308,7 +308,7 @@ function ScrollToTop() {
 
 function AppShell() {
   const { meals, loading: mealsLoading, addMeal, updateMeal, deleteMeal, markMadeToday, fetchMeals } = useMeals()
-  const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek, fetchWeekMeals, updateDayOfWeek } = useWeekMeals()
+  const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek, fetchWeekMeals, updateDayOfWeek, updateServingsOverride } = useWeekMeals()
   const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName, removeMember } = useHousehold()
   const [showSettings, setShowSettings] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(() => !!localStorage.getItem('new_account'))
@@ -392,6 +392,8 @@ function AppShell() {
                 clearWeek={clearWeek}
                 markMadeToday={handleMarkMadeShared}
                 updateDayOfWeek={updateDayOfWeek}
+                updateServingsOverride={updateServingsOverride}
+                updateMeal={updateMeal}
                 onRefresh={handleRefresh}
               />
             }
@@ -415,6 +417,7 @@ function AppShell() {
                 loading={weekLoading}
                 clearWeek={clearWeek}
                 onRefresh={handleRefresh}
+                updateServingsOverride={updateServingsOverride}
               />
             }
           />

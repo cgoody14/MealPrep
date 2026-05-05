@@ -21,7 +21,7 @@ function parseSteps(instructions) {
     .filter(Boolean)
 }
 
-export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelete, onEdit, onReimport }) {
+export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelete, onEdit, onReimport, onRemoveFromWeek }) {
   const [adding, setAdding] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -67,13 +67,17 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
           <div className="detail-sticky-actions">
             <button className="btn btn-cook" onClick={() => setCookMode(true)}>👨‍🍳 Cook</button>
             <button className="btn btn-edit" onClick={() => onEdit(meal)}>✏️ Edit</button>
-            <button
-              className={`btn ${inWeek ? 'btn-in-week' : 'btn-primary'}`}
-              onClick={inWeek ? undefined : handleAddToWeek}
-              disabled={inWeek || adding}
-            >
-              {adding ? 'Adding…' : inWeek ? '✓ In This Week' : 'Add to This Week'}
-            </button>
+            {onRemoveFromWeek ? (
+              <button className="btn btn-ghost" onClick={onRemoveFromWeek}>Remove from Week</button>
+            ) : (
+              <button
+                className={`btn ${inWeek ? 'btn-in-week' : 'btn-primary'}`}
+                onClick={inWeek ? undefined : handleAddToWeek}
+                disabled={inWeek || adding}
+              >
+                {adding ? 'Adding…' : inWeek ? '✓ In This Week' : 'Add to This Week'}
+              </button>
+            )}
           </div>
         </div>
 
