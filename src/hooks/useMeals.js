@@ -49,6 +49,7 @@ export function useMeals() {
   const [meals, setMeals] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [userId, setUserId] = useState(null)
 
   const fetchMeals = useCallback(async () => {
     setLoading(true)
@@ -56,6 +57,7 @@ export function useMeals() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      setUserId(user.id)
 
       const { data, error: fetchError } = await supabase
         .from('meals')
@@ -83,6 +85,20 @@ export function useMeals() {
   }, [])
 
   useEffect(() => { fetchMeals() }, [fetchMeals])
+
+  // Real-time sync — refetch whenever any household member's meal changes.
+  // Supabase Realtime enforces the meals_select RLS policy server-side, so
+  // only events for rows this user can already see are delivered.
+  useEffect(() => {
+    if (!userId) return
+    const channel = supabase
+      .channel(`meals-${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meals' }, () => {
+        fetchMeals()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [userId, fetchMeals])
 
   const addMeal = async (meal) => {
     const { data: { session } } = await supabase.auth.getSession()
