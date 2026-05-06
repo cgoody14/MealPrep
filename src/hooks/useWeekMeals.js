@@ -6,6 +6,7 @@ export function useWeekMeals() {
   const [weekMeals, setWeekMeals] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [userId, setUserId] = useState(null)
   const weekStart = getWeekStart()
 
   const fetchWeekMeals = useCallback(async () => {
@@ -14,12 +15,12 @@ export function useWeekMeals() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      setUserId(user.id)
 
       const { data, error: fetchError } = await supabase
         .from('week_meals')
         .select('*, meals(*)')
         .eq('week_start', weekStart)
-        .eq('user_id', user.id)
         .order('added_at', { ascending: true })
 
       if (fetchError) throw fetchError
@@ -32,6 +33,18 @@ export function useWeekMeals() {
   }, [weekStart])
 
   useEffect(() => { fetchWeekMeals() }, [fetchWeekMeals])
+
+  // Real-time sync — refetch when any household member changes the week plan
+  useEffect(() => {
+    if (!userId) return
+    const channel = supabase
+      .channel(`week-meals-${userId}-${weekStart}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'week_meals' }, () => {
+        fetchWeekMeals()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [userId, weekStart, fetchWeekMeals])
 
   const addToWeek = async (meal_id) => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -73,12 +86,10 @@ export function useWeekMeals() {
   }
 
   const clearWeek = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
     const { error: clearError } = await supabase
       .from('week_meals')
       .delete()
       .eq('week_start', weekStart)
-      .eq('user_id', user.id)
     if (clearError) throw clearError
     setWeekMeals([])
   }
