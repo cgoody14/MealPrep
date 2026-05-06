@@ -124,7 +124,7 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.name.trim()) {
+    if (!form.name.trim() && !initial?.id) {
       setNameError('Name is required.')
       return
     }
@@ -144,7 +144,7 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
       // Backward compat: photo_url = first URL
       const photo_url = photo_urls[0] ?? null
       await onSave({
-        name: form.name.trim(),
+        name: form.name.trim() || initial?.name || '',
         rating: form.rating ?? 3,
         last_made: form.last_made || null,
         times_made: Number(form.times_made) || 1,
@@ -180,7 +180,7 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
 
         <form onSubmit={handleSubmit} className="meal-form">
           <div className="form-group">
-            <label className="form-label">Name <span className="required">*</span></label>
+            <label className="form-label">Name {!initial?.id && <span className="required">*</span>}</label>
             <input
               className={`form-input ${nameError ? 'input-error' : ''}`}
               value={form.name}
