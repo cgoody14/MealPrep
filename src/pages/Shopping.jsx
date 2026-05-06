@@ -248,7 +248,7 @@ function ShoppingShareModal({ categories, manualItems, mealObjects, quantities, 
 
 export default function Shopping({ weekMeals, loading, clearWeek, onRefresh, updateServingsOverride }) {
   const weekStart = getWeekStart()
-  const { globalServings } = useServingSize()
+  const { globalServings, setGlobalServings } = useServingSize()
 
   const {
     recipeChecked,
@@ -439,15 +439,22 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh, upd
         <div>
           <h1 className="page-title">Shopping List</h1>
           <p className="page-subtitle">Auto-generated from this week's meals. Check off items as you shop — your progress saves automatically and resets each new week.</p>
-          <p className="shop-cooking-for-note">
-            Scaled for {globalServings} {globalServings === 1 ? 'person' : 'people'}
-          </p>
           <div className="week-header-meta">
             {totalItems} item{totalItems !== 1 ? 's' : ''} across {totalCategories} categor{totalCategories !== 1 ? 'ies' : 'y'}
             {' · '}{getWeekRange()}
           </div>
         </div>
         {onRefresh && <button className="btn btn-ghost refresh-btn" onClick={onRefresh} title="Refresh">↻</button>}
+      </div>
+
+      <div className="cooking-for-bar">
+        <div className="cooking-for-pill">
+          <span className="cooking-for-label">Cooking for</span>
+          <button className="cooking-for-btn" onClick={() => setGlobalServings(globalServings - 1)} disabled={globalServings <= 1}>−</button>
+          <span className="cooking-for-count">{globalServings}</span>
+          <button className="cooking-for-btn" onClick={() => setGlobalServings(globalServings + 1)} disabled={globalServings >= 12}>+</button>
+          <span className="cooking-for-label">{globalServings === 1 ? 'person' : 'people'}</span>
+        </div>
       </div>
 
       {/* Action buttons */}

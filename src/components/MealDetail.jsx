@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Stars from './Stars'
 import { daysSince, formatDate } from '../utils/format'
 import { isImageUrl } from '../utils/storage'
@@ -27,6 +27,8 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
   const [deleting, setDeleting] = useState(false)
   const [scaledServings, setScaledServings] = useState(contextServings ?? meal.servings ?? null)
   const [cookMode, setCookMode] = useState(false)
+  const [photoIndex, setPhotoIndex] = useState(0)
+  const touchStartX = useRef(0)
 
   const originalServings = meal.servings || null
   const displayIngredients = scaledServings && originalServings
@@ -120,34 +122,56 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
               ? meal.photo_urls
               : (meal.photo_url ? [meal.photo_url] : [])
             if (allPhotos.length === 0) return null
-            return (
-              <div className="recipe-attachment">
-                {allPhotos.length === 1 ? (
-                  isImageUrl(allPhotos[0]) ? (
-                    <a href={allPhotos[0]} target="_blank" rel="noopener noreferrer" className="recipe-photo-link">
-                      <img src={allPhotos[0]} alt="Recipe photo" className="recipe-photo-thumb" />
+            const idx = Math.min(photoIndex, allPhotos.length - 1)
+            const currentUrl = allPhotos[idx]
+
+            if (allPhotos.length === 1) {
+              return (
+                <div className="recipe-attachment">
+                  {isImageUrl(currentUrl) ? (
+                    <a href={currentUrl} target="_blank" rel="noopener noreferrer" className="recipe-photo-link">
+                      <img src={currentUrl} alt="Recipe photo" className="recipe-photo-thumb" />
                       <span className="recipe-photo-label">View recipe photo</span>
                     </a>
                   ) : (
-                    <a href={allPhotos[0]} target="_blank" rel="noopener noreferrer" className="recipe-attachment-link">
+                    <a href={currentUrl} target="_blank" rel="noopener noreferrer" className="recipe-attachment-link">
                       📎 View recipe attachment
                     </a>
-                  )
-                ) : (
-                  <div className="recipe-photo-gallery">
-                    {allPhotos.map((url, i) =>
-                      isImageUrl(url) ? (
-                        <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="recipe-photo-gallery-item">
-                          <img src={url} alt={`Photo ${i + 1}`} className="recipe-photo-gallery-thumb" />
-                        </a>
-                      ) : (
-                        <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="recipe-attachment-link">
-                          📎 {i + 1}
-                        </a>
-                      )
+                  )}
+                </div>
+              )
+            }
+
+            return (
+              <div className="recipe-attachment">
+                <div
+                  className="photo-carousel"
+                  onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
+                  onTouchEnd={e => {
+                    const dx = e.changedTouches[0].clientX - touchStartX.current
+                    if (dx > 50) setPhotoIndex(i => (i - 1 + allPhotos.length) % allPhotos.length)
+                    else if (dx < -50) setPhotoIndex(i => (i + 1) % allPhotos.length)
+                  }}
+                >
+                  <button
+                    className="carousel-btn"
+                    onClick={() => setPhotoIndex(i => (i - 1 + allPhotos.length) % allPhotos.length)}
+                    aria-label="Previous photo"
+                  >◀</button>
+                  <a href={currentUrl} target="_blank" rel="noopener noreferrer" className="carousel-img-wrap">
+                    {isImageUrl(currentUrl) ? (
+                      <img src={currentUrl} alt={`Photo ${idx + 1} of ${allPhotos.length}`} className="carousel-photo-img" />
+                    ) : (
+                      <span className="recipe-attachment-link">📎 Attachment {idx + 1}</span>
                     )}
-                  </div>
-                )}
+                  </a>
+                  <button
+                    className="carousel-btn"
+                    onClick={() => setPhotoIndex(i => (i + 1) % allPhotos.length)}
+                    aria-label="Next photo"
+                  >▶</button>
+                </div>
+                <div className="carousel-counter">Photo {idx + 1} of {allPhotos.length}</div>
               </div>
             )
           })()}

@@ -302,7 +302,9 @@ function AuthPage() {
 
 function ScrollToTop() {
   const { pathname } = useLocation()
-  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  useEffect(() => {
+    document.querySelector('.main-content')?.scrollTo(0, 0)
+  }, [pathname])
   return null
 }
 
