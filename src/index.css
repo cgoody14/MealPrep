@@ -621,7 +621,9 @@ button {
   border-radius: 20px;
   font-size: 12px;
   color: var(--text2);
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .chip-more {
@@ -3136,6 +3138,7 @@ button {
     border-radius: 0;
     padding: 20px;
     overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .modal-sm,
@@ -3146,9 +3149,22 @@ button {
     max-width: 100%;
   }
 
-  /* Detail modal sticky bar still works in full-screen */
+  /* Detail modal sticky bar — wrap actions on narrow screens */
   .detail-sticky-bar {
     border-radius: 0;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 14px;
+  }
+
+  .detail-sticky-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .detail-sticky-actions .btn {
+    font-size: 12px;
+    padding: 7px 11px;
   }
 
   /* ── Inputs: prevent iOS auto-zoom ── */
