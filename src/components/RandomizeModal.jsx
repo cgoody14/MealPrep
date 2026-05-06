@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Stars from './Stars'
 import { weightedRandom } from '../utils/scoring'
 
-export default function RandomizeModal({ meals, onAdd, onClose }) {
+export default function RandomizeModal({ meals, activeTag, onAdd, onClose }) {
   const [countInput, setCountInput] = useState('5')
   const [cooldown, setCooldown] = useState(1)
   const [results, setResults] = useState([])
@@ -66,6 +66,9 @@ export default function RandomizeModal({ meals, onAdd, onClose }) {
       <div className="modal modal-rand slide-up" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={handleClose}>✕</button>
         <h2 className="modal-title">🎲 Randomize For Me</h2>
+        {activeTag && activeTag !== 'All' && (
+          <div className="rand-filter-note">Filtering by tag: <strong>{activeTag}</strong></div>
+        )}
 
         <div className="form-group">
           <label className="form-label">How many meals?</label>

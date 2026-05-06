@@ -40,50 +40,59 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
     return ALL_TAGS.filter(t => used.has(t))
   }, [meals])
 
+  // Meals passed to the randomizer — respects tag filter but not text search
+  const tagFilteredMeals = useMemo(() =>
+    activeTag === 'All' ? meals : meals.filter(m => (m.tags || []).includes(activeTag))
+  , [meals, activeTag])
+
   const filtered = useMemo(() => {
+    const sortFn = (a, b) => {
+      switch (sort) {
+        case 'rating': return (b.rating || 0) - (a.rating || 0)
+        case 'recent': {
+          if (!a.last_made && !b.last_made) return 0
+          if (!a.last_made) return 1
+          if (!b.last_made) return -1
+          return new Date(b.last_made) - new Date(a.last_made)
+        }
+        case 'oldest': {
+          if (!a.last_made && !b.last_made) return 0
+          if (!a.last_made) return -1
+          if (!b.last_made) return 1
+          return new Date(a.last_made) - new Date(b.last_made)
+        }
+        case 'az': return a.name.localeCompare(b.name)
+        default: return 0
+      }
+    }
+
     let list = [...meals]
+
     if (search.trim()) {
       const q = search.toLowerCase()
 
-      // Score each meal by match quality: name > tag > ingredient
+      // Score: exact name > name prefix > name contains > exact tag > tag contains > ingredient
       const score = m => {
         const name = m.name.toLowerCase()
-        if (name === q) return 4                          // exact name
-        if (name.startsWith(q)) return 3                 // name starts with query
-        if (name.includes(q)) return 2                   // name contains query
-        if ((m.tags || []).some(t => t.toLowerCase().includes(q))) return 1
-        return 0                                          // ingredient-only match
+        if (name === q) return 5
+        if (name.startsWith(q)) return 4
+        if (name.includes(q)) return 3
+        if ((m.tags || []).some(t => t.toLowerCase() === q)) return 2
+        if ((m.tags || []).some(t => t.toLowerCase().includes(q))) return 2
+        if ((m.ingredients || []).some(i => i.toLowerCase().includes(q))) return 1
+        return 0
       }
 
       list = list
-        .filter(m =>
-          m.name.toLowerCase().includes(q) ||
-          (m.ingredients || []).some(i => i.toLowerCase().includes(q)) ||
-          (m.tags || []).some(t => t.toLowerCase().includes(q))
-        )
-        .sort((a, b) => score(b) - score(a))
-
-      // After relevance sort, apply the user's chosen sort as a tiebreaker
-      // by stable-sorting within each score group (done via the sort below)
+        .filter(m => score(m) > 0)
+        // Primary: relevance; tiebreaker: user's chosen sort
+        .sort((a, b) => (score(b) - score(a)) || sortFn(a, b))
+    } else {
+      list.sort(sortFn)
     }
+
     if (activeTag !== 'All') {
       list = list.filter(m => (m.tags || []).includes(activeTag))
-    }
-    switch (sort) {
-      case 'rating': list.sort((a, b) => (b.rating || 0) - (a.rating || 0)); break
-      case 'recent': list.sort((a, b) => {
-        if (!a.last_made && !b.last_made) return 0
-        if (!a.last_made) return 1
-        if (!b.last_made) return -1
-        return new Date(b.last_made) - new Date(a.last_made)
-      }); break
-      case 'oldest': list.sort((a, b) => {
-        if (!a.last_made && !b.last_made) return 0
-        if (!a.last_made) return -1
-        if (!b.last_made) return 1
-        return new Date(a.last_made) - new Date(b.last_made)
-      }); break
-      case 'az': list.sort((a, b) => a.name.localeCompare(b.name)); break
     }
     return list
   }, [meals, search, activeTag, sort])
@@ -239,7 +248,8 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
 
       {showRandomize && (
         <RandomizeModal
-          meals={meals}
+          meals={tagFilteredMeals}
+          activeTag={activeTag}
           onAdd={addToWeek}
           onClose={handleRandomizeDone}
         />
