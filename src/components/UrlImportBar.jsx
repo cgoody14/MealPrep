@@ -134,7 +134,11 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
         notes: result.notes || '',
         tags: Array.isArray(result.tags) ? result.tags.filter(t => ALLOWED_TAGS.includes(t)) : [],
         cookTime: result.cookTime || '',
-        servings: result.servings || '',
+        servings: parseInt(result.servings) || null,
+        calories: parseInt(result.calories) || null,
+        protein_g: parseInt(result.protein_g) || null,
+        carbs_g: parseInt(result.carbs_g) || null,
+        fat_g: parseInt(result.fat_g) || null,
         instructions: (result.instructions || '').split(' | ').map(s => s.trim()).filter(Boolean).join('\n'),
         source: '',
         rating: 3,
@@ -171,7 +175,11 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
         ? result.tags.filter(t => ALLOWED_TAGS.includes(t))
         : [],
       cookTime: result.cookTime || '',
-      servings: result.servings || '',
+      servings: parseInt(result.servings) || null,
+      calories: parseInt(result.calories) || null,
+      protein_g: parseInt(result.protein_g) || null,
+      carbs_g: parseInt(result.carbs_g) || null,
+      fat_g: parseInt(result.fat_g) || null,
       instructions: (result.instructions || '').split(' | ').map(s => s.trim()).filter(Boolean).join('\n'),
       source: url.trim(),
       rating: 3,
@@ -203,6 +211,11 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
         notes: preview.notes,
         instructions: preview.instructions || '',
         cook_time: preview.cookTime || '',
+        servings: preview.servings || null,
+        calories: preview.calories || null,
+        protein_g: preview.protein_g || null,
+        carbs_g: preview.carbs_g || null,
+        fat_g: preview.fat_g || null,
         tags: preview.tags,
         source: preview.source,
         photo_url,
@@ -331,10 +344,11 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
           </div>
 
           {/* Meta row */}
-          {(preview.cookTime || preview.servings || preview.source) && (
+          {(preview.cookTime || preview.servings || preview.calories || preview.source) && (
             <div className="import-preview-meta">
               {preview.cookTime && <span>⏱ {preview.cookTime}</span>}
-              {preview.servings && <span>👥 {preview.servings}</span>}
+              {preview.servings && <span>👥 Serves {preview.servings}</span>}
+              {preview.calories && <span>🔥 {preview.calories} cal/serving</span>}
               {preview.source && (
                 <a href={preview.source} target="_blank" rel="noopener noreferrer" className="source-link">
                   ↗ Original recipe
