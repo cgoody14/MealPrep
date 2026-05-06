@@ -344,6 +344,23 @@ function AppShell() {
     await supabase.auth.signOut()
   }
 
+  // After any household membership change, immediately refresh the combined
+  // meal library and week plan for the user performing the action.
+  const handleJoinHousehold = async (code) => {
+    await joinHousehold(code)
+    await Promise.all([fetchMeals(), fetchWeekMeals()])
+  }
+
+  const handleLeaveHousehold = async () => {
+    await leaveHousehold()
+    await Promise.all([fetchMeals(), fetchWeekMeals()])
+  }
+
+  const handleRemoveMember = async (userId) => {
+    await removeMember(userId)
+    await Promise.all([fetchMeals(), fetchWeekMeals()])
+  }
+
   const handleMarkMadeShared = async (id) => {
     return markMadeToday(id)
   }
@@ -427,7 +444,7 @@ function AppShell() {
       {showOnboarding && !householdLoading && (
         <OnboardingModal
           household={household}
-          onJoin={joinHousehold}
+          onJoin={handleJoinHousehold}
           onDone={() => setShowOnboarding(false)}
         />
       )}
@@ -441,9 +458,9 @@ function AppShell() {
           household={household}
           members={members}
           currentUserId={currentUserId}
-          onJoin={joinHousehold}
-          onLeave={leaveHousehold}
-          onRemoveMember={removeMember}
+          onJoin={handleJoinHousehold}
+          onLeave={handleLeaveHousehold}
+          onRemoveMember={handleRemoveMember}
           onUpdateDisplayName={updateDisplayName}
           onClose={() => setShowSettings(false)}
           onSignOut={handleSignOut}

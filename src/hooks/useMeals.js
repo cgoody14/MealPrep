@@ -96,6 +96,11 @@ export function useMeals() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'meals' }, () => {
         fetchMeals()
       })
+      // Also watch household membership — when someone joins/leaves, the visible
+      // set of meals changes even though no meal rows were touched.
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_households' }, () => {
+        fetchMeals()
+      })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [userId, fetchMeals])

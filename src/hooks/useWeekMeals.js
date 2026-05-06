@@ -34,12 +34,16 @@ export function useWeekMeals() {
 
   useEffect(() => { fetchWeekMeals() }, [fetchWeekMeals])
 
-  // Real-time sync — refetch when any household member changes the week plan
+  // Real-time sync — refetch when any household member changes the week plan,
+  // or when household membership changes (join/leave).
   useEffect(() => {
     if (!userId) return
     const channel = supabase
       .channel(`week-meals-${userId}-${weekStart}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'week_meals' }, () => {
+        fetchWeekMeals()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_households' }, () => {
         fetchWeekMeals()
       })
       .subscribe()
