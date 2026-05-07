@@ -435,7 +435,6 @@ function AppShell() {
                 loading={weekLoading}
                 clearWeek={clearWeek}
                 onRefresh={handleRefresh}
-                updateServingsOverride={updateServingsOverride}
               />
             }
           />

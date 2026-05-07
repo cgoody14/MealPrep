@@ -58,6 +58,11 @@ export function scaleIngredients(ingredients, originalServings, targetServings) 
   return ingredients.map(ing => scaleIngredient(ing, factor))
 }
 
+export function scaleIngredientsByFactor(ingredients, factor) {
+  if (!factor || factor === 1) return ingredients
+  return (ingredients || []).map(ing => scaleIngredient(ing, factor))
+}
+
 export function getScaleFactor(originalServings, targetServings) {
   if (!originalServings || originalServings === 0) return null
   return Math.max(0.25, targetServings / originalServings)

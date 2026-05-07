@@ -3592,77 +3592,45 @@ button {
   flex-shrink: 0;
 }
 
-/* Per-recipe display-only stepper */
-.recipe-override-row {
+/* ½× 1× 2× scale toggle */
+.scale-toggle-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 4px 0;
 }
 
-.recipe-override-label {
+.scale-toggle-label {
   font-size: 12px;
   color: var(--text3);
 }
 
-.recipe-override-stepper {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.recipe-override-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
+.scale-toggle {
+  display: inline-flex;
   background: var(--bg2);
-  color: var(--text);
-  cursor: pointer;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
 }
 
-.recipe-override-btn:hover {
-  background: var(--border);
-}
-
-.recipe-override-val {
-  font-size: 13px;
-  font-weight: 600;
-  min-width: 24px;
-  text-align: center;
-  color: var(--text);
-}
-
-.recipe-reset-btn {
-  background: none;
-  border: none;
-  color: var(--accent);
-  cursor: pointer;
-  font-size: 13px;
-  padding: 0;
-  line-height: 1;
-}
-
-.recipe-reset-btn:hover {
-  opacity: 0.7;
-}
-
-.scale-unavailable {
-  font-size: 11px;
-  color: var(--text3);
-  margin-bottom: 6px;
-}
-
-/* Shopping "cooking for" note */
-.shop-cooking-for-note {
+.scale-toggle-btn {
+  padding: 3px 10px;
   font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
   color: var(--text3);
-  margin-bottom: 4px;
+  border-radius: calc(var(--radius-sm) - 2px);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.scale-toggle-btn.active {
+  background: var(--card);
+  color: var(--accent);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
 /* ================================================

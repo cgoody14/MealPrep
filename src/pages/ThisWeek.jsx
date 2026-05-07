@@ -3,8 +3,23 @@ import Stars from '../components/Stars'
 import MealDetail from '../components/MealDetail'
 import MealForm from '../components/MealForm'
 import { getWeekRange, daysSince, getWeekStart } from '../utils/format'
-import { scaleIngredients, getScaleFactor, formatScaleBadge } from '../utils/scaling'
-import { useServingSize } from '../hooks/useServingSize'
+import { scaleIngredientsByFactor } from '../utils/scaling'
+
+const SCALE_OPTIONS = [
+  { factor: 0.5, label: '½×' },
+  { factor: 1,   label: '1×' },
+  { factor: 2,   label: '2×' },
+]
+
+function getStoredFactor(wmId) {
+  const saved = localStorage.getItem(`scale-factor-${wmId}`)
+  return saved ? parseFloat(saved) : 1
+}
+
+function storeFactor(wmId, factor) {
+  if (factor === 1) localStorage.removeItem(`scale-factor-${wmId}`)
+  else localStorage.setItem(`scale-factor-${wmId}`, String(factor))
+}
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const DAY_FULL_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -37,20 +52,17 @@ function CooldownBar({ lastMade }) {
   )
 }
 
-function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDayChange,
-                        effectiveServings, hasOverride, onOverrideChange, onOverrideReset }) {
+function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDayChange }) {
   const m = wm.meals
   if (!m) return null
   const [openPanel, setOpenPanel] = useState(undefined)
+  const [factor, setFactorState] = useState(() => getStoredFactor(wm.id))
   const days = daysSince(m.last_made)
   const daysText = m.last_made ? (days === 0 ? 'Today' : `${days}d ago`) : 'Never made'
   const steps = parseSteps(m.instructions)
 
-  const scaleFactor = m.servings ? getScaleFactor(m.servings, effectiveServings) : null
-  const badge = formatScaleBadge(scaleFactor)
-  const displayIngredients = scaleFactor
-    ? scaleIngredients(m.ingredients || [], m.servings, effectiveServings)
-    : (m.ingredients || [])
+  const setFactor = (f) => { storeFactor(wm.id, f); setFactorState(f) }
+  const displayIngredients = scaleIngredientsByFactor(m.ingredients || [], factor)
 
   const togglePanel = (panel) =>
     setOpenPanel(prev => prev === panel ? undefined : panel)
@@ -62,7 +74,7 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
         <div className="meal-card-header">
           <div className="meal-name-row">
             <h3 className="meal-name">{m.name}</h3>
-            {badge && <span className="scale-badge">{badge}</span>}
+            {factor !== 1 && <span className="scale-badge">{factor === 0.5 ? '½×' : '2×'}</span>}
           </div>
           <button
             className="btn-icon remove-btn"
@@ -90,24 +102,19 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
           </select>
         </div>
 
-        {/* Display-only servings stepper */}
-        {m.servings && (
-          <div className="recipe-override-row" onClick={e => e.stopPropagation()}>
-            <span className="recipe-override-label">Servings</span>
-            <div className="recipe-override-stepper">
-              <button
-                className="recipe-override-btn"
-                onClick={() => onOverrideChange(Math.max(1, effectiveServings - 1))}
-              >−</button>
-              <span className="recipe-override-val">{effectiveServings}</span>
-              <button
-                className="recipe-override-btn"
-                onClick={() => onOverrideChange(effectiveServings + 1)}
-              >+</button>
+        {/* Scale toggle: ½× 1× 2× */}
+        {m.ingredients?.length > 0 && (
+          <div className="scale-toggle-row" onClick={e => e.stopPropagation()}>
+            <span className="scale-toggle-label">Scale</span>
+            <div className="scale-toggle">
+              {SCALE_OPTIONS.map(({ factor: f, label }) => (
+                <button
+                  key={f}
+                  className={`scale-toggle-btn${factor === f ? ' active' : ''}`}
+                  onClick={() => setFactor(f)}
+                >{label}</button>
+              ))}
             </div>
-            {hasOverride && (
-              <button className="recipe-reset-btn" onClick={onOverrideReset} title="Reset to global">↺</button>
-            )}
           </div>
         )}
 
@@ -149,9 +156,6 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
 
         {openPanel === 'ing' && m.ingredients?.length > 0 && (
           <div className="week-card-expandable" onClick={e => e.stopPropagation()}>
-            {!m.servings && (
-              <p className="scale-unavailable">Set a servings count on this recipe to enable scaling</p>
-            )}
             <div className="chip-row">
               {displayIngredients.map((ing, i) => <span key={i} className="chip">{ing}</span>)}
             </div>
@@ -195,8 +199,6 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
   const [detailEntry, setDetailEntry] = useState(null) // { meal, weekMealId }
   const [editingMeal, setEditingMeal] = useState(null)
 
-  const { globalServings, setGlobalServings, perRecipeOverrides, setRecipeOverride, resetRecipeOverride, getEffectiveServings } = useServingSize()
-
   const weekStart = getWeekStart()
 
   const handleClearWeek = async () => {
@@ -235,10 +237,6 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
     markingId,
     onOpenDetail: (m, weekMealId) => setDetailEntry({ meal: m, weekMealId }),
     onDayChange: handleDayChange,
-    effectiveServings: getEffectiveServings(wm.meals),
-    hasOverride: perRecipeOverrides[wm.meals?.id] != null,
-    onOverrideChange: (s) => setRecipeOverride(wm.meals?.id, s),
-    onOverrideReset: () => resetRecipeOverride(wm.meals?.id),
   })
 
   return (
@@ -250,25 +248,6 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
           <div className="week-header-meta">{getWeekRange()} · {weekMeals.length} meal{weekMeals.length !== 1 ? 's' : ''}</div>
         </div>
         {onRefresh && <button className="btn btn-ghost refresh-btn" onClick={onRefresh} title="Refresh">↻</button>}
-      </div>
-
-      {/* Cooking for pill */}
-      <div className="cooking-for-bar">
-        <div className="cooking-for-pill">
-          <span className="cooking-for-label">Cooking for</span>
-          <button
-            className="cooking-for-btn"
-            onClick={() => setGlobalServings(globalServings - 1)}
-            disabled={globalServings <= 1}
-          >−</button>
-          <span className="cooking-for-count">{globalServings}</span>
-          <button
-            className="cooking-for-btn"
-            onClick={() => setGlobalServings(globalServings + 1)}
-            disabled={globalServings >= 12}
-          >+</button>
-          <span className="cooking-for-label">{globalServings === 1 ? 'person' : 'people'}</span>
-        </div>
       </div>
 
       <div className="week-actions">
@@ -315,7 +294,6 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
       {detailEntry && (
         <MealDetail
           meal={detailEntry.meal}
-          contextServings={getEffectiveServings(detailEntry.meal)}
           onClose={() => setDetailEntry(null)}
           inWeek={weekMealIds.has(detailEntry.meal.id)}
           onAddToWeek={addToWeek}
