@@ -66,15 +66,20 @@ export function useMeals() {
 
       if (fetchError) throw fetchError
 
-      if (data.length === 0) {
+      // Only seed once per user — if the flag is already set, an empty list
+      // means they deliberately deleted everything, so respect that.
+      const seededKey = `meals-seeded-${user.id}`
+      if (data.length === 0 && !localStorage.getItem(seededKey)) {
         const seeds = SEED_MEALS(user.id)
         const { data: inserted, error: insertError } = await supabase
           .from('meals')
           .insert(seeds)
           .select()
         if (insertError) throw insertError
+        localStorage.setItem(seededKey, '1')
         setMeals(inserted || [])
       } else {
+        if (data.length > 0) localStorage.setItem(seededKey, '1')
         setMeals(data)
       }
     } catch (err) {
