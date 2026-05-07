@@ -1029,6 +1029,15 @@ button {
 .modal-detail {
   max-width: 540px;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-detail .detail-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-form {
@@ -1255,10 +1264,9 @@ button {
   color: var(--accent);
 }
 
-/* Detail modal sticky header */
+/* Detail modal header — pinned via flex column on .modal-detail */
 .detail-sticky-bar {
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 10;
   background: var(--card);
   border-bottom: 1px solid var(--border);
@@ -3147,6 +3155,12 @@ button {
   .modal-form,
   .modal-rand {
     max-width: 100%;
+  }
+
+  /* detail modal manages its own internal scroll — don't let .modal override it */
+  .modal-detail {
+    overflow: hidden;
+    padding: 0;
   }
 
   /* Detail modal sticky bar — wrap actions on narrow screens */
