@@ -52,16 +52,24 @@ function CooldownBar({ lastMade }) {
   )
 }
 
-function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDayChange }) {
+function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDayChange, onAdjustCount }) {
   const m = wm.meals
   if (!m) return null
   const [openPanel, setOpenPanel] = useState(undefined)
   const [factor, setFactorState] = useState(() => getStoredFactor(wm.id))
+  const [localCount, setLocalCount] = useState(m.times_made ?? 0)
   const days = daysSince(m.last_made)
   const daysText = m.last_made ? (days === 0 ? 'Today' : `${days}d ago`) : 'Never made'
   const steps = parseSteps(m.instructions)
 
   const setFactor = (f) => { storeFactor(wm.id, f); setFactorState(f) }
+
+  const handleCount = (e, delta) => {
+    e.stopPropagation()
+    const next = Math.max(0, localCount + delta)
+    setLocalCount(next)
+    onAdjustCount?.(m.id, next)
+  }
   const displayIngredients = scaleIngredientsByFactor(m.ingredients || [], factor)
 
   const togglePanel = (panel) =>
@@ -85,7 +93,13 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
         <Stars rating={m.rating} size="sm" />
         {m.cook_time && <div className="meal-cook-time">⏱ {m.cook_time}</div>}
         <div className="meal-meta">
-          {daysText} · <strong>{m.times_made}×</strong> cooked
+          {daysText} ·{' '}
+          <span className="times-cooked-row" onClick={e => e.stopPropagation()}>
+            <button className="times-cooked-btn" onClick={e => handleCount(e, -1)} disabled={localCount === 0}>−</button>
+            <strong>{localCount}×</strong>
+            <button className="times-cooked-btn" onClick={e => handleCount(e, 1)}>+</button>
+          </span>
+          {' '}cooked
         </div>
 
         {/* Day selector */}
@@ -237,6 +251,7 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
     markingId,
     onOpenDetail: (m, weekMealId) => setDetailEntry({ meal: m, weekMealId }),
     onDayChange: handleDayChange,
+    onAdjustCount: (id, n) => updateMeal(id, { times_made: n }),
   })
 
   return (

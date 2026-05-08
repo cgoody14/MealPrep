@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Stars from './Stars'
 import { daysSince } from '../utils/format'
 
@@ -17,7 +18,8 @@ function CooldownBar({ lastMade }) {
   )
 }
 
-export default function MealCard({ meal, onOpen, onToggleWeek, inWeek, weekLoading, animDelay = 0 }) {
+export default function MealCard({ meal, onOpen, onToggleWeek, inWeek, weekLoading, onAdjustCount, animDelay = 0 }) {
+  const [localCount, setLocalCount] = useState(meal.times_made ?? 0)
   const days = daysSince(meal.last_made)
   const daysText = meal.last_made ? (days === 0 ? 'Today' : `${days}d ago`) : 'Never made'
   const visibleIngredients = (meal.ingredients || []).slice(0, 4)
@@ -27,6 +29,13 @@ export default function MealCard({ meal, onOpen, onToggleWeek, inWeek, weekLoadi
   const handleWeekToggle = (e) => {
     e.stopPropagation()
     onToggleWeek(meal)
+  }
+
+  const handleCount = (e, delta) => {
+    e.stopPropagation()
+    const next = Math.max(0, localCount + delta)
+    setLocalCount(next)
+    onAdjustCount?.(meal.id, next)
   }
 
   return (
@@ -41,7 +50,13 @@ export default function MealCard({ meal, onOpen, onToggleWeek, inWeek, weekLoadi
           <div className="meal-cook-time">⏱ {meal.cook_time}</div>
         )}
         <div className="meal-meta">
-          {daysText} · <strong>{meal.times_made}×</strong> cooked
+          {daysText} ·{' '}
+          <span className="times-cooked-row" onClick={e => e.stopPropagation()}>
+            <button className="times-cooked-btn" onClick={e => handleCount(e, -1)} disabled={localCount === 0}>−</button>
+            <strong>{localCount}×</strong>
+            <button className="times-cooked-btn" onClick={e => handleCount(e, 1)}>+</button>
+          </span>
+          {' '}cooked
         </div>
         {visibleIngredients.length > 0 && (
           <div className="chip-row">

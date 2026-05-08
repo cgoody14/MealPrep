@@ -824,6 +824,39 @@ button {
   color: var(--text);
 }
 
+.times-cooked-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.times-cooked-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+  flex-shrink: 0;
+}
+
+.times-cooked-btn:hover:not(:disabled) {
+  background: var(--border2);
+  color: var(--text);
+}
+
+.times-cooked-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .meal-card-footer {
   padding: 10px 16px;
   border-top: 1px solid var(--border);
