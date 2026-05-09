@@ -7,7 +7,16 @@ export function useWeekMeals() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [userId, setUserId] = useState(null)
-  const weekStart = getWeekStart()
+  const [weekStart, setWeekStart] = useState(getWeekStart)
+
+  // Detect week boundary crossing while the app is open (e.g. tab open Sun→Mon)
+  useEffect(() => {
+    const check = setInterval(() => {
+      const now = getWeekStart()
+      setWeekStart(prev => (prev !== now ? now : prev))
+    }, 60_000)
+    return () => clearInterval(check)
+  }, [])
 
   const fetchWeekMeals = useCallback(async () => {
     setLoading(true)

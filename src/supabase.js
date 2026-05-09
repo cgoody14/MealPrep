@@ -9,4 +9,3 @@ export const supabase = createClient(
   }
 )
 
-console.log('[supabase] connecting to:', import.meta.env.VITE_SUPABASE_URL)

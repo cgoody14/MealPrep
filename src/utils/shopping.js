@@ -1,3 +1,5 @@
+import { callGroq } from './groqClient'
+
 export function buildShoppingList(meals) {
   const cats = {
     "Proteins & Meat": [],
@@ -32,23 +34,15 @@ export function buildShoppingList(meals) {
 
 export async function enrichIngredientsWithQuantities(mealName, ingredients) {
   try {
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY
-    const endpoint = 'https://api.groq.com/openai/v1/chat/completions'
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        temperature: 0.1,
-        max_tokens: 500,
-        messages: [
-          {
-            role: 'system',
-            content: `You are a recipe assistant. Given a recipe name and a list of ingredients, return ONLY a valid JSON array with no preamble, no markdown, no backticks.
+    // callGroq imported at top of file
+    const data = await callGroq({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.1,
+      max_tokens: 500,
+      messages: [
+        {
+          role: 'system',
+          content: `You are a recipe assistant. Given a recipe name and a list of ingredients, return ONLY a valid JSON array with no preamble, no markdown, no backticks.
 
 Rules:
 - If an ingredient already has a quantity or measurement (e.g. "4 chicken breasts", "2 cups flour", "1 lemon"), return it exactly as-is — do NOT change the unit or convert to weight
@@ -57,20 +51,14 @@ Rules:
 - Return the same number of items as the input array in the same order
 - Never return null
 
-Example: ["4 chicken breasts","butter","garlic"] → ["4 chicken breasts","3 tbsp butter","4 cloves garlic"]`
-          },
-          {
-            role: 'user',
-            content: `Recipe: "${mealName}"
-Ingredients: ${JSON.stringify(ingredients)}
-
-Return a JSON array of the same ingredients with realistic quantities added.`
-          }
-        ]
-      })
+Example: ["4 chicken breasts","butter","garlic"] → ["4 chicken breasts","3 tbsp butter","4 cloves garlic"]`,
+        },
+        {
+          role: 'user',
+          content: `Recipe: "${mealName}"\nIngredients: ${JSON.stringify(ingredients)}\n\nReturn a JSON array of the same ingredients with realistic quantities added.`,
+        },
+      ],
     })
-
-    const data = await response.json()
     const text = data.choices?.[0]?.message?.content ?? '[]'
     const clean = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
     const jsonMatch = clean.match(/\[[\s\S]*\]/)
@@ -82,23 +70,15 @@ Return a JSON array of the same ingredients with realistic quantities added.`
 
 export async function consolidateQuantities(categoryItems, mealNames) {
   try {
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY
-    const endpoint = 'https://api.groq.com/openai/v1/chat/completions'
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        temperature: 0.1,
-        max_tokens: 800,
-        messages: [
-          {
-            role: 'system',
-            content: `You are a grocery list consolidator. Given a list of ingredients that may appear across multiple recipes, return ONLY a valid JSON array with no preamble, no markdown, no backticks.
+    // callGroq imported at top of file
+    const data = await callGroq({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.1,
+      max_tokens: 800,
+      messages: [
+        {
+          role: 'system',
+          content: `You are a grocery list consolidator. Given a list of ingredients that may appear across multiple recipes, return ONLY a valid JSON array with no preamble, no markdown, no backticks.
 
 Each item in the array should be a string combining the ingredient name with a realistic total quantity needed across all the recipes provided.
 
@@ -108,21 +88,14 @@ Rules:
 - Only convert units when combining same-unit quantities at large amounts (e.g. 16 tbsp → 1 cup)
 - Keep count-based items as counts: "4 chicken breasts", "3 eggs", "2 lemons"
 
-Example: "butter" in 3 recipes needing 2 tbsp, 3 tbsp, 1 tbsp → "6 tbsp butter"`
-          },
-          {
-            role: 'user',
-            content: `Recipes this week: ${mealNames.join(', ')}
-
-Ingredients to consolidate: ${JSON.stringify(categoryItems)}
-
-Return a JSON array of strings with total quantities.`
-          }
-        ]
-      })
+Example: "butter" in 3 recipes needing 2 tbsp, 3 tbsp, 1 tbsp → "6 tbsp butter"`,
+        },
+        {
+          role: 'user',
+          content: `Recipes this week: ${mealNames.join(', ')}\n\nIngredients to consolidate: ${JSON.stringify(categoryItems)}\n\nReturn a JSON array of strings with total quantities.`,
+        },
+      ],
     })
-
-    const data = await response.json()
     const text = data.choices?.[0]?.message?.content ?? '[]'
     const clean = text.replace(/```json|```/g, '').trim()
     const match = clean.match(/\[[\s\S]*\]/)
@@ -134,37 +107,23 @@ Return a JSON array of strings with total quantities.`
 
 export async function categorizeIngredient(ingredient) {
   try {
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY
-    const endpoint = 'https://api.groq.com/openai/v1/chat/completions'
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        temperature: 0.1,
-        max_tokens: 50,
-        messages: [
-          {
-            role: 'system',
-            content: `You are a grocery categorizer. Given an ingredient name return ONLY a JSON object with one key "category" whose value is exactly one of these categories:
+    // callGroq imported at top of file
+    const data = await callGroq({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.1,
+      max_tokens: 50,
+      messages: [
+        {
+          role: 'system',
+          content: `You are a grocery categorizer. Given an ingredient name return ONLY a JSON object with one key "category" whose value is exactly one of these categories:
 "Proteins & Meat", "Seafood", "Produce", "Dairy & Eggs", "Pantry & Dry Goods", "Herbs & Spices", "Other"
 
 No preamble, no markdown, no backticks. Raw JSON only.
-Example: {"category": "Produce"}`
-          },
-          {
-            role: 'user',
-            content: ingredient
-          }
-        ]
-      })
+Example: {"category": "Produce"}`,
+        },
+        { role: 'user', content: ingredient },
+      ],
     })
-
-    const data = await response.json()
     const text = data.choices?.[0]?.message?.content ?? '{}'
     const clean = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
     const jsonMatch = clean.match(/\{[\s\S]*\}/)
