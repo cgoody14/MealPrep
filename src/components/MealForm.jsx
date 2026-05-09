@@ -17,7 +17,7 @@ const emptyMeal = {
   instructions: '',
   tags: [],
   source: '',
-  times_made: 1,
+  times_made: 0,
   cook_time: '',
   servings: '',
   calories: '',
@@ -147,7 +147,7 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
         name: form.name.trim() || initial?.name || '',
         rating: form.rating ?? 3,
         last_made: form.last_made || null,
-        times_made: Number(form.times_made) || 1,
+        times_made: form.times_made !== '' ? Math.max(0, Number(form.times_made)) : 0,
         ingredients: form.ingredients,
         notes: form.notes.trim(),
         instructions: form.instructions.trim(),
@@ -271,7 +271,7 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
               <input
                 className="form-input"
                 type="number"
-                min="1"
+                min="0"
                 value={form.times_made}
                 onChange={e => set('times_made', e.target.value)}
               />
