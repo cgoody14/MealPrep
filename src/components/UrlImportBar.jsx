@@ -33,8 +33,8 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [ingInput, setIngInput] = useState('')
-  const [photoFile, setPhotoFile] = useState(null)
-  const [photoObjectUrl, setPhotoObjectUrl] = useState(null)
+  const [photoFiles, setPhotoFiles] = useState([])
+  const [photoObjectUrls, setPhotoObjectUrls] = useState([])
   const [photoError, setPhotoError] = useState('')
 
   const intervalRef = useRef(null)
@@ -45,7 +45,7 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
       if (successTimerRef.current) clearTimeout(successTimerRef.current)
-      if (photoObjectUrl) URL.revokeObjectURL(photoObjectUrl)
+      photoObjectUrls.forEach(u => URL.revokeObjectURL(u))
     }
   }, [])
 
@@ -101,18 +101,25 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
   }
 
   const handlePhotoSelect = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
     setPhotoError('')
-    if (photoObjectUrl) URL.revokeObjectURL(photoObjectUrl)
-    setPhotoFile(file)
-    setPhotoObjectUrl(URL.createObjectURL(file))
+    const newUrls = files.map(f => URL.createObjectURL(f))
+    setPhotoFiles(prev => [...prev, ...files])
+    setPhotoObjectUrls(prev => [...prev, ...newUrls])
     setPreview(null)
     setStatus('idle')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const removePhoto = (idx) => {
+    URL.revokeObjectURL(photoObjectUrls[idx])
+    setPhotoFiles(prev => prev.filter((_, i) => i !== idx))
+    setPhotoObjectUrls(prev => prev.filter((_, i) => i !== idx))
   }
 
   const handlePhotoImport = async () => {
-    if (!photoFile) return
+    if (!photoFiles.length) return
     setStatus('loading')
     setPhotoError('')
     setFallbackMsg('')
@@ -126,7 +133,7 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     }, 1800)
 
     try {
-      const result = await scrapeRecipeFromImage(photoFile)
+      const result = await scrapeRecipeFromImage(photoFiles)
       stopStatusCycle()
       setPreview({
         name: result.name || '',
@@ -192,11 +199,11 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     setSaving(true)
     setSaveError('')
     try {
-      // Upload photo if one was used for import (non-fatal if it fails)
+      // Upload first photo if one was used for import (non-fatal if it fails)
       let photo_url = null
-      if (photoFile) {
+      if (photoFiles.length > 0) {
         try {
-          photo_url = await uploadRecipeAttachment(photoFile)
+          photo_url = await uploadRecipeAttachment(photoFiles[0])
         } catch (uploadErr) {
           console.warn('Photo upload failed, saving without attachment:', uploadErr.message)
         }
@@ -241,9 +248,10 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     setIngInput('')
     setSaveError('')
     setFallbackMsg('')
-    setPhotoFile(null)
+    photoObjectUrls.forEach(u => URL.revokeObjectURL(u))
+    setPhotoFiles([])
+    setPhotoObjectUrls([])
     setPhotoError('')
-    if (photoObjectUrl) { URL.revokeObjectURL(photoObjectUrl); setPhotoObjectUrl(null) }
     if (fileInputRef.current) fileInputRef.current.value = ''
     stopStatusCycle()
   }
@@ -269,7 +277,7 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
             onClick={handleImport}
             disabled={status === 'loading' || !url.trim()}
           >
-            {status === 'loading' && !photoFile ? 'Importing…' : 'Import'}
+            {status === 'loading' && !photoFiles.length ? 'Importing…' : 'Import'}
           </button>
         </div>
 
@@ -282,36 +290,61 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
             ref={fileInputRef}
             type="file"
             accept="image/*"
+            multiple
             id="recipe-photo-input"
             className="photo-file-input"
             onChange={handlePhotoSelect}
             disabled={status === 'loading'}
           />
-          {!photoFile ? (
+          {photoFiles.length === 0 ? (
             <label htmlFor="recipe-photo-input" className="photo-upload-btn">
-              📷 Upload Recipe Photo
+              📷 Upload Recipe Photo(s)
             </label>
           ) : (
-            <div className="photo-selected-row">
-              <img src={photoObjectUrl} alt="recipe" className="photo-thumb" />
-              <span className="photo-filename">{photoFile.name}</span>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={handlePhotoImport}
-                disabled={status === 'loading'}
-              >
-                {status === 'loading' && photoFile ? 'Scanning…' : 'Extract Recipe'}
-              </button>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  setPhotoFile(null)
-                  if (photoObjectUrl) { URL.revokeObjectURL(photoObjectUrl); setPhotoObjectUrl(null) }
-                  if (fileInputRef.current) fileInputRef.current.value = ''
-                  setPhotoError('')
-                }}
-                disabled={status === 'loading'}
-              >✕</button>
+            <div className="multi-photo-selected">
+              <div className="multi-photo-grid">
+                {photoObjectUrls.map((url, i) => (
+                  <div key={i} className="multi-photo-item">
+                    <img src={url} alt={`page ${i + 1}`} className="multi-photo-thumb" />
+                    <button
+                      className="multi-photo-remove"
+                      onClick={() => removePhoto(i)}
+                      disabled={status === 'loading'}
+                      title="Remove"
+                    >✕</button>
+                    {photoFiles.length > 1 && (
+                      <span className="multi-photo-badge">{i + 1}</span>
+                    )}
+                  </div>
+                ))}
+                <label
+                  htmlFor="recipe-photo-input"
+                  className={`multi-photo-add${status === 'loading' ? ' disabled' : ''}`}
+                  title="Add more photos"
+                >
+                  +
+                </label>
+              </div>
+              <div className="multi-photo-actions">
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handlePhotoImport}
+                  disabled={status === 'loading'}
+                >
+                  {status === 'loading' ? 'Scanning…' : `Extract Recipe${photoFiles.length > 1 ? ` (${photoFiles.length} photos)` : ''}`}
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => {
+                    photoObjectUrls.forEach(u => URL.revokeObjectURL(u))
+                    setPhotoFiles([])
+                    setPhotoObjectUrls([])
+                    if (fileInputRef.current) fileInputRef.current.value = ''
+                    setPhotoError('')
+                  }}
+                  disabled={status === 'loading'}
+                >Clear</button>
+              </div>
             </div>
           )}
         </div>
