@@ -204,14 +204,14 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     setSaving(true)
     setSaveError('')
     try {
-      // Upload first photo if one was used for import (non-fatal if it fails)
-      let photo_url = null
+      // Upload all photos (non-fatal if any fail)
+      let photo_urls = []
       if (photoFiles.length > 0) {
-        try {
-          photo_url = await uploadRecipeAttachment(photoFiles[0])
-        } catch (uploadErr) {
-          console.warn('Photo upload failed, saving without attachment:', uploadErr.message)
-        }
+        const results = await Promise.allSettled(photoFiles.map(f => uploadRecipeAttachment(f)))
+        results.forEach((r, i) => {
+          if (r.status === 'fulfilled') photo_urls.push(r.value)
+          else console.warn(`Photo ${i + 1} upload failed:`, r.reason?.message)
+        })
       }
 
       await onImport({
@@ -230,7 +230,8 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
         fat_g: preview.fat_g || null,
         tags: preview.tags,
         source: preview.source,
-        photo_url,
+        photo_url: photo_urls[0] ?? null,
+        photo_urls: photo_urls.length > 0 ? photo_urls : null,
       })
       setUrl('')
       setPreview(null)
