@@ -4,8 +4,13 @@ import { scrapeRecipeWithAI, scrapeRecipeFromImage } from '../utils/recipeAgent'
 import { uploadRecipeAttachment } from '../utils/storage'
 
 const ALLOWED_TAGS = [
-  'protein','pasta','seafood','vegetarian','sides','easy','weeknight',
-  'weekend','crowd-pleaser','healthy','brunch','italian','japanese','greek'
+  'protein','chicken','beef','pork','steak','shrimp','salmon','lamb','turkey',
+  'seafood','pasta',
+  'vegetarian','vegan','healthy','gluten-free','low-carb',
+  'sides','soup','salad',
+  'easy','quick','weeknight','weekend','brunch',
+  'crowd-pleaser','meal-prep','grill',
+  'italian','japanese','greek','mexican','thai','indian','korean','mediterranean',
 ]
 
 const STATUS_MESSAGES = [
