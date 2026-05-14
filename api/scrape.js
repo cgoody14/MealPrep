@@ -18,10 +18,55 @@ const RECIPE_JSON_SCHEMA = `Exactly this shape:
 
 Servings rules: return an integer (e.g. "serves 4" → 4). Return 0 if unknown.
 Nutrition rules: estimate realistic per-serving values as integers. Return 0 if unknown.
-Ingredient rules: transcribe ONLY ingredients explicitly listed. Copy quantities exactly as written.
-Tag rules — only use from this exact list: protein, pasta, seafood, vegetarian, sides, easy, weeknight, weekend, crowd-pleaser, healthy, brunch, italian, japanese, greek
-Instructions rules: single string separated by ' | ' (space pipe space). Include temperatures, times, quantities. 15-25 words per step.
-Never return null. Return empty arrays for ingredients/tags if unknown.`
+
+Ingredient rules: transcribe ONLY ingredients explicitly listed in the recipe. Copy quantities and preparation notes exactly as written. Never infer or add ingredients not stated.
+
+Tag rules — only use from this exact list that genuinely apply:
+protein, chicken, beef, pork, steak, shrimp, salmon, lamb, turkey,
+seafood, pasta, vegetarian, vegan, healthy, gluten-free, low-carb,
+sides, soup, salad, easy, quick, weeknight, weekend, brunch,
+crowd-pleaser, meal-prep, grill,
+italian, japanese, greek, mexican, thai, indian, korean, mediterranean
+
+Instructions rules:
+- Write ALL steps as a single string separated by ' | ' (space pipe space) — NOT newlines or \\n
+- Transcribe every step from the source in FULL — do NOT summarize, skip, or merge steps
+- A typical recipe should produce 8–20 steps; never compress multiple actions into one step
+- Each step must include: specific temperatures (e.g. 375°F, medium-high heat), specific times (e.g. 15–20 minutes), exact techniques, and quantities where relevant
+- Keep prep steps separate from cook steps (e.g. mixing sauce is its own step, not merged into the main cook step)
+- Mark optional steps clearly: "If desired, broil for 3 minutes for a light char"
+- Include plating and serving instructions as the final step
+- Aim for 15–30 words per step
+- Bad: "1. Make tartar sauce" — Good: "1. Combine 1/2 cup mayonnaise, 1/4 cup finely chopped bread-and-butter pickles, 1 tbsp pickle brine, 1 small shallot, 2 tbsp fresh dill, 2 tbsp capers, and 1 tsp soy sauce in a bowl; season with salt and refrigerate until ready to use"
+- Bad: "2. Fry the fish" — Good: "2. Heat 1 cup vegetable oil in a large skillet over medium-high heat until shimmering; fry breaded fillets 3–4 minutes per side until deep golden brown and cooked through"
+
+Never return null. Return empty arrays for ingredients and tags if unknown. Return empty string for other fields if unknown.`
+
+// Pre-format JSON-LD structured data to highlight instruction steps clearly for Groq.
+// When a site provides recipeInstructions as a HowToStep array, we pull them out
+// and label them explicitly so the AI can't miss or compress them.
+function formatStructuredRecipe(structured) {
+  const rawInstructions = structured.recipeInstructions
+  const steps = []
+  if (Array.isArray(rawInstructions)) {
+    rawInstructions.forEach((step, i) => {
+      const text = typeof step === 'string' ? step : (step.text || step.name || '')
+      if (text.trim()) steps.push(`${i + 1}. ${text.trim()}`)
+    })
+  } else if (typeof rawInstructions === 'string' && rawInstructions.trim()) {
+    steps.push(rawInstructions.trim())
+  }
+
+  if (steps.length > 0) {
+    const { recipeInstructions: _omit, ...rest } = structured
+    return (
+      JSON.stringify(rest) +
+      '\n\nRECIPE INSTRUCTIONS — transcribe EVERY step below in full detail, do not summarize:\n' +
+      steps.join('\n')
+    )
+  }
+  return JSON.stringify(structured)
+}
 
 // Recursively find a Recipe node in a JSON-LD value
 function findRecipe(node) {
@@ -141,7 +186,7 @@ export default async function handler(req, res) {
   // JSON-LD (schema.org/Recipe) is present on most modern recipe sites and is
   // machine-readable, giving Groq the cleanest possible signal.
   const structured = extractJsonLd(pageHtml)
-  const recipeContext = structured ? JSON.stringify(structured) : htmlToText(pageHtml)
+  const recipeContext = structured ? formatStructuredRecipe(structured) : htmlToText(pageHtml)
   const contextLabel = structured ? 'JSON-LD structured recipe data' : 'recipe page text'
 
   // ── Step 3: Normalize into our schema via Groq ─────────────────────────────
@@ -155,7 +200,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         temperature: 0.1,
-        max_tokens: 2500,
+        max_tokens: 4000,
         messages: [
           {
             role: 'system',
