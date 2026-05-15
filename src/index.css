@@ -178,6 +178,8 @@ body {
   overflow-x: hidden;
   overscroll-behavior-x: none;
   overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  will-change: transform;
   background: var(--bg);
   min-width: 0;
 }
@@ -1072,6 +1074,8 @@ button {
   flex: 1;
   overflow-y: auto;
   overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  will-change: transform;
 }
 
 .modal-form {
@@ -3254,6 +3258,7 @@ button {
   .modal-overlay {
     align-items: flex-start;
     padding: 0;
+    backdrop-filter: none; /* too expensive during scroll on mobile */
   }
 
   .modal {
@@ -3344,7 +3349,9 @@ button {
   .tag-filter-row {
     flex-wrap: nowrap;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    will-change: transform;
     padding-bottom: 4px;
     -webkit-mask-image: linear-gradient(to right, black 88%, transparent 100%);
     mask-image: linear-gradient(to right, black 88%, transparent 100%);
