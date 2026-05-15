@@ -1329,7 +1329,7 @@ button {
 }
 
 .detail-body {
-  padding: 24px 28px calc(28px + env(safe-area-inset-bottom, 0px));
+  padding: 24px 28px 36px;
 }
 
 /* Delete recipe zone */
@@ -3283,6 +3283,9 @@ button {
   .modal-detail {
     overflow: hidden;
     padding: 0;
+    /* Stop at top of tab bar so nothing is hidden behind it */
+    height: calc(100vh - 60px - env(safe-area-inset-bottom, 0px));
+    max-height: calc(100vh - 60px - env(safe-area-inset-bottom, 0px));
   }
 
   /* Detail modal sticky bar — wrap actions on narrow screens */
