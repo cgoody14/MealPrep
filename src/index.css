@@ -179,7 +179,6 @@ body {
   overscroll-behavior-x: none;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
-  will-change: transform;
   background: var(--bg);
   min-width: 0;
 }
@@ -1075,7 +1074,6 @@ button {
   overflow-y: auto;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
-  will-change: transform;
 }
 
 .modal-form {
@@ -3351,7 +3349,6 @@ button {
     overflow-x: auto;
     overscroll-behavior-x: contain;
     touch-action: pan-x;
-    will-change: transform;
     padding-bottom: 4px;
     -webkit-mask-image: linear-gradient(to right, black 88%, transparent 100%);
     mask-image: linear-gradient(to right, black 88%, transparent 100%);
