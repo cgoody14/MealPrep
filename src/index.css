@@ -176,7 +176,7 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  overscroll-behavior-x: none;
+  overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
   background: var(--bg);
   min-width: 0;
@@ -1072,6 +1072,7 @@ button {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
 }
 
 .modal-form {
@@ -1328,7 +1329,7 @@ button {
 }
 
 .detail-body {
-  padding: 24px 28px 28px;
+  padding: 24px 28px calc(28px + env(safe-area-inset-bottom, 0px));
 }
 
 /* Delete recipe zone */
