@@ -20,6 +20,7 @@ const SORT_OPTIONS = [
   { value: 'rating', label: 'Highest Rated' },
   { value: 'recent', label: 'Recently Made' },
   { value: 'oldest', label: 'Made Longest Ago' },
+  { value: 'added', label: 'Recently Added' },
   { value: 'az', label: 'A–Z' },
 ]
 
@@ -66,6 +67,7 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
           if (!b.last_made) return 1
           return new Date(a.last_made) - new Date(b.last_made)
         }
+        case 'added': return new Date(b.created_at) - new Date(a.created_at)
         case 'az': return a.name.localeCompare(b.name)
         default: return 0
       }
