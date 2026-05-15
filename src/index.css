@@ -176,8 +176,8 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: contain;
   background: var(--bg);
   min-width: 0;
 }
@@ -1071,8 +1071,7 @@ button {
 .modal-detail .detail-body {
   flex: 1;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: contain;
 }
 
 .modal-form {
