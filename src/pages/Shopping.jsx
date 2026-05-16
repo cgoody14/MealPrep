@@ -569,6 +569,30 @@ export default function Shopping({ weekMeals, loading, clearWeek, onRefresh }) {
                           </div>
                         )}
                       </div>
+                      {/* Source link and/or photo thumbnails */}
+                      {(meal.source || meal.photo_urls?.length > 0 || meal.photo_url) && (
+                        <div className="by-recipe-links" onClick={e => e.stopPropagation()}>
+                          {meal.source && (
+                            <a
+                              href={meal.source}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="by-recipe-source-link"
+                            >
+                              ↗ View recipe
+                            </a>
+                          )}
+                          {(meal.photo_urls?.length > 0 || meal.photo_url) && (
+                            <div className="by-recipe-photos">
+                              {(meal.photo_urls?.length > 0 ? meal.photo_urls : [meal.photo_url]).map((url, i) => (
+                                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                                  <img src={url} alt={`${meal.name} page ${i + 1}`} className="by-recipe-photo-thumb" />
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {!isRecipeCollapsed && (
                         <ul className="shop-item-list">
                           {isLoading && factor === 1 && <li className="shop-item"><span className="qty-loading">Adding quantities…</span></li>}
