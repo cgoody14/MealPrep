@@ -226,7 +226,7 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
               onToggleWeek={handleToggleWeek}
               inWeek={weekMealIds.has(meal.id)}
               weekLoading={weekLoading}
-              onAdjustCount={(id, n) => updateMeal(id, { times_made: n })}
+              onAdjustCount={(id, _n, update) => updateMeal(id, update)}
               animDelay={i * 40}
             />
           ))}

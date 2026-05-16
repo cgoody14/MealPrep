@@ -35,7 +35,9 @@ export default function MealCard({ meal, onOpen, onToggleWeek, inWeek, weekLoadi
     e.stopPropagation()
     const next = Math.max(0, localCount + delta)
     setLocalCount(next)
-    onAdjustCount?.(meal.id, next)
+    const update = { times_made: next }
+    if (delta > 0 && !meal.last_made) update.last_made = new Date().toISOString().split('T')[0]
+    onAdjustCount?.(meal.id, next, update)
   }
 
   return (

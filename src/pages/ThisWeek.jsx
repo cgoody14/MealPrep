@@ -68,7 +68,9 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
     e.stopPropagation()
     const next = Math.max(0, localCount + delta)
     setLocalCount(next)
-    onAdjustCount?.(m.id, next)
+    const update = { times_made: next }
+    if (delta > 0 && !m.last_made) update.last_made = new Date().toISOString().split('T')[0]
+    onAdjustCount?.(m.id, next, update)
   }
   const displayIngredients = scaleIngredientsByFactor(m.ingredients || [], factor)
 
@@ -251,7 +253,7 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
     markingId,
     onOpenDetail: (m, weekMealId) => setDetailEntry({ meal: m, weekMealId }),
     onDayChange: handleDayChange,
-    onAdjustCount: (id, n) => updateMeal(id, { times_made: n }),
+    onAdjustCount: (id, _n, update) => updateMeal(id, update),
   })
 
   return (
