@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import MealCard from '../components/MealCard'
 import MealDetail from '../components/MealDetail'
 import MealForm from '../components/MealForm'
 import UrlImportBar from '../components/UrlImportBar'
-import RandomizeModal from '../components/RandomizeModal'
 import SkeletonCard from '../components/SkeletonCard'
 
 const ALL_TAGS = [
@@ -25,6 +25,7 @@ const SORT_OPTIONS = [
 ]
 
 export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMeal, markMadeToday, weekMeals, addToWeek, removeFromWeek, onRefresh }) {
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('rating')
   const [activeTag, setActiveTag] = useState('All')
@@ -33,8 +34,6 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
   const [showAdd, setShowAdd] = useState(false)
   const [weekLoading, setWeekLoading] = useState(false)
   const [importError, setImportError] = useState('')
-  const [showRandomize, setShowRandomize] = useState(false)
-  const [randomizeSuccess, setRandomizeSuccess] = useState('')
   const [reimportUrl, setReimportUrl] = useState('')
 
   const weekMealIds = new Set((weekMeals || []).map(wm => wm.meal_id))
@@ -136,14 +135,6 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
     await addMeal(data)
   }
 
-  const handleRandomizeDone = (count) => {
-    setShowRandomize(false)
-    if (count) {
-      setRandomizeSuccess(`✓ ${count} meal${count !== 1 ? 's' : ''} added to This Week!`)
-      setTimeout(() => setRandomizeSuccess(''), 3000)
-    }
-  }
-
   return (
     <div className="page">
       <div className="page-header">
@@ -177,13 +168,10 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
-        <button className="btn btn-secondary" onClick={() => setShowRandomize(true)}>
+        <button className="btn btn-secondary" onClick={() => navigate('/randomizer')}>
           🎲 Randomize
         </button>
       </div>
-      {randomizeSuccess && (
-        <div className="randomize-success fade-in">{randomizeSuccess}</div>
-      )}
 
       {availableTags.length > 0 && (
         <div className="tag-filter-row">
@@ -254,14 +242,6 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
         />
       )}
 
-      {showRandomize && (
-        <RandomizeModal
-          meals={tagFilteredMeals}
-          activeTag={activeTag}
-          onAdd={addToWeek}
-          onClose={handleRandomizeDone}
-        />
-      )}
     </div>
   )
 }
