@@ -7,7 +7,8 @@ export function weightedRandom(meals, count, cooldownDays) {
   const weighted = eligible.map(m => {
     const days = m.last_made ? Math.floor((now - new Date(m.last_made)) / 86400000) : 999;
     const recency = days >= 30 ? 1.0 : days >= 14 ? 0.6 : 0.3;
-    const weight = Math.pow(m.rating, 2) * Math.log(m.times_made + 1) * recency;
+    // +2 instead of +1 so never-made meals (times_made=0) get log(2)≈0.69, not 0
+    const weight = Math.max(0.5, Math.pow(m.rating || 3, 2) * Math.log((m.times_made || 0) + 2) * recency);
     return { ...m, weight };
   });
   const selected = [];

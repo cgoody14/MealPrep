@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import Stars from '../components/Stars'
-import { plannerScore } from '../utils/scoring'
 import { buildShoppingList } from '../utils/shopping'
 import { daysSince } from '../utils/format'
 
@@ -31,21 +30,39 @@ export default function Planner({ meals, addToWeek, weekMeals, onRefresh }) {
 
     const cooldownDays = cooldown * 7
     const now = new Date()
+
     const eligible = meals.filter(m => {
       const days = m.last_made ? Math.floor((now - new Date(m.last_made)) / 86400000) : 999
       return days >= cooldownDays
     })
 
-    const scored = eligible.map(m => ({
-      ...m,
-      _score: plannerScore(m, keywords),
-      _matchedKeywords: keywords.filter(kw =>
+    // Weighted random selection — higher-rated and less-recently-made meals are
+    // more likely to appear, but all eligible meals have a real chance each time.
+    const weighted = eligible.map(m => {
+      const days = m.last_made ? Math.floor((now - new Date(m.last_made)) / 86400000) : 999
+      const recency = days >= 30 ? 1.0 : days >= 14 ? 0.6 : 0.3
+      const keywordBoost = keywords.filter(kw =>
+        (m.ingredients || []).some(i => i.toLowerCase().includes(kw))
+      ).length * 2
+      const weight = Math.max(0.5, ((m.rating || 3) + keywordBoost) * Math.log((m.times_made || 0) + 2) * recency)
+      const _matchedKeywords = keywords.filter(kw =>
         (m.ingredients || []).some(i => i.toLowerCase().includes(kw))
       )
-    }))
+      return { ...m, weight, _matchedKeywords }
+    })
 
-    scored.sort((a, b) => b._score - a._score)
-    setResults(scored.slice(0, count))
+    const selected = []
+    const pool = [...weighted]
+    for (let i = 0; i < Math.min(count, pool.length); i++) {
+      const total = pool.reduce((s, m) => s + m.weight, 0)
+      let rand = Math.random() * total
+      for (let j = 0; j < pool.length; j++) {
+        rand -= pool[j].weight
+        if (rand <= 0) { selected.push(pool[j]); pool.splice(j, 1); break }
+      }
+    }
+
+    setResults(selected)
     setGenerated(true)
     setAddedIds(new Set())
   }
