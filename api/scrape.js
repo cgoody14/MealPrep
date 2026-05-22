@@ -68,10 +68,12 @@ function formatStructuredRecipe(structured) {
   return JSON.stringify(structured)
 }
 
-// Recursively find a Recipe node in a JSON-LD value
+// Recursively find a Recipe node in a JSON-LD value.
+// @type can be a string OR an array (e.g. ["Recipe","Article"]) on many sites.
 function findRecipe(node) {
   if (!node || typeof node !== 'object') return null
-  if (node['@type'] === 'Recipe') return node
+  const t = node['@type']
+  if (t === 'Recipe' || (Array.isArray(t) && t.includes('Recipe'))) return node
   if (Array.isArray(node)) {
     for (const item of node) {
       const r = findRecipe(item)
@@ -80,6 +82,23 @@ function findRecipe(node) {
   }
   if (node['@graph']) return findRecipe(node['@graph'])
   return null
+}
+
+// Strip gift-link / tracking query params before fetching so the server sees
+// a plain page URL. NYT unlocked_article_code triggers a cookie-based redirect
+// that our stateless fetch can't follow correctly; the clean URL still serves
+// full JSON-LD for SEO purposes.
+function cleanFetchUrl(rawUrl) {
+  try {
+    const u = new URL(rawUrl)
+    const drop = ['unlocked_article_code', 'smid', 'utm_source', 'utm_medium',
+      'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid', '_ga',
+      'share', 'referringSource', 'action']
+    drop.forEach(p => u.searchParams.delete(p))
+    return u.toString()
+  } catch {
+    return rawUrl
+  }
 }
 
 // Extract the first Recipe JSON-LD block from an HTML page
@@ -175,11 +194,15 @@ export default async function handler(req, res) {
   }
 
   // ── Step 1: Fetch the actual page ───────────────────────────────────────────
+  // Use a clean URL (tracking/gift params stripped) — gift-link tokens like
+  // NYT's unlocked_article_code trigger cookie-based redirects that a stateless
+  // fetch can't follow, but the clean URL still serves full JSON-LD for SEO.
+  const fetchUrl = cleanFetchUrl(url)
   let pageHtml
   try {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 9000)
-    const pageRes = await fetch(url, {
+    const pageRes = await fetch(fetchUrl, {
       signal: controller.signal,
       redirect: 'follow',
       headers: {
