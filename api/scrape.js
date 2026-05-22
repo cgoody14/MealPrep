@@ -101,18 +101,44 @@ function cleanFetchUrl(rawUrl) {
   }
 }
 
-// Extract the first Recipe JSON-LD block from an HTML page
+// Extract the first Recipe JSON-LD block from an HTML page.
+// Handles CDATA wrappers and HTML-entity-encoded content.
 function extractJsonLd(html) {
   const re = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
   let match
   while ((match = re.exec(html)) !== null) {
     try {
-      const parsed = JSON.parse(match[1])
+      let content = match[1]
+        .replace(/^\/\/<!\[CDATA\[/, '').replace(/\/\/\]\]>$/, '')
+        .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+        .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+        .trim()
+      const parsed = JSON.parse(content)
       const recipe = findRecipe(parsed)
       if (recipe) return recipe
     } catch { /* malformed JSON-LD — skip */ }
   }
   return null
+}
+
+// Extract recipe data from the Next.js __NEXT_DATA__ JSON block.
+// Sites like NYT Cooking embed full page props (including recipe objects)
+// in this script tag for client-side hydration — it's always server-rendered.
+function extractNextData(html) {
+  const match = html.match(/<script id="__NEXT_DATA__" type="application\/json"[^>]*>([\s\S]*?)<\/script>/)
+  if (!match) return null
+  try {
+    const data = JSON.parse(match[1])
+    // First check if the pageProps contain a JSON-LD-style Recipe node
+    const pageProps = data?.props?.pageProps
+    if (!pageProps) return null
+    const ldRecipe = findRecipe(pageProps)
+    if (ldRecipe) return { type: 'jsonld', data: ldRecipe }
+    // Otherwise return the raw pageProps JSON for Groq to interpret
+    const text = JSON.stringify(pageProps)
+    if (text.length < 50) return null
+    return { type: 'json', data: text.slice(0, 14000) }
+  } catch { return null }
 }
 
 // Strip HTML to clean readable text for Groq
@@ -155,13 +181,13 @@ function isBlockedPage(status, html) {
   if (status === 403 || status === 503) return true
   if (!html) return false
   const lower = html.slice(0, 4000).toLowerCase()
+  // Only match Cloudflare-specific signatures — avoid generic phrases like
+  // "access denied" that appear on paywalled-but-valid recipe pages.
   return (
     lower.includes('cf-browser-verification') ||
     lower.includes('challenge-platform') ||
     lower.includes('enable javascript and cookies') ||
-    (lower.includes('just a moment') && lower.includes('cloudflare')) ||
-    lower.includes('access denied') ||
-    lower.includes('403 forbidden')
+    (lower.includes('just a moment') && lower.includes('cloudflare'))
   )
 }
 
@@ -206,7 +232,7 @@ export default async function handler(req, res) {
       signal: controller.signal,
       redirect: 'follow',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
       },
@@ -222,12 +248,28 @@ export default async function handler(req, res) {
     return res.status(200).json(buildFallback(url, false))
   }
 
-  // ── Step 2: Extract content — JSON-LD first, then raw text ─────────────────
-  // JSON-LD (schema.org/Recipe) is present on most modern recipe sites and is
-  // machine-readable, giving Groq the cleanest possible signal.
+  // ── Step 2: Extract content using up to 3 strategies ──────────────────────
+  // 1. JSON-LD (schema.org/Recipe) — cleanest signal, present on most sites
+  // 2. __NEXT_DATA__ — Next.js page props (e.g. NYT Cooking); always server-rendered
+  // 3. Stripped HTML text — last resort
+  let recipeContext, contextLabel
   const structured = extractJsonLd(pageHtml)
-  const recipeContext = structured ? formatStructuredRecipe(structured) : htmlToText(pageHtml)
-  const contextLabel = structured ? 'JSON-LD structured recipe data' : 'recipe page text'
+  if (structured) {
+    recipeContext = formatStructuredRecipe(structured)
+    contextLabel = 'JSON-LD structured recipe data'
+  } else {
+    const nextData = extractNextData(pageHtml)
+    if (nextData?.type === 'jsonld') {
+      recipeContext = formatStructuredRecipe(nextData.data)
+      contextLabel = 'JSON-LD structured recipe data'
+    } else if (nextData?.type === 'json') {
+      recipeContext = nextData.data
+      contextLabel = 'Next.js page props JSON (extract the recipe)'
+    } else {
+      recipeContext = htmlToText(pageHtml)
+      contextLabel = 'recipe page text'
+    }
+  }
 
   // ── Step 3: Normalize into our schema via Groq ─────────────────────────────
   try {
