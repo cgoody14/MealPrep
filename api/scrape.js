@@ -102,18 +102,12 @@ function cleanFetchUrl(rawUrl) {
 }
 
 // Extract the first Recipe JSON-LD block from an HTML page.
-// Handles CDATA wrappers and HTML-entity-encoded content.
 function extractJsonLd(html) {
   const re = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
   let match
   while ((match = re.exec(html)) !== null) {
     try {
-      let content = match[1]
-        .replace(/^\/\/<!\[CDATA\[/, '').replace(/\/\/\]\]>$/, '')
-        .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-        .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-        .trim()
-      const parsed = JSON.parse(content)
+      const parsed = JSON.parse(match[1].trim())
       const recipe = findRecipe(parsed)
       if (recipe) return recipe
     } catch { /* malformed JSON-LD — skip */ }
