@@ -176,7 +176,11 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     stopStatusCycle()
 
     if (result._fallback) {
-      setFallbackMsg("Couldn't reach that recipe site — fill in the details below.")
+      setFallbackMsg(
+        result._blocked
+          ? "That site blocks automated access (e.g. AllRecipes, NYT Cooking). Take a screenshot of the recipe and use photo import instead, or fill in the details below."
+          : "Couldn't reach that recipe site — fill in the details below."
+      )
     }
 
     setPreview({

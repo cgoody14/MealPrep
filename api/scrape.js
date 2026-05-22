@@ -120,16 +120,30 @@ function parseAIResponse(text) {
   return JSON.parse(match[0])
 }
 
-function buildFallback(url) {
+function buildFallback(url, blocked = false) {
   try {
     const slug = new URL(url).pathname.split('/').filter(Boolean).pop() ?? ''
     const name = slug
       .replace(/[-_]/g, ' ').replace(/\.(html|htm|php|aspx)$/i, '')
       .replace(/\b\w/g, c => c.toUpperCase()).trim() || 'Imported Recipe'
-    return { name, ingredients: [], notes: '', tags: [], cookTime: '', servings: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, instructions: '', _fallback: true }
+    return { name, ingredients: [], notes: '', tags: [], cookTime: '', servings: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, instructions: '', _fallback: true, _blocked: blocked }
   } catch {
-    return { name: 'Imported Recipe', ingredients: [], notes: '', tags: [], cookTime: '', servings: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, instructions: '', _fallback: true }
+    return { name: 'Imported Recipe', ingredients: [], notes: '', tags: [], cookTime: '', servings: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, instructions: '', _fallback: true, _blocked: blocked }
   }
+}
+
+function isBlockedPage(status, html) {
+  if (status === 403 || status === 503) return true
+  if (!html) return false
+  const lower = html.slice(0, 4000).toLowerCase()
+  return (
+    lower.includes('cf-browser-verification') ||
+    lower.includes('challenge-platform') ||
+    lower.includes('enable javascript and cookies') ||
+    (lower.includes('just a moment') && lower.includes('cloudflare')) ||
+    lower.includes('access denied') ||
+    lower.includes('403 forbidden')
+  )
 }
 
 export default async function handler(req, res) {
@@ -169,17 +183,28 @@ export default async function handler(req, res) {
       signal: controller.signal,
       redirect: 'follow',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
       },
     })
     clearTimeout(timeout)
-    if (!pageRes.ok) throw new Error(`HTTP ${pageRes.status}`)
-    pageHtml = await pageRes.text()
+    const html = await pageRes.text()
+    if (!pageRes.ok || isBlockedPage(pageRes.status, html)) {
+      return res.status(200).json(buildFallback(url, true))
+    }
+    pageHtml = html
   } catch {
     // Can't reach the page — degrade gracefully with a fallback
-    return res.status(200).json(buildFallback(url))
+    return res.status(200).json(buildFallback(url, false))
   }
 
   // ── Step 2: Extract content — JSON-LD first, then raw text ─────────────────
