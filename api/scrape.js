@@ -171,20 +171,6 @@ function buildFallback(url, blocked = false) {
   }
 }
 
-function isBlockedPage(status, html) {
-  if (status === 403 || status === 503) return true
-  if (!html) return false
-  const lower = html.slice(0, 4000).toLowerCase()
-  // Only match Cloudflare-specific signatures — avoid generic phrases like
-  // "access denied" that appear on paywalled-but-valid recipe pages.
-  return (
-    lower.includes('cf-browser-verification') ||
-    lower.includes('challenge-platform') ||
-    lower.includes('enable javascript and cookies') ||
-    (lower.includes('just a moment') && lower.includes('cloudflare'))
-  )
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -214,10 +200,10 @@ export default async function handler(req, res) {
   }
 
   // ── Step 1: Fetch the actual page ───────────────────────────────────────────
-  // Use a clean URL (tracking/gift params stripped) — gift-link tokens like
-  // NYT's unlocked_article_code trigger cookie-based redirects that a stateless
-  // fetch can't follow, but the clean URL still serves full JSON-LD for SEO.
+  // Strip gift/tracking params first — NYT unlocked_article_code and similar
+  // tokens trigger cookie-based redirects a stateless fetch can't follow.
   const fetchUrl = cleanFetchUrl(url)
+  const isKnownBlock = /allrecipes\.com/i.test(parsedUrl.hostname)
   let pageHtml
   try {
     const controller = new AbortController()
@@ -232,14 +218,10 @@ export default async function handler(req, res) {
       },
     })
     clearTimeout(timeout)
-    const html = await pageRes.text()
-    if (!pageRes.ok || isBlockedPage(pageRes.status, html)) {
-      return res.status(200).json(buildFallback(url, true))
-    }
-    pageHtml = html
+    if (!pageRes.ok) throw new Error(`HTTP ${pageRes.status}`)
+    pageHtml = await pageRes.text()
   } catch {
-    // Can't reach the page — degrade gracefully with a fallback
-    return res.status(200).json(buildFallback(url, false))
+    return res.status(200).json(buildFallback(url, isKnownBlock))
   }
 
   // ── Step 2: Extract content using up to 3 strategies ──────────────────────
