@@ -171,8 +171,14 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     setSuccessMsg('')
     startStatusCycle()
 
-    // scrapeRecipeWithAI never throws — returns buildFallback on any error
-    const result = await scrapeRecipeWithAI(url.trim())
+    // scrapeRecipeWithAI never throws — returns buildFallback on any error.
+    // Auto-retry once on a non-blocked fallback (cold starts, transient timeouts).
+    let result = await scrapeRecipeWithAI(url.trim())
+    if (result._fallback && !result._blocked) {
+      await new Promise(r => setTimeout(r, 1500))
+      const retry = await scrapeRecipeWithAI(url.trim())
+      if (!retry._fallback) result = retry
+    }
     stopStatusCycle()
 
     if (result._fallback) {
