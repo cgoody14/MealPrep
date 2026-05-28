@@ -1,4 +1,4 @@
-const CACHE = 'mise-en-place-v2'
+const CACHE = 'rouxlo-v2'
 const PRECACHE = ['/', '/index.html']
 
 self.addEventListener('install', e => {

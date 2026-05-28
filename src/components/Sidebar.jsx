@@ -17,11 +17,11 @@ export default function Sidebar({ mealCount, weekCount, onOpenSettings }) {
         <div className="sidebar-brand">
           <img
             src="/logo.png"
-            alt="Mise en Place"
+            alt="Rouxlo"
             className="sidebar-brand-logo"
             onError={e => { e.currentTarget.style.display = 'none' }}
           />
-          <span className="sidebar-brand-text">Mise en Place</span>
+          <span className="sidebar-brand-text">Rouxlo</span>
         </div>
         <ul className="sidebar-nav">
           {NAV.map(item => (

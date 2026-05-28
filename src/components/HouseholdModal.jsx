@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
-const APP_URL = 'https://meal-prep-lac.vercel.app/'
-const SHARE_TEXT = `Check out Mise en Place — a personal meal planner and recipe journal. ${APP_URL}`
+const APP_URL = import.meta.env.VITE_APP_URL || 'https://rouxlo.com'
+const SHARE_TEXT = `Check out Rouxlo — a personal recipe collection and meal planner. ${APP_URL}`
 
 export default function HouseholdModal({
   household, members, currentUserId,
@@ -41,7 +41,7 @@ export default function HouseholdModal({
 
   const handleShareApp = async () => {
     if (navigator.share) {
-      try { await navigator.share({ title: 'Mise en Place', text: SHARE_TEXT, url: APP_URL }) }
+      try { await navigator.share({ title: 'Rouxlo', text: SHARE_TEXT, url: APP_URL }) }
       catch { /* user cancelled */ }
     } else {
       try {
@@ -62,9 +62,9 @@ export default function HouseholdModal({
 
   const handleShare = async () => {
     if (!household?.invite_code) return
-    const text = `Join me on Mise en Place — our shared meal planner!\n\nhttps://meal-prep-lac.vercel.app/\n\nCreate an account, then go to Settings → Join a Household and enter code: ${household.invite_code}`
+    const text = `Join me on Rouxlo — our shared meal planner!\n\n${APP_URL}\n\nCreate an account, then go to Settings → Join a Household and enter code: ${household.invite_code}`
     if (navigator.share) {
-      try { await navigator.share({ title: 'Mise en Place Invite', text }) }
+      try { await navigator.share({ title: 'Rouxlo Invite', text }) }
       catch { /* user cancelled */ }
     } else {
       try {
@@ -306,7 +306,7 @@ export default function HouseholdModal({
 
         {/* ── Share the app ── */}
         <div className="settings-section">
-          <h3 className="settings-section-title">Share Mise en Place</h3>
+          <h3 className="settings-section-title">Share Rouxlo</h3>
           <p className="settings-desc">Invite a friend to start their own meal journal.</p>
           <div className="share-app-row">
             {navigator.share ? (
@@ -323,7 +323,7 @@ export default function HouseholdModal({
                 </button>
                 <button
                   className="btn btn-secondary btn-sm"
-                  onClick={() => window.open(`mailto:?subject=Check out Mise en Place&body=${encodeURIComponent(SHARE_TEXT)}`)}
+                  onClick={() => window.open(`mailto:?subject=Check out Rouxlo&body=${encodeURIComponent(SHARE_TEXT)}`)}
                 >
                   ✉️ Email
                 </button>

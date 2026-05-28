@@ -43,7 +43,7 @@ function ResetPasswordPage({ onDone }) {
       <div className="auth-card">
         <div className="auth-brand">
           <img src="/logo.png" alt="" className="auth-brand-logo" onError={e => { e.currentTarget.style.display = 'none' }} />
-          <h1 className="auth-title">Mise en Place</h1>
+          <h1 className="auth-title">Rouxlo</h1>
           <p className="auth-subtitle">Set a new password</p>
         </div>
         {success ? (
@@ -124,7 +124,7 @@ function AuthPage() {
         const { error: authError } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: 'https://meal-prep-lac.vercel.app/' }
+          options: { emailRedirectTo: import.meta.env.VITE_APP_URL || 'https://rouxlo.com' }
         })
         if (authError) throw authError
 
@@ -146,7 +146,7 @@ function AuthPage() {
         setMode('login')
       } else if (mode === 'forgot') {
         const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: 'https://meal-prep-lac.vercel.app/'
+          redirectTo: import.meta.env.VITE_APP_URL || 'https://rouxlo.com'
         })
         if (err) throw err
         setInfo('Check your email for a password reset link.')
@@ -164,7 +164,7 @@ function AuthPage() {
         <div className="auth-card">
           <div className="auth-brand">
             <img src="/logo.png" alt="" className="auth-brand-logo" onError={e => { e.currentTarget.style.display = 'none' }} />
-            <h1 className="auth-title">Mise en Place</h1>
+            <h1 className="auth-title">Rouxlo</h1>
             <p className="auth-subtitle">Reset your password</p>
           </div>
           {info ? (
@@ -208,7 +208,7 @@ function AuthPage() {
       <div className="auth-card">
         <div className="auth-brand">
           <img src="/logo.png" alt="" className="auth-brand-logo" onError={e => { e.currentTarget.style.display = 'none' }} />
-          <h1 className="auth-title">Mise en Place</h1>
+          <h1 className="auth-title">Rouxlo</h1>
           <p className="auth-subtitle">Your personal meal journal &amp; planner</p>
         </div>
 

@@ -49,7 +49,7 @@ export default function OnboardingModal({ household, onJoin, onDone }) {
     <div className="modal-overlay onboarding-overlay">
       <div className="onboarding-card slide-up">
         <div className="onboarding-brand">🍽️</div>
-        <h2 className="onboarding-title">Welcome to Mise en Place</h2>
+        <h2 className="onboarding-title">Welcome to Rouxlo</h2>
         <p className="onboarding-desc">
           {hasCode
             ? "We found a household code from your sign-up. Tap Join to share a meal library with your household."

@@ -35,7 +35,7 @@ export default function InstallGuideModal({ onClose }) {
           <div className="install-app-icon">🍽️</div>
           <h2 className="install-title">Add to Home Screen</h2>
           <p className="install-subtitle">
-            Get one-tap access to Mise en Place — no App Store required.
+            Get one-tap access to Rouxlo — no App Store required.
           </p>
         </div>
 

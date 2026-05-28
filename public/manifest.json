@@ -1,7 +1,7 @@
 {
-  "name": "Mise en Place",
-  "short_name": "Mise",
-  "description": "Your personal meal planning and recipe journal",
+  "name": "Rouxlo",
+  "short_name": "Rouxlo",
+  "description": "Your personal recipe collection and meal planner",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FAF7F2",

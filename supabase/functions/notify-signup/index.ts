@@ -40,14 +40,14 @@ Deno.serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: `Mise en Place <${fromEmail}>`,
+        from: `Rouxlo <${fromEmail}>`,
         to: ownerEmail,
         subject: '🍽️ New user signed up',
         html: `
           <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#FAF7F2;border-radius:12px;">
             <h2 style="color:#B85C2C;margin:0 0 16px;">New Sign-Up</h2>
             <p style="margin:0 0 8px;color:#3D2B1F;font-size:15px;">
-              A new user just created an account on <strong>Mise en Place</strong>.
+              A new user just created an account on <strong>Rouxlo</strong>.
             </p>
             <table style="margin:20px 0;background:#fff;border-radius:8px;padding:16px 20px;width:100%;border:1px solid #e8e0d8;">
               <tr>
@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
                 <td style="color:#1a1a1a;font-size:14px;padding:4px 0;">${time} ET</td>
               </tr>
             </table>
-            <p style="color:#9E8880;font-size:12px;margin:0;">Mise en Place · Automated notification</p>
+            <p style="color:#9E8880;font-size:12px;margin:0;">Rouxlo · Automated notification</p>
           </div>
         `,
       }),
