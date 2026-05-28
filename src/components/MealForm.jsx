@@ -64,7 +64,7 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
     const dup = existingMeals.find(m =>
       m.name.toLowerCase() === trimmed && m.id !== initial?.id
     )
-    setDupWarning(dup ? `A recipe named "${dup.name}" already exists in your Rolodex.` : '')
+    setDupWarning(dup ? `A recipe named "${dup.name}" already exists in your Recipes.` : '')
   }
 
   const addIngredient = () => {

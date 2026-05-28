@@ -278,7 +278,7 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
       ) : weekMeals.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📅</div>
-          <div className="empty-text">No meals this week. Add from the Rolodex or use the Randomizer.</div>
+          <div className="empty-text">No meals this week. Add from Recipes or use the Randomizer.</div>
         </div>
       ) : (
         <>

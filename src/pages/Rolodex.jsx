@@ -139,7 +139,7 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
     <div className="page">
       <div className="page-header">
         <div className="page-title-row">
-          <h1 className="page-title">Rolodex</h1>
+          <h1 className="page-title">Recipes</h1>
           <span className="meal-count-pill">{meals.length} recipe{meals.length !== 1 ? 's' : ''}</span>
         </div>
         <div className="page-header-actions">

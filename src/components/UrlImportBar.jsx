@@ -248,7 +248,7 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
       setStatus('idle')
       setIngInput('')
       setFallbackMsg('')
-      setSuccessMsg('Saved to Rolodex!')
+      setSuccessMsg('Saved to Recipes!')
       successTimerRef.current = setTimeout(() => setSuccessMsg(''), 2000)
     } catch (err) {
       setSaveError(err.message || 'Failed to save. Please try again.')
