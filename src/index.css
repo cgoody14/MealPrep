@@ -2673,6 +2673,56 @@ button {
   text-align: center;
 }
 
+/* ── Auth dark mode ── */
+[data-theme="dark"] .auth-card {
+  background: #1E1B22;
+  border-color: #3A3540;
+}
+[data-theme="dark"] .auth-tab {
+  background: #27242B;
+  color: #9E9494;
+}
+[data-theme="dark"] .auth-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+[data-theme="dark"] .auth-tab:hover:not(.active) {
+  background: #322F38;
+  color: #D0C8C0;
+}
+[data-theme="dark"] .auth-tab:first-child {
+  border-right-color: #3A3540;
+}
+[data-theme="dark"] .auth-subtitle {
+  color: #9E9494;
+}
+[data-theme="dark"] .form-label {
+  color: #C0B8B0;
+}
+[data-theme="dark"] .auth-card .form-input {
+  background: #14121A;
+  border-color: #3A3540;
+  color: #F0EBE3;
+}
+[data-theme="dark"] .auth-card .form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(184,92,44,0.25);
+}
+[data-theme="dark"] .auth-card .form-input::placeholder {
+  color: #5A5258;
+}
+[data-theme="dark"] .password-toggle {
+  color: #786E6A;
+}
+[data-theme="dark"] .password-toggle:hover {
+  color: #B8AFA6;
+}
+[data-theme="dark"] .auth-info-box {
+  background: #1a2e1a;
+  border-color: #2d5a2d;
+  color: #6BCB77;
+}
+
 /* ================================================
    SIDEBAR BOTTOM / SETTINGS BUTTON
    ================================================ */
