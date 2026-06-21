@@ -2706,6 +2706,34 @@ button {
   color: rgba(255,255,255,0.9);
 }
 
+[data-theme="dark"] .sidebar {
+  background: #141218;
+}
+[data-theme="dark"] .sidebar-brand {
+  border-bottom-color: rgba(255,255,255,0.06);
+}
+[data-theme="dark"] .sidebar-link {
+  color: rgba(255,255,255,0.55);
+}
+[data-theme="dark"] .sidebar-link:hover {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.9);
+}
+[data-theme="dark"] .sidebar-link.active {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}
+[data-theme="dark"] .sidebar-settings-btn {
+  color: rgba(255,255,255,0.55);
+}
+[data-theme="dark"] .sidebar-settings-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.9);
+}
+[data-theme="dark"] .sidebar-bottom {
+  border-top-color: rgba(255,255,255,0.06);
+}
+
 /* ================================================
    SETTINGS / HOUSEHOLD MODAL
    ================================================ */
