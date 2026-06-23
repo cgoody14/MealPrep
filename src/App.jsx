@@ -121,7 +121,6 @@ function AuthPage() {
     setError('')
     setInfo('')
     try {
-      localStorage.setItem('remember_me', rememberMe ? 'true' : 'false')
       if (mode === 'login') {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
         if (authError) throw authError
