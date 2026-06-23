@@ -111,6 +111,7 @@ function AuthPage() {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
 
   const switchMode = (next) => { setMode(next); setError(''); setInfo(''); setShowPassword(false) }
 
@@ -120,6 +121,7 @@ function AuthPage() {
     setError('')
     setInfo('')
     try {
+      localStorage.setItem('remember_me', rememberMe ? 'true' : 'false')
       if (mode === 'login') {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
         if (authError) throw authError
@@ -292,6 +294,16 @@ function AuthPage() {
           )}
           {error && <div className="form-error">{error}</div>}
           {info && <div className="form-info">{info}</div>}
+          {mode === 'login' && (
+            <label className="auth-remember">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={e => setRememberMe(e.target.checked)}
+              />
+              <span>Remember me</span>
+            </label>
+          )}
           <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
             {loading ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
           </button>
