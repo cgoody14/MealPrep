@@ -5,6 +5,7 @@ const NAV = [
   { path: '/week', icon: '📅', label: 'This Week', countKey: 'week' },
   { path: '/randomizer', icon: '🔀', label: 'Meal Randomizer', mobileLabel: 'Randomizer', countKey: null },
   { path: '/shopping', icon: '🛒', label: 'Shopping List', countKey: null },
+  { path: '/faqs', icon: '?', label: 'FAQs', countKey: null },
 ]
 
 export default function Sidebar({ mealCount, weekCount, onOpenSettings }) {

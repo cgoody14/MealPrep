@@ -3323,6 +3323,104 @@ button {
 }
 
 /* ================================================
+   FAQs
+   ================================================ */
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-top: 8px;
+}
+
+.faq-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.faq-section-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+
+.faq-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.faq-item.open {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(184,92,44,0.08);
+}
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.faq-question:hover {
+  background: var(--bg2);
+}
+
+.faq-q-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.faq-chevron {
+  font-size: 22px;
+  color: var(--text3);
+  line-height: 1;
+  transition: transform 0.2s ease-out, color 0.15s;
+  flex-shrink: 0;
+}
+
+.faq-item.open .faq-chevron {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+.faq-answer {
+  padding: 0 16px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text2);
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  animation: faqAnswerFade 0.18s ease-out;
+}
+
+.faq-answer strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+@keyframes faqAnswerFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================================
    TABLET (< 900px)
    ================================================ */
 

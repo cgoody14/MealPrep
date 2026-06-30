@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import MealCard from '../components/MealCard'
 import MealDetail from '../components/MealDetail'
 import MealForm from '../components/MealForm'
@@ -31,7 +31,6 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
   const [activeTag, setActiveTag] = useState('All')
   const [detailMeal, setDetailMeal] = useState(null)
   const [editMeal, setEditMeal] = useState(null)
-  const [showAdd, setShowAdd] = useState(false)
   const [weekLoading, setWeekLoading] = useState(false)
   const [importError, setImportError] = useState('')
   const [reimportUrl, setReimportUrl] = useState('')
@@ -125,8 +124,6 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
   const handleSaveEdit = async (data) => {
     if (editMeal?.id) {
       await updateMeal(editMeal.id, data)
-    } else {
-      await addMeal(data)
     }
   }
 
@@ -144,7 +141,7 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
         </div>
         <div className="page-header-actions">
           {onRefresh && <button className="btn btn-ghost refresh-btn" onClick={onRefresh} title="Refresh">↻</button>}
-          <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Add Meal</button>
+          <Link to="/faqs" className="btn btn-secondary">FAQs</Link>
         </div>
       </div>
       <p className="page-subtitle">Your personal recipe archive. Add meals manually or import from any recipe URL. Search, filter by tag, and track how often you cook each dish.</p>
@@ -233,11 +230,11 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
         />
       )}
 
-      {(editMeal || showAdd) && (
+      {editMeal && (
         <MealForm
-          initial={editMeal || {}}
+          initial={editMeal}
           onSave={handleSaveEdit}
-          onClose={() => { setEditMeal(null); setShowAdd(false) }}
+          onClose={() => setEditMeal(null)}
           existingMeals={meals}
         />
       )}

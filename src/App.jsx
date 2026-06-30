@@ -9,6 +9,7 @@ import Rolodex from './pages/Rolodex'
 import ThisWeek from './pages/ThisWeek'
 import Planner from './pages/Planner'
 import Shopping from './pages/Shopping'
+import Faqs from './pages/Faqs'
 import { useMeals } from './hooks/useMeals'
 import { useWeekMeals } from './hooks/useWeekMeals'
 import { useHousehold } from './hooks/useHousehold'
@@ -455,6 +456,7 @@ function AppShell() {
               />
             }
           />
+          <Route path="/faqs" element={<Faqs />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
