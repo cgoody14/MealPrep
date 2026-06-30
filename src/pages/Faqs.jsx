@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useMemo } from 'react'
 
 const SECTIONS = [
   {
@@ -104,9 +104,9 @@ const SECTIONS = [
   },
 ]
 
-function FaqItem({ id, q, a, isOpen, onToggle }) {
+function FaqItem({ id, q, a, isOpen, onToggle, setRef }) {
   return (
-    <div className={`faq-item${isOpen ? ' open' : ''}`}>
+    <div ref={setRef} className={`faq-item${isOpen ? ' open' : ''}`}>
       <button
         type="button"
         className="faq-question"
@@ -121,9 +121,35 @@ function FaqItem({ id, q, a, isOpen, onToggle }) {
   )
 }
 
+const ALL_ITEMS = SECTIONS.flatMap((section, sIdx) =>
+  section.items.map((item, iIdx) => ({
+    id: `${sIdx}-${iIdx}`,
+    section: section.title,
+    q: item.q,
+  }))
+)
+
 export default function Faqs() {
   const [openId, setOpenId] = useState(null)
+  const [query, setQuery] = useState('')
+  const itemRefs = useRef({})
+
   const handleToggle = (id) => setOpenId(prev => prev === id ? null : id)
+
+  const trimmedQuery = query.trim().toLowerCase()
+  const matches = useMemo(() => {
+    if (!trimmedQuery) return []
+    return ALL_ITEMS.filter(item => item.q.toLowerCase().includes(trimmedQuery))
+  }, [trimmedQuery])
+
+  const handleSelectResult = (id) => {
+    setQuery('')
+    setOpenId(id)
+    requestAnimationFrame(() => {
+      const el = itemRefs.current[id]
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
 
   return (
     <div className="page">
@@ -133,6 +159,36 @@ export default function Faqs() {
         </div>
       </div>
       <p className="page-subtitle">Quick answers to common questions about using Rouxlo.</p>
+
+      <div className="faq-search-wrap">
+        <input
+          type="search"
+          className="form-input faq-search-input"
+          placeholder="Search questions…"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          spellCheck={false}
+        />
+        {trimmedQuery && (
+          <div className="faq-search-results">
+            {matches.length === 0 ? (
+              <div className="faq-search-empty">No matching questions.</div>
+            ) : (
+              matches.map(m => (
+                <button
+                  key={m.id}
+                  type="button"
+                  className="faq-search-result"
+                  onClick={() => handleSelectResult(m.id)}
+                >
+                  <span className="faq-search-result-section">{m.section}</span>
+                  <span className="faq-search-result-q">{m.q}</span>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="faq-list">
         {SECTIONS.map((section, sIdx) => (
@@ -148,6 +204,7 @@ export default function Faqs() {
                   a={item.a}
                   isOpen={openId === id}
                   onToggle={handleToggle}
+                  setRef={el => { itemRefs.current[id] = el }}
                 />
               )
             })}

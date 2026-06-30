@@ -3326,6 +3326,76 @@ button {
    FAQs
    ================================================ */
 
+.faq-search-wrap {
+  position: relative;
+  margin: 14px 0 24px;
+}
+
+.faq-search-input {
+  width: 100%;
+  font-size: 14.5px;
+  padding: 11px 14px;
+}
+
+.faq-search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.faq-search-empty {
+  padding: 14px 16px;
+  color: var(--text3);
+  font-size: 13.5px;
+  text-align: center;
+}
+
+.faq-search-result {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.faq-search-result:last-child {
+  border-bottom: none;
+}
+
+.faq-search-result:hover {
+  background: var(--bg2);
+}
+
+.faq-search-result-section {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.faq-search-result-q {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.35;
+}
+
 .faq-list {
   display: flex;
   flex-direction: column;
@@ -3353,6 +3423,7 @@ button {
   border-radius: var(--radius-sm);
   overflow: hidden;
   transition: border-color 0.15s, box-shadow 0.15s;
+  scroll-margin-top: 20px;
 }
 
 .faq-item.open {
