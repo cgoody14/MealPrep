@@ -218,7 +218,7 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
           }}
           disabled={markingId === m.id}
         >
-          {markingId === m.id ? 'Saving…' : showMarked ? '✓ Made Today' : '✓ Mark Made'}
+          {markingId === m.id ? 'Saving…' : showMarked ? '✓ Made Today' : 'Mark Made'}
         </button>
       </div>
       <CooldownBar lastMade={m.last_made} />

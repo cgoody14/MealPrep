@@ -893,6 +893,18 @@ button {
 .meal-card-footer {
   padding: 10px 16px;
   border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.meal-card-footer .source-link {
+  margin-bottom: 0;
+}
+
+.meal-card-footer .mark-made-btn {
+  margin-left: auto;
 }
 
 .btn-week {
