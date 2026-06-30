@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Stars from '../components/Stars'
 import MealDetail from '../components/MealDetail'
 import MealForm from '../components/MealForm'
@@ -58,9 +58,15 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
   const [openPanel, setOpenPanel] = useState(undefined)
   const [factor, setFactorState] = useState(() => getStoredFactor(wm.id))
   const [localCount, setLocalCount] = useState(m.times_made ?? 0)
+  const [justMarked, setJustMarked] = useState(false)
   const days = daysSince(m.last_made)
   const daysText = m.last_made ? (days === 0 ? 'Today' : `${days}d ago`) : 'Never made'
   const steps = parseSteps(m.instructions)
+
+  useEffect(() => { setLocalCount(m.times_made ?? 0) }, [m.times_made])
+
+  const isMarkedToday = m.last_made === new Date().toISOString().split('T')[0]
+  const showMarked = isMarkedToday || justMarked
 
   const setFactor = (f) => { storeFactor(wm.id, f); setFactorState(f) }
 
@@ -197,11 +203,15 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
           <a href={m.source} target="_blank" rel="noopener noreferrer" className="source-link">↗ recipe</a>
         )}
         <button
-          className="btn btn-secondary btn-sm"
-          onClick={() => onMarkMade(m.id)}
+          className={`btn btn-sm mark-made-btn${showMarked ? ' mark-made-btn-active' : ''}`}
+          onClick={async () => {
+            setJustMarked(true)
+            setLocalCount(c => c + 1)
+            await onMarkMade(m.id)
+          }}
           disabled={markingId === m.id}
         >
-          {markingId === m.id ? 'Saving…' : '✓ Mark Made'}
+          {markingId === m.id ? 'Saving…' : showMarked ? '✓ Made Today' : '✓ Mark Made'}
         </button>
       </div>
       <CooldownBar lastMade={m.last_made} />

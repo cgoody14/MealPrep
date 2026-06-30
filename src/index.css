@@ -398,6 +398,36 @@ button {
   background: var(--border);
 }
 
+.mark-made-btn {
+  background: var(--bg2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.mark-made-btn:hover:not(:disabled) {
+  background: var(--border);
+}
+
+.mark-made-btn-active,
+.mark-made-btn-active:hover {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+  font-weight: 600;
+  box-shadow: 0 0 0 3px rgba(74,124,89,0.18);
+}
+
+@keyframes markMadePop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.mark-made-btn-active {
+  animation: markMadePop 0.3s ease-out;
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text2);
