@@ -205,9 +205,16 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
         <button
           className={`btn btn-sm mark-made-btn${showMarked ? ' mark-made-btn-active' : ''}`}
           onClick={async () => {
-            setJustMarked(true)
-            setLocalCount(c => c + 1)
-            await onMarkMade(m.id)
+            if (showMarked) {
+              setJustMarked(false)
+              const next = Math.max(0, localCount - 1)
+              setLocalCount(next)
+              onAdjustCount?.(m.id, next, { times_made: next, last_made: null })
+            } else {
+              setJustMarked(true)
+              setLocalCount(c => c + 1)
+              await onMarkMade(m.id)
+            }
           }}
           disabled={markingId === m.id}
         >
