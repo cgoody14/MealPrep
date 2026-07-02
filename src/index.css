@@ -2783,13 +2783,19 @@ button {
 }
 
 /* ================================================
-   PERSISTENT SETTINGS GEAR (top-right)
+   PERSISTENT TOP-RIGHT ACTIONS (refresh + gear)
    ================================================ */
 
-.settings-gear-btn {
+.top-right-actions {
   position: fixed;
   top: calc(12px + env(safe-area-inset-top, 0px));
   right: calc(12px + env(safe-area-inset-right, 0px));
+  display: flex;
+  gap: 8px;
+  z-index: 100;
+}
+
+.top-right-btn {
   width: 40px;
   height: 40px;
   display: flex;
@@ -2804,18 +2810,26 @@ button {
   cursor: pointer;
   font-size: 20px;
   line-height: 1;
-  z-index: 100;
   transition: transform 0.15s ease-out, color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
-.settings-gear-btn:hover {
+.top-right-btn:hover:not(:disabled) {
   color: var(--accent);
   transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
 }
 
-.settings-gear-btn:active {
-  transform: translateY(0);
+.top-right-btn:active { transform: translateY(0); }
+.top-right-btn:disabled { opacity: 0.6; cursor: default; }
+
+.top-right-btn.is-refreshing span {
+  display: inline-block;
+  animation: gearSpin 0.8s linear infinite;
+}
+
+@keyframes gearSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 [data-theme="dark"] .sidebar {
@@ -3179,13 +3193,6 @@ button {
   justify-content: center;
   padding: 12px 0 4px;
   animation: fade-in 0.15s ease;
-}
-
-.refresh-btn {
-  font-size: 1.2rem;
-  line-height: 1;
-  padding: 6px 10px;
-  min-width: 36px;
 }
 
 .empty-state {

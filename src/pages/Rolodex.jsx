@@ -24,7 +24,7 @@ const SORT_OPTIONS = [
   { value: 'az', label: 'A–Z' },
 ]
 
-export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMeal, markMadeToday, weekMeals, addToWeek, removeFromWeek, onRefresh }) {
+export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMeal, markMadeToday, weekMeals, addToWeek, removeFromWeek }) {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('rating')
@@ -138,9 +138,6 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
         <div className="page-title-row">
           <h1 className="page-title">Recipes</h1>
           <span className="meal-count-pill">{meals.length} recipe{meals.length !== 1 ? 's' : ''}</span>
-        </div>
-        <div className="page-header-actions">
-          {onRefresh && <button className="btn btn-ghost refresh-btn" onClick={onRefresh} title="Refresh">↻</button>}
         </div>
       </div>
       <p className="page-subtitle">Your personal recipe archive. Add meals manually or import from any recipe URL. Search, filter by tag, and track how often you cook each dish.</p>

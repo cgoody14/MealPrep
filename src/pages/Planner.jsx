@@ -3,7 +3,7 @@ import Stars from '../components/Stars'
 import { buildShoppingList } from '../utils/shopping'
 import { daysSince } from '../utils/format'
 
-export default function Planner({ meals, addToWeek, weekMeals, onRefresh }) {
+export default function Planner({ meals, addToWeek, weekMeals }) {
   const [countInput, setCountInput] = useState('5')
   const [cooldown, setCooldown] = useState(1)
   const [ingInput, setIngInput] = useState('')
@@ -93,7 +93,6 @@ export default function Planner({ meals, addToWeek, weekMeals, onRefresh }) {
     <div className="page">
       <div className="page-header">
         <h1 className="page-title">Meal Randomizer</h1>
-        {onRefresh && <button className="btn btn-ghost refresh-btn" onClick={onRefresh} title="Refresh">↻</button>}
       </div>
       <p className="page-subtitle">Generate a randomized meal plan based on your cook history, ratings, and ingredient preferences. Add results directly to This Week.</p>
 

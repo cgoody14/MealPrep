@@ -226,7 +226,7 @@ function WeekMealCard({ wm, onRemove, onMarkMade, markingId, onOpenDetail, onDay
   )
 }
 
-export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeFromWeek, clearWeek, markMadeToday, updateDayOfWeek, updateMeal, onRefresh }) {
+export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeFromWeek, clearWeek, markMadeToday, updateDayOfWeek, updateMeal }) {
   const [clearing, setClearing] = useState(false)
   const [markingId, setMarkingId] = useState(null)
   const [detailEntry, setDetailEntry] = useState(null) // { meal, weekMealId }
@@ -281,7 +281,6 @@ export default function ThisWeek({ meals, weekMeals, loading, addToWeek, removeF
           <p className="page-subtitle">Assign meals to days, or leave them unassigned. Tap any card to view details.</p>
           <div className="week-header-meta">{getWeekRange()} · {weekMeals.length} meal{weekMeals.length !== 1 ? 's' : ''}</div>
         </div>
-        {onRefresh && <button className="btn btn-ghost refresh-btn" onClick={onRefresh} title="Refresh">↻</button>}
       </div>
 
       <div className="week-actions">

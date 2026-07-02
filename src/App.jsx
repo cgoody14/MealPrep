@@ -392,14 +392,25 @@ function AppShell() {
         mealCount={meals.length}
         weekCount={weekMeals.length}
       />
-      <button
-        className="settings-gear-btn"
-        onClick={() => setShowSettings(true)}
-        aria-label="Settings"
-        title="Settings"
-      >
-        <span aria-hidden="true">⚙</span>
-      </button>
+      <div className="top-right-actions">
+        <button
+          className={`top-right-btn${refreshing ? ' is-refreshing' : ''}`}
+          onClick={handleRefresh}
+          disabled={refreshing}
+          aria-label="Refresh"
+          title="Refresh"
+        >
+          <span aria-hidden="true">↻</span>
+        </button>
+        <button
+          className="top-right-btn"
+          onClick={() => setShowSettings(true)}
+          aria-label="Settings"
+          title="Settings"
+        >
+          <span aria-hidden="true">⚙</span>
+        </button>
+      </div>
       <main className="main-content" ref={mainRef}>
         {(isPulling || refreshing) && (
           <div className="pull-indicator">
@@ -420,7 +431,6 @@ function AppShell() {
                 weekMeals={weekMeals}
                 addToWeek={addToWeek}
                 removeFromWeek={removeFromWeek}
-                onRefresh={handleRefresh}
               />
             }
           />
@@ -437,7 +447,6 @@ function AppShell() {
                 markMadeToday={handleMarkMadeShared}
                 updateDayOfWeek={updateDayOfWeek}
                 updateMeal={updateMeal}
-                onRefresh={handleRefresh}
               />
             }
           />
@@ -448,7 +457,6 @@ function AppShell() {
                 meals={meals}
                 addToWeek={addToWeek}
                 weekMeals={weekMeals}
-                onRefresh={handleRefresh}
               />
             }
           />
@@ -459,7 +467,6 @@ function AppShell() {
                 weekMeals={weekMeals}
                 loading={weekLoading}
                 clearWeek={clearWeek}
-                onRefresh={handleRefresh}
               />
             }
           />
