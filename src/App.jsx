@@ -391,8 +391,15 @@ function AppShell() {
       <Sidebar
         mealCount={meals.length}
         weekCount={weekMeals.length}
-        onOpenSettings={() => setShowSettings(true)}
       />
+      <button
+        className="settings-gear-btn"
+        onClick={() => setShowSettings(true)}
+        aria-label="Settings"
+        title="Settings"
+      >
+        <span aria-hidden="true">⚙</span>
+      </button>
       <main className="main-content" ref={mainRef}>
         {(isPulling || refreshing) && (
           <div className="pull-indicator">

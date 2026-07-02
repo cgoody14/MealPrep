@@ -2783,38 +2783,39 @@ button {
 }
 
 /* ================================================
-   SIDEBAR BOTTOM / SETTINGS BUTTON
+   PERSISTENT SETTINGS GEAR (top-right)
    ================================================ */
 
-.sidebar-spacer {
-  flex: 1;
-}
-
-.sidebar-bottom {
-  padding: 10px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-}
-
-.sidebar-settings-btn {
+.settings-gear-btn {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.6);
-  font-size: 13.5px;
-  font-weight: 500;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  box-shadow: var(--shadow);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  text-align: left;
+  font-size: 20px;
+  line-height: 1;
+  z-index: 100;
+  transition: transform 0.15s ease-out, color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
-.sidebar-settings-btn:hover {
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.9);
+.settings-gear-btn:hover {
+  color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.settings-gear-btn:active {
+  transform: translateY(0);
 }
 
 [data-theme="dark"] .sidebar {
@@ -2833,16 +2834,6 @@ button {
 [data-theme="dark"] .sidebar-link.active {
   background: rgba(255,255,255,0.12);
   color: #fff;
-}
-[data-theme="dark"] .sidebar-settings-btn {
-  color: rgba(255,255,255,0.55);
-}
-[data-theme="dark"] .sidebar-settings-btn:hover {
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.9);
-}
-[data-theme="dark"] .sidebar-bottom {
-  border-top-color: rgba(255,255,255,0.06);
 }
 
 /* ================================================
@@ -3541,13 +3532,6 @@ button {
 
   .tab-item.active {
     color: #fff;
-  }
-
-  /* Settings button in mobile tab bar */
-  .tab-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
   }
 
   .tab-icon {

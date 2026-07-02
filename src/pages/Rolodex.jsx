@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import MealCard from '../components/MealCard'
 import MealDetail from '../components/MealDetail'
 import MealForm from '../components/MealForm'
@@ -141,7 +141,6 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
         </div>
         <div className="page-header-actions">
           {onRefresh && <button className="btn btn-ghost refresh-btn" onClick={onRefresh} title="Refresh">↻</button>}
-          <Link to="/faqs" className="btn btn-secondary">FAQs</Link>
         </div>
       </div>
       <p className="page-subtitle">Your personal recipe archive. Add meals manually or import from any recipe URL. Search, filter by tag, and track how often you cook each dish.</p>
