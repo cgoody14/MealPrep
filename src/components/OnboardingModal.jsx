@@ -23,7 +23,9 @@ export default function OnboardingModal({ household, onJoin, onDone }) {
       setJoined(true)
       setTimeout(finish, 1400)
     } catch (err) {
-      setError(err.message || 'Invalid code — check and try again.')
+      if (err?.code !== 'HOUSEHOLD_JOIN_BLOCKED') {
+        setError(err.message || 'Invalid code — check and try again.')
+      }
       setJoining(false)
     }
   }

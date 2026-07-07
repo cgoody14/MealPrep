@@ -2858,6 +2858,100 @@ button {
   max-width: 480px;
 }
 
+/* ================================================
+   UPGRADE PROMPT MODAL
+   ================================================ */
+
+.modal-upgrade {
+  max-width: 520px;
+  padding: 32px 28px;
+}
+
+.upgrade-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.upgrade-sub {
+  color: var(--text2);
+  font-size: 14px;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.upgrade-tiers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.upgrade-tier {
+  position: relative;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.upgrade-tier.featured {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(184,92,44,0.12);
+}
+
+.upgrade-tier-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.upgrade-tier-name {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.upgrade-tier-price {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 14px;
+}
+
+.upgrade-tier-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  color: var(--text2);
+  flex: 1;
+}
+
+.upgrade-tier-features li {
+  padding: 4px 0;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .upgrade-tiers {
+    grid-template-columns: 1fr;
+  }
+}
+
 .settings-section {
   padding: 18px 0;
   border-top: 1px solid var(--border);

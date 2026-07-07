@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabase'
+import { canJoinHousehold, TierGateError } from '../lib/subscriptions'
 
 export function useHousehold() {
   const [household, setHousehold] = useState(null)   // households row
@@ -57,6 +58,12 @@ export function useHousehold() {
   const joinHousehold = async (code) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
+
+    // Tier gate — free-tier user can't join another household
+    const currentTier = household?.tier || 'free'
+    if (!canJoinHousehold(currentTier)) {
+      throw new TierGateError('HOUSEHOLD_JOIN_BLOCKED', 'Household sharing requires Pro')
+    }
 
     const cleanCode = code.trim().toUpperCase()
 

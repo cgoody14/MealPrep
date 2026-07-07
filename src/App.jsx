@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar'
 import HouseholdModal from './components/HouseholdModal'
 import OnboardingModal from './components/OnboardingModal'
 import InstallGuideModal from './components/InstallGuideModal'
+import UpgradePrompt from './components/UpgradePrompt'
 import Rolodex from './pages/Rolodex'
 import ThisWeek from './pages/ThisWeek'
 import Planner from './pages/Planner'
@@ -331,6 +332,20 @@ function AppShell() {
   const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek, fetchWeekMeals, updateDayOfWeek, updateServingsOverride } = useWeekMeals()
   const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName, removeMember } = useHousehold()
   const [showSettings, setShowSettings] = useState(false)
+  const [upgradeReason, setUpgradeReason] = useState(null)
+
+  // Wrap addMeal so tier gates trigger the upgrade modal instead of
+  // surfacing a raw error to the recipe-import flow.
+  const gatedAddMeal = async (meal) => {
+    try {
+      return await addMeal(meal)
+    } catch (err) {
+      if (err?.code === 'RECIPE_LIMIT_REACHED') {
+        setUpgradeReason('recipe_limit')
+      }
+      throw err
+    }
+  }
   const [showOnboarding, setShowOnboarding] = useState(() => !!localStorage.getItem('new_account'))
   const [showInstallGuide, setShowInstallGuide] = useState(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
@@ -367,8 +382,15 @@ function AppShell() {
   // After any household membership change, immediately refresh the combined
   // meal library and week plan for the user performing the action.
   const handleJoinHousehold = async (code) => {
-    await joinHousehold(code)
-    await Promise.all([fetchMeals(), fetchWeekMeals()])
+    try {
+      await joinHousehold(code)
+      await Promise.all([fetchMeals(), fetchWeekMeals()])
+    } catch (err) {
+      if (err?.code === 'HOUSEHOLD_JOIN_BLOCKED') {
+        setUpgradeReason('household_join')
+      }
+      throw err
+    }
   }
 
   const handleLeaveHousehold = async () => {
@@ -424,7 +446,7 @@ function AppShell() {
               <Rolodex
                 meals={meals}
                 loading={mealsLoading}
-                addMeal={addMeal}
+                addMeal={gatedAddMeal}
                 updateMeal={updateMeal}
                 deleteMeal={deleteMeal}
                 markMadeToday={handleMarkMadeShared}
@@ -485,6 +507,10 @@ function AppShell() {
 
       {showInstallGuide && !showOnboarding && (
         <InstallGuideModal onClose={() => setShowInstallGuide(false)} />
+      )}
+
+      {upgradeReason && (
+        <UpgradePrompt reason={upgradeReason} onClose={() => setUpgradeReason(null)} />
       )}
 
       {showSettings && (

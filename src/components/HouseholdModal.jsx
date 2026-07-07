@@ -83,7 +83,9 @@ export default function HouseholdModal({
       await onJoin(joinCode)
       setJoinCode('')
     } catch (err) {
-      setJoinError(err.message)
+      if (err?.code !== 'HOUSEHOLD_JOIN_BLOCKED') {
+        setJoinError(err.message)
+      }
     } finally {
       setJoining(false)
     }

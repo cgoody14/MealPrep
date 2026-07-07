@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabase'
+import { getTier, canAddRecipe, TierGateError } from '../lib/subscriptions'
 
 const SEED_MEALS = (userId) => {
   const today = new Date()
@@ -113,6 +114,18 @@ export function useMeals() {
   const addMeal = async (meal) => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) throw new Error('Not authenticated')
+
+    // Tier gate — block free-tier users past FREE_RECIPE_LIMIT
+    const { data: hm } = await supabase
+      .from('user_households')
+      .select('household_id')
+      .eq('user_id', session.user.id)
+      .single()
+    const tier = await getTier(hm?.household_id)
+    if (!canAddRecipe(meals.length, tier)) {
+      throw new TierGateError('RECIPE_LIMIT_REACHED', 'Recipe limit reached for current tier')
+    }
+
     const payload = {
       user_id: session.user.id,
       name: meal.name,

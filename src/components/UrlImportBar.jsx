@@ -251,7 +251,9 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
       setSuccessMsg('Saved to Recipes!')
       successTimerRef.current = setTimeout(() => setSuccessMsg(''), 2000)
     } catch (err) {
-      setSaveError(err.message || 'Failed to save. Please try again.')
+      if (err?.code !== 'RECIPE_LIMIT_REACHED') {
+        setSaveError(err.message || 'Failed to save. Please try again.')
+      }
     } finally {
       setSaving(false)
     }
