@@ -524,6 +524,7 @@ function AppShell() {
           onUpdateDisplayName={updateDisplayName}
           onClose={() => setShowSettings(false)}
           onSignOut={handleSignOut}
+          onUpgrade={() => setUpgradeReason('manual_upgrade')}
           isDark={isDark}
           onToggleDark={toggleDark}
         />

@@ -5,7 +5,7 @@ const SHARE_TEXT = `Check out Rouxlo — a personal recipe collection and meal p
 
 export default function HouseholdModal({
   household, members, currentUserId,
-  onJoin, onLeave, onRemoveMember, onUpdateDisplayName, onClose, onSignOut,
+  onJoin, onLeave, onRemoveMember, onUpdateDisplayName, onClose, onSignOut, onUpgrade,
   isDark, onToggleDark
 }) {
   const [joinCode, setJoinCode] = useState('')
@@ -167,6 +167,32 @@ export default function HouseholdModal({
             )}
             {nameError && <div className="form-error" style={{ marginTop: 6 }}>{nameError}</div>}
             <span className="hh-code-hint">This name is visible to other members of your household.</span>
+          </div>
+        )}
+
+        {/* ── Your Plan ── */}
+        {household && (
+          <div className="settings-section">
+            <h3 className="settings-section-title">Your Plan</h3>
+            <div className="settings-plan-row">
+              <span className={`plan-badge plan-badge-${household.tier || 'free'}`}>
+                {household.tier === 'unlimited' ? 'Unlimited'
+                  : household.tier === 'pro' ? 'Pro'
+                  : 'Free'}
+              </span>
+              {household.tier !== 'unlimited' && (
+                <button className="btn btn-primary btn-sm" onClick={onUpgrade}>
+                  Upgrade
+                </button>
+              )}
+            </div>
+            <span className="hh-code-hint">
+              {household.tier === 'unlimited'
+                ? 'You have unlimited recipes and household sharing.'
+                : household.tier === 'pro'
+                  ? 'Pro tier — up to 50 recipes and household sharing.'
+                  : 'Free tier — up to 10 recipes, single-user only.'}
+            </span>
           </div>
         )}
 
