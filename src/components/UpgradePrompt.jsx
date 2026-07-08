@@ -2,13 +2,13 @@ import { TIER_INFO, FREE_RECIPE_LIMIT } from '../lib/subscriptions'
 
 const REASON_HEADLINE = {
   recipe_limit: `You've reached the ${FREE_RECIPE_LIMIT}-recipe limit`,
-  household_join: 'Household sharing requires an upgrade',
+  household_join: "That household hasn't upgraded yet",
   manual_upgrade: 'Upgrade your plan',
 }
 
 const REASON_BODY = {
   recipe_limit: 'Upgrade to keep saving new recipes.',
-  household_join: 'Upgrade to share your recipe library with a partner or family.',
+  household_join: 'Ask the person who shared this code to upgrade their household to Pro so you can join.',
   manual_upgrade: 'Pick a plan below to unlock more recipes and household sharing.',
 }
 

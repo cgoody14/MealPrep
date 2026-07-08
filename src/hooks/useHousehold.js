@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabase'
-import { canJoinHousehold, TierGateError } from '../lib/subscriptions'
+import { getTier, canJoinHousehold, TierGateError } from '../lib/subscriptions'
 
 export function useHousehold() {
   const [household, setHousehold] = useState(null)   // households row
@@ -59,12 +59,6 @@ export function useHousehold() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
 
-    // Tier gate — free-tier user can't join another household
-    const currentTier = household?.tier || 'free'
-    if (!canJoinHousehold(currentTier)) {
-      throw new TierGateError('HOUSEHOLD_JOIN_BLOCKED', 'Household sharing requires Pro')
-    }
-
     const cleanCode = code.trim().toUpperCase()
 
     // Use RPC so SECURITY DEFINER bypasses the household RLS policy —
@@ -73,6 +67,13 @@ export function useHousehold() {
       .rpc('find_household_by_invite', { code: cleanCode })
 
     if (e1 || !householdId) throw new Error('Invite code not found — check the code and try again.')
+
+    // Tier gate — the TARGET household must be on Pro/Unlimited for
+    // new members to join. (Household-based billing: the inviter pays.)
+    const targetTier = await getTier(householdId)
+    if (!canJoinHousehold(targetTier)) {
+      throw new TierGateError('HOUSEHOLD_JOIN_BLOCKED', 'This household is on the Free plan')
+    }
 
     // Use RPC so SECURITY DEFINER bypasses the SELECT policy which PostgreSQL
     // applies as an implicit WITH CHECK on UPDATE — it would block setting
