@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { supabase } from '../supabase'
 import { TIER_INFO, FREE_RECIPE_LIMIT } from '../lib/subscriptions'
 
 const REASON_HEADLINE = {
@@ -13,6 +15,34 @@ const REASON_BODY = {
 }
 
 export default function UpgradePrompt({ reason, onClose }) {
+  const [pendingTier, setPendingTier] = useState(null)
+  const [error, setError] = useState('')
+
+  const handleUpgrade = async (tier) => {
+    setPendingTier(tier)
+    setError('')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not authenticated')
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ tier }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || 'Payment setup failed')
+      }
+      window.location.href = data.url
+    } catch (err) {
+      setError(err.message || 'Payment setup failed — try again.')
+      setPendingTier(null)
+    }
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal-upgrade slide-up" onClick={e => e.stopPropagation()}>
@@ -27,6 +57,7 @@ export default function UpgradePrompt({ reason, onClose }) {
           {['pro', 'unlimited'].map(key => {
             const t = TIER_INFO[key]
             const featured = key === 'pro'
+            const isPending = pendingTier === key
             return (
               <div key={key} className={`upgrade-tier${featured ? ' featured' : ''}`}>
                 {featured && <span className="upgrade-tier-badge">Recommended</span>}
@@ -35,15 +66,23 @@ export default function UpgradePrompt({ reason, onClose }) {
                 <ul className="upgrade-tier-features">
                   {t.features.map(f => <li key={f}>✓ {f}</li>)}
                 </ul>
-                <button className="btn btn-primary btn-full" disabled title="Coming soon">
-                  Upgrade — coming soon
+                <button
+                  className="btn btn-primary btn-full"
+                  onClick={() => handleUpgrade(key)}
+                  disabled={!!pendingTier}
+                >
+                  {isPending ? 'Redirecting…' : 'Upgrade'}
                 </button>
               </div>
             )
           })}
         </div>
 
-        <button className="btn btn-ghost btn-full" onClick={onClose}>Not now</button>
+        {error && <div className="form-error upgrade-error">{error}</div>}
+
+        <button className="btn btn-ghost btn-full" onClick={onClose} disabled={!!pendingTier}>
+          Not now
+        </button>
       </div>
     </div>
   )

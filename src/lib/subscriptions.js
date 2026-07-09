@@ -9,11 +9,13 @@ export const TIER_INFO = {
   pro: {
     name: 'Pro',
     price: '$4.99/mo',
+    stripePriceId: import.meta.env.VITE_STRIPE_PRICE_PRO,
     features: [`Up to ${PRO_RECIPE_LIMIT} recipes`, 'Household sharing', 'AI URL & photo import'],
   },
   unlimited: {
     name: 'Unlimited',
     price: '$8.99/mo',
+    stripePriceId: import.meta.env.VITE_STRIPE_PRICE_UNLIMITED,
     features: ['Unlimited recipes', 'Household sharing', 'AI URL & photo import', 'Priority support'],
   },
 }

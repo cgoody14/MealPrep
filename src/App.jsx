@@ -330,9 +330,39 @@ function ScrollToTop() {
 function AppShell() {
   const { meals, loading: mealsLoading, addMeal, updateMeal, deleteMeal, markMadeToday, fetchMeals } = useMeals()
   const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek, fetchWeekMeals, updateDayOfWeek, updateServingsOverride } = useWeekMeals()
-  const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName, removeMember } = useHousehold()
+  const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName, removeMember, fetchHousehold } = useHousehold()
   const [showSettings, setShowSettings] = useState(false)
   const [upgradeReason, setUpgradeReason] = useState(null)
+  const [upgradeToast, setUpgradeToast] = useState(null) // 'success' | 'canceled' | null
+
+  // Handle the return trip from Stripe Checkout. ?upgrade=success means the
+  // subscription was created — poll fetchHousehold a couple times so the tier
+  // badge flips as soon as the webhook lands.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const status = params.get('upgrade')
+    if (status !== 'success' && status !== 'canceled') return
+
+    setUpgradeToast(status)
+    setShowSettings(true)
+
+    // Clean the URL without a full nav
+    params.delete('upgrade')
+    const clean = window.location.pathname + (params.toString() ? '?' + params.toString() : '')
+    window.history.replaceState({}, '', clean)
+
+    if (status === 'success') {
+      let tries = 0
+      const iv = setInterval(async () => {
+        tries += 1
+        await fetchHousehold()
+        if (tries >= 4) clearInterval(iv)
+      }, 1500)
+    }
+
+    const toastTimer = setTimeout(() => setUpgradeToast(null), 6000)
+    return () => clearTimeout(toastTimer)
+  }, [fetchHousehold])
 
   // Wrap addMeal so tier gates trigger the upgrade modal instead of
   // surfacing a raw error to the recipe-import flow.
@@ -511,6 +541,15 @@ function AppShell() {
 
       {upgradeReason && (
         <UpgradePrompt reason={upgradeReason} onClose={() => setUpgradeReason(null)} />
+      )}
+
+      {upgradeToast && (
+        <div className={`upgrade-toast upgrade-toast-${upgradeToast}`} role="status">
+          {upgradeToast === 'success'
+            ? '✓ Payment received — your plan is upgrading.'
+            : 'Checkout canceled — no changes.'}
+          <button className="upgrade-toast-close" onClick={() => setUpgradeToast(null)} aria-label="Dismiss">✕</button>
+        </div>
       )}
 
       {showSettings && (

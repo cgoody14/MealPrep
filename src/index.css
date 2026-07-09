@@ -2952,6 +2952,63 @@ button {
   }
 }
 
+.upgrade-error {
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* ================================================
+   UPGRADE TOAST (after Stripe redirect)
+   ================================================ */
+
+.upgrade-toast {
+  position: fixed;
+  top: calc(72px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 12px 20px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+  font-size: 14px;
+  font-weight: 500;
+  max-width: min(90vw, 480px);
+  animation: toastIn 0.25s ease-out;
+}
+
+.upgrade-toast-success {
+  background: var(--green);
+  color: #fff;
+  border: 1px solid var(--green);
+}
+
+.upgrade-toast-canceled {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.upgrade-toast-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 14px;
+  opacity: 0.8;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.upgrade-toast-close:hover { opacity: 1; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
 .settings-section {
   padding: 18px 0;
   border-top: 1px solid var(--border);
