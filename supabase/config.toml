@@ -1,0 +1,9 @@
+# Supabase project config.
+# Keep the Stripe webhook public: Stripe authenticates via its own request
+# signature (verified inside the function with constructEventAsync), not a
+# Supabase JWT. Without this, the platform rejects every webhook with 401
+# before the function runs.
+project_id = "dmwycrtpirxfchpzohqs"
+
+[functions.stripe-webhook]
+verify_jwt = false
