@@ -483,6 +483,16 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
             <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
               {saving ? 'Saving…' : 'Save to Rolodex'}
             </button>
+            {preview.source && (
+              <button
+                className="btn btn-secondary"
+                onClick={handleImport}
+                disabled={saving}
+                title="Re-scan the page in case something was missed or didn't load"
+              >
+                Try again
+              </button>
+            )}
             <button className="btn btn-ghost" onClick={handleDiscard} disabled={saving}>Discard</button>
           </div>
         </div>

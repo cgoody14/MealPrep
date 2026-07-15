@@ -540,7 +540,11 @@ function AppShell() {
       )}
 
       {upgradeReason && (
-        <UpgradePrompt reason={upgradeReason} onClose={() => setUpgradeReason(null)} />
+        <UpgradePrompt
+          reason={upgradeReason}
+          currentTier={household?.tier || 'free'}
+          onClose={() => setUpgradeReason(null)}
+        />
       )}
 
       {upgradeToast && (
@@ -563,7 +567,7 @@ function AppShell() {
           onUpdateDisplayName={updateDisplayName}
           onClose={() => setShowSettings(false)}
           onSignOut={handleSignOut}
-          onUpgrade={() => setUpgradeReason('manual_upgrade')}
+          onUpgrade={() => { setShowSettings(false); setUpgradeReason('manual_upgrade') }}
           isDark={isDark}
           onToggleDark={toggleDark}
         />
