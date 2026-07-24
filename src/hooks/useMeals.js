@@ -163,7 +163,15 @@ export function useMeals() {
       .insert([payload])
       .select()
     console.log('[addMeal] response — data:', data, '  error:', addError)
-    if (addError) throw addError
+    if (addError) {
+      // Server-side cap trigger is the backstop if the client pre-check above
+      // was bypassed — surface it as the same gate so the UI shows the upgrade
+      // modal instead of a raw Postgres error.
+      if (addError.message?.includes('RECIPE_LIMIT_REACHED')) {
+        throw new TierGateError('RECIPE_LIMIT_REACHED', 'Recipe limit reached for current tier')
+      }
+      throw addError
+    }
     await fetchMeals()
     return data[0]
   }
