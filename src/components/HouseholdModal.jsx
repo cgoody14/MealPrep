@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabase'
 
 const APP_URL = import.meta.env.VITE_APP_URL || 'https://rouxlo.com'
 const SHARE_TEXT = `Check out Rouxlo — a personal recipe collection and meal planner. ${APP_URL}`
@@ -29,6 +30,12 @@ export default function HouseholdModal({
   const [nameError, setNameError] = useState('')
 
   const isSolo = members.length <= 1
+
+  // Current user's login email, shown under their name in Settings.
+  const [email, setEmail] = useState('')
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setEmail(data?.user?.email || ''))
+  }, [])
 
   const handleCopyCode = async () => {
     if (!household?.invite_code) return
@@ -166,6 +173,12 @@ export default function HouseholdModal({
               </div>
             )}
             {nameError && <div className="form-error" style={{ marginTop: 6 }}>{nameError}</div>}
+            {email && (
+              <div className="hh-email-row">
+                <span className="hh-email-label">Email</span>
+                <span className="hh-email-value">{email}</span>
+              </div>
+            )}
             <span className="hh-code-hint">This name is visible to other members of your household.</span>
           </div>
         )}

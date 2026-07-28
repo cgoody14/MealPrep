@@ -3209,6 +3209,27 @@ button {
   color: var(--text3);
 }
 
+.hh-email-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 2px 0 6px;
+}
+
+.hh-email-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.hh-email-value {
+  font-size: 14px;
+  color: var(--text2);
+  word-break: break-all;
+}
+
 .hh-name-edit-row {
   display: flex;
   gap: 8px;
