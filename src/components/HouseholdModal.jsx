@@ -190,7 +190,7 @@ export default function HouseholdModal({
               {household.tier === 'unlimited'
                 ? 'You have unlimited recipes and household sharing.'
                 : household.tier === 'pro'
-                  ? 'Pro tier — up to 50 recipes and household sharing.'
+                  ? 'Pro tier — up to 20 recipes.'
                   : 'Free tier — up to 10 recipes, single-user only.'}
             </span>
           </div>

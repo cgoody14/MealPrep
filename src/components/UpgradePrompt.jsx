@@ -13,7 +13,7 @@ const REASON_HEADLINE = {
 
 const REASON_BODY = {
   recipe_limit: 'Upgrade to keep saving new recipes.',
-  household_join: 'Ask the person who shared this code to upgrade their household to Pro so you can join.',
+  household_join: 'Ask the person who shared this code to upgrade their household to Unlimited so you can join.',
   manual_upgrade: 'Pick a plan below to unlock more recipes and household sharing.',
 }
 
@@ -71,8 +71,8 @@ export default function UpgradePrompt({ reason, currentTier = 'free', onClose })
           <div className="upgrade-tiers">
             {offeredTiers.map((key, i) => {
               const t = TIER_INFO[key]
-              // Feature the lowest offered upgrade (the natural next step).
-              const featured = i === 0
+              // Unlimited is the recommended plan.
+              const featured = key === 'unlimited'
               const isPending = pendingTier === key
               return (
                 <div key={key} className={`upgrade-tier${featured ? ' featured' : ''}`}>
