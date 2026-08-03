@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabase'
 import { getWeekStart } from '../utils/format'
+import { notifyHousehold } from '../lib/push'
 
 export function useWeekMeals() {
   const [weekMeals, setWeekMeals] = useState([])
@@ -68,6 +69,8 @@ export function useWeekMeals() {
       .single()
     if (addError) throw addError
     setWeekMeals(prev => [...prev, data])
+    // Notify other household members (fire-and-forget).
+    notifyHousehold('week_meal', { mealName: data?.meals?.name })
     return data
   }
 

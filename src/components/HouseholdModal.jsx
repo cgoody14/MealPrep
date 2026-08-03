@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import { pushSupported, getPushEnabled, subscribeToPush, unsubscribeFromPush } from '../lib/push'
 
 const APP_URL = import.meta.env.VITE_APP_URL || 'https://rouxlo.com'
 const SHARE_TEXT = `Check out Rouxlo — a personal recipe collection and meal planner. ${APP_URL}`
@@ -36,6 +37,33 @@ export default function HouseholdModal({
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data?.user?.email || ''))
   }, [])
+
+  // Household push notifications
+  const [notifEnabled, setNotifEnabled] = useState(false)
+  const [notifBusy, setNotifBusy] = useState(false)
+  const [notifError, setNotifError] = useState('')
+  const canNotify = pushSupported()
+  useEffect(() => {
+    if (canNotify) getPushEnabled().then(setNotifEnabled)
+  }, [canNotify])
+
+  const handleToggleNotif = async () => {
+    setNotifBusy(true)
+    setNotifError('')
+    try {
+      if (notifEnabled) {
+        await unsubscribeFromPush()
+        setNotifEnabled(false)
+      } else {
+        await subscribeToPush()
+        setNotifEnabled(true)
+      }
+    } catch (err) {
+      setNotifError(err.message || 'Could not update notifications.')
+    } finally {
+      setNotifBusy(false)
+    }
+  }
 
   const handleCopyCode = async () => {
     if (!household?.invite_code) return
@@ -205,6 +233,28 @@ export default function HouseholdModal({
                 : household.tier === 'pro'
                   ? 'Pro tier — up to 20 recipes.'
                   : 'Free tier — up to 10 recipes, single-user only.'}
+            </span>
+          </div>
+        )}
+
+        {/* ── Notifications section ── */}
+        {household && canNotify && (
+          <div className="settings-section">
+            <h3 className="settings-section-title">Notifications</h3>
+            <div className="hh-notif-row">
+              <span className="hh-notif-label">Household activity</span>
+              <button
+                className={`btn btn-sm ${notifEnabled ? 'btn-secondary' : 'btn-primary'}`}
+                onClick={handleToggleNotif}
+                disabled={notifBusy}
+              >
+                {notifBusy ? '…' : notifEnabled ? 'Turn off' : 'Turn on'}
+              </button>
+            </div>
+            {notifError && <div className="form-error" style={{ marginTop: 6 }}>{notifError}</div>}
+            <span className="hh-code-hint">
+              Get a notification when someone in your household adds a recipe, plans a meal, or joins.
+              On iPhone, add Rouxlo to your Home Screen first for notifications to work.
             </span>
           </div>
         )}

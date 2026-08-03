@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabase'
 import { getTier, canJoinHousehold, TierGateError } from '../lib/subscriptions'
+import { notifyHousehold } from '../lib/push'
 
 export function useHousehold() {
   const [household, setHousehold] = useState(null)   // households row
@@ -83,6 +84,8 @@ export function useHousehold() {
       .rpc('join_household_and_deduplicate', { target_household_id: householdId })
 
     if (e2) throw e2
+    // Notify existing members that someone joined (fire-and-forget).
+    notifyHousehold('member_join')
     await fetchHousehold()
   }
 

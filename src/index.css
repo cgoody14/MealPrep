@@ -3216,6 +3216,20 @@ button {
   margin: 2px 0 6px;
 }
 
+.hh-notif-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.hh-notif-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text1);
+}
+
 .hh-email-label {
   font-size: 12px;
   font-weight: 600;

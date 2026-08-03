@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabase'
 import { getTier, canAddRecipe, TierGateError } from '../lib/subscriptions'
+import { notifyHousehold } from '../lib/push'
 
 export function useMeals() {
   const [meals, setMeals] = useState([])
@@ -100,6 +101,8 @@ export function useMeals() {
       }
       throw addError
     }
+    // Notify other household members (fire-and-forget).
+    notifyHousehold('new_recipe', { mealName: data[0]?.name })
     await fetchMeals()
     return data[0]
   }
