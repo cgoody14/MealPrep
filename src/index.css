@@ -1477,6 +1477,17 @@ button {
   border-bottom: 1px solid var(--border);
 }
 
+/* In the recipe detail view the adjust bar sits under the title */
+.detail-adjust {
+  margin: 6px 0 4px;
+}
+
+.detail-adjust .ai-adjust {
+  margin-bottom: 8px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
 .ai-adjust-row {
   display: flex;
   gap: 8px;

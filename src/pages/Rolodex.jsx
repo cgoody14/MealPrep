@@ -223,6 +223,11 @@ export default function Rolodex({ meals, loading, addMeal, updateMeal, deleteMea
           onDelete={async (id) => { await deleteMeal(id); setDetailMeal(null) }}
           onEdit={(meal) => { setDetailMeal(null); setEditMeal(meal) }}
           onReimport={(url) => { setDetailMeal(null); setReimportUrl(url) }}
+          onUpdate={async (id, updates) => {
+            const updated = await updateMeal(id, updates)
+            if (updated) setDetailMeal(updated)
+            return updated
+          }}
         />
       )}
 

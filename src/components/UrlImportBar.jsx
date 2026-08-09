@@ -2,16 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import Stars from './Stars'
 import { scrapeRecipeWithAI, scrapeRecipeFromImage, generateRecipeFromPrompt, adjustRecipeWithAI } from '../utils/recipeAgent'
 import { uploadRecipeAttachment } from '../utils/storage'
-
-const ALLOWED_TAGS = [
-  'protein','chicken','beef','pork','steak','shrimp','salmon','lamb','turkey',
-  'seafood','pasta',
-  'vegetarian','vegan','healthy','gluten-free','low-carb',
-  'sides','soup','salad',
-  'easy','quick','weeknight','weekend','brunch',
-  'crowd-pleaser','meal-prep','grill',
-  'italian','japanese','greek','mexican','thai','indian','korean','mediterranean',
-]
+import { ALLOWED_TAGS } from '../lib/tags'
 
 const STATUS_MESSAGES = [
   'Looking up recipe…',

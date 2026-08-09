@@ -3,7 +3,11 @@ import Stars from './Stars'
 import { daysSince, formatDate } from '../utils/format'
 import { isImageUrl } from '../utils/storage'
 import { scaleIngredients } from '../utils/scaleIngredients'
+import { adjustRecipeWithAI } from '../utils/recipeAgent'
+import { ALLOWED_TAGS } from '../lib/tags'
 import CookMode from './CookMode'
+
+const ADJUST_CHIPS = ['Halve servings', 'Double it', 'Make it vegetarian', 'Make it healthier']
 
 function renderStepText(text) {
   const parts = text.split(/(If desired[,.]?|[Oo]ptional[,:]?)/g)
@@ -21,7 +25,7 @@ function parseSteps(instructions) {
     .filter(Boolean)
 }
 
-export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelete, onEdit, onReimport, onRemoveFromWeek, contextServings }) {
+export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelete, onEdit, onReimport, onRemoveFromWeek, onUpdate, contextServings }) {
   const [adding, setAdding] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -29,6 +33,58 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
   const [cookMode, setCookMode] = useState(false)
   const [photoIndex, setPhotoIndex] = useState(0)
   const touchStartX = useRef(0)
+
+  // Adjust-with-AI on a saved recipe
+  const [showAdjust, setShowAdjust] = useState(false)
+  const [adjustInput, setAdjustInput] = useState('')
+  const [adjusting, setAdjusting] = useState(false)
+  const [adjustError, setAdjustError] = useState('')
+
+  const handleAdjust = async (instructionArg) => {
+    const instruction = (instructionArg ?? adjustInput).trim()
+    if (!instruction || adjusting || !onUpdate) return
+    setAdjusting(true)
+    setAdjustError('')
+    try {
+      const result = await adjustRecipeWithAI(
+        {
+          name: meal.name,
+          ingredients: meal.ingredients || [],
+          notes: meal.notes || '',
+          tags: meal.tags || [],
+          cookTime: meal.cook_time || '',
+          servings: meal.servings || 0,
+          calories: meal.calories || 0,
+          protein_g: meal.protein_g || 0,
+          carbs_g: meal.carbs_g || 0,
+          fat_g: meal.fat_g || 0,
+          instructions: meal.instructions || '',
+        },
+        instruction
+      )
+      const updates = {
+        name: result.name || meal.name,
+        ingredients: Array.isArray(result.ingredients) ? result.ingredients : meal.ingredients,
+        notes: result.notes ?? meal.notes,
+        tags: Array.isArray(result.tags) ? result.tags.filter(t => ALLOWED_TAGS.includes(t)) : meal.tags,
+        cook_time: result.cookTime || meal.cook_time,
+        servings: parseInt(result.servings) || meal.servings,
+        calories: parseInt(result.calories) || meal.calories,
+        protein_g: parseInt(result.protein_g) || meal.protein_g,
+        carbs_g: parseInt(result.carbs_g) || meal.carbs_g,
+        fat_g: parseInt(result.fat_g) || meal.fat_g,
+        instructions: (result.instructions || '').split(' | ').map(s => s.trim()).filter(Boolean).join('\n') || meal.instructions,
+      }
+      await onUpdate(meal.id, updates)
+      setScaledServings(updates.servings || null)
+      setAdjustInput('')
+      setShowAdjust(false)
+    } catch (err) {
+      setAdjustError(err.message || 'Could not adjust the recipe. Try rephrasing.')
+    } finally {
+      setAdjusting(false)
+    }
+  }
 
   const originalServings = meal.servings || null
   const displayIngredients = scaledServings && originalServings
@@ -89,6 +145,61 @@ export default function MealDetail({ meal, onClose, inWeek, onAddToWeek, onDelet
             <h2 className="detail-title">{meal.name}</h2>
             <Stars rating={meal.rating} size="lg" />
           </div>
+
+          {onUpdate && (
+            <div className="detail-adjust">
+              {!showAdjust ? (
+                <button className="btn btn-secondary btn-sm" onClick={() => setShowAdjust(true)}>
+                  ✨ Adjust with AI
+                </button>
+              ) : (
+                <div className="ai-adjust">
+                  <div className="ai-adjust-row">
+                    <input
+                      className="form-input"
+                      value={adjustInput}
+                      onChange={e => setAdjustInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdjust() } }}
+                      placeholder="Tell AI how to change it… e.g. make it vegetarian, convert to metric"
+                      disabled={adjusting}
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handleAdjust()}
+                      disabled={adjusting || !adjustInput.trim()}
+                    >
+                      {adjusting ? 'Adjusting…' : 'Apply'}
+                    </button>
+                  </div>
+                  <div className="ai-adjust-chips">
+                    {ADJUST_CHIPS.map(chip => (
+                      <button
+                        key={chip}
+                        type="button"
+                        className="chip chip-suggest"
+                        onClick={() => handleAdjust(chip)}
+                        disabled={adjusting}
+                      >
+                        {chip}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="chip chip-suggest"
+                      onClick={() => { setShowAdjust(false); setAdjustInput(''); setAdjustError('') }}
+                      disabled={adjusting}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {adjusting && <div className="import-status-line" style={{ marginTop: 8 }}>Rewriting the recipe…</div>}
+                  {adjustError && <div className="form-error" style={{ marginTop: 6 }}>{adjustError}</div>}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="detail-stats">
             <div className="stat-box">

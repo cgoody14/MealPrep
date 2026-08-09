@@ -13,6 +13,10 @@ const SECTIONS = [
         a: <>Tap <strong>Upload Recipe Photo(s)</strong> on the Recipes page and pick one or more images. You can select multiple pages of the same recipe and Rouxlo will read them as one continuous list of steps. Review the extracted recipe and save.</>
       },
       {
+        q: 'Can AI create a recipe from just an idea?',
+        a: <>Yes. On the <strong>Recipes</strong> page, find <strong>Describe a recipe</strong>, type what you're craving (e.g. "a cozy chicken pot pie" or "spicy Thai peanut noodles"), and tap <strong>✨ Generate</strong>. AI writes a full recipe — ingredients, steps, and nutrition — which you can review, tweak, and save.</>
+      },
+      {
         q: "A website I tried won't import — what now?",
         a: <>Some sites (like AllRecipes) block automated requests with bot protection. When that happens, take a screenshot of the recipe and use the <strong>Upload Recipe Photo</strong> option instead — it works for any site. If the page partially loaded, a manual form will appear so you can fill in the missing details.</>
       },
@@ -28,6 +32,10 @@ const SECTIONS = [
       {
         q: 'How do I edit a recipe I already saved?',
         a: <>Tap any recipe card to open its detail view, then tap <strong>Edit</strong>. You can change the name, rating, ingredients, instructions, cook time, servings, nutrition, tags, notes, source URL, and photos. Tap <strong>Save Changes</strong> when done.</>
+      },
+      {
+        q: 'Can I use AI to tweak a recipe?',
+        a: <>Yes. Right after importing or generating a recipe, use the <strong>✨ Adjust with AI</strong> bar in the preview — type a change like "make it vegetarian," "halve the servings," or "convert to metric" and AI rewrites the ingredients, steps, and nutrition. You can also adjust an <strong>already-saved</strong> recipe: open it and tap <strong>✨ Adjust with AI</strong>.</>
       },
       {
         q: 'How do I delete a recipe?',
