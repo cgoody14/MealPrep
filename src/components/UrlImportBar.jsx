@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Stars from './Stars'
-import { scrapeRecipeWithAI, scrapeRecipeFromImage, generateRecipeFromPrompt } from '../utils/recipeAgent'
+import { scrapeRecipeWithAI, scrapeRecipeFromImage, generateRecipeFromPrompt, adjustRecipeWithAI } from '../utils/recipeAgent'
 import { uploadRecipeAttachment } from '../utils/storage'
 
 const ALLOWED_TAGS = [
@@ -50,6 +50,9 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
   const [photoError, setPhotoError] = useState('')
   const [describeInput, setDescribeInput] = useState('')
   const [describeError, setDescribeError] = useState('')
+  const [adjustInput, setAdjustInput] = useState('')
+  const [adjusting, setAdjusting] = useState(false)
+  const [adjustError, setAdjustError] = useState('')
 
   const intervalRef = useRef(null)
   const successTimerRef = useRef(null)
@@ -212,6 +215,40 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     }
   }
 
+  const handleAdjust = async (instructionArg) => {
+    const instruction = (instructionArg ?? adjustInput).trim()
+    if (!instruction || !preview || adjusting) return
+    setAdjusting(true)
+    setAdjustError('')
+    try {
+      const result = await adjustRecipeWithAI(preview, instruction)
+      setPreview(prev => ({
+        ...prev,
+        name: result.name || prev.name,
+        ingredients: Array.isArray(result.ingredients) ? result.ingredients : prev.ingredients,
+        notes: result.notes ?? prev.notes,
+        tags: Array.isArray(result.tags) ? result.tags.filter(t => ALLOWED_TAGS.includes(t)) : prev.tags,
+        cookTime: result.cookTime || prev.cookTime,
+        servings: parseInt(result.servings) || prev.servings,
+        calories: parseInt(result.calories) || prev.calories,
+        protein_g: parseInt(result.protein_g) || prev.protein_g,
+        carbs_g: parseInt(result.carbs_g) || prev.carbs_g,
+        fat_g: parseInt(result.fat_g) || prev.fat_g,
+        instructions: (result.instructions || '').split(' | ').map(s => s.trim()).filter(Boolean).join('\n') || prev.instructions,
+        // Preserve user context that AI shouldn't touch.
+        source: prev.source,
+        rating: prev.rating,
+      }))
+      setAdjustInput('')
+    } catch (err) {
+      setAdjustError(err.message || 'Could not adjust the recipe. Try rephrasing.')
+    } finally {
+      setAdjusting(false)
+    }
+  }
+
+  const ADJUST_CHIPS = ['Halve servings', 'Double it', 'Make it vegetarian', 'Make it healthier']
+
   const handleImport = async () => {
     if (!url.trim()) return
     setStatus('loading')
@@ -321,6 +358,8 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     setPhotoError('')
     setDescribeInput('')
     setDescribeError('')
+    setAdjustInput('')
+    setAdjustError('')
     if (fileInputRef.current) fileInputRef.current.value = ''
     stopStatusCycle()
   }
@@ -468,6 +507,42 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
 
       {status === 'preview' && preview && (
         <div className="import-preview fade-in">
+          {/* Adjust with AI */}
+          <div className="ai-adjust">
+            <div className="ai-adjust-row">
+              <input
+                className="form-input"
+                value={adjustInput}
+                onChange={e => setAdjustInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdjust() } }}
+                placeholder="Tell AI how to change it… e.g. make it vegetarian, convert to metric"
+                disabled={adjusting}
+              />
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => handleAdjust()}
+                disabled={adjusting || !adjustInput.trim()}
+              >
+                {adjusting ? 'Adjusting…' : '✨ Adjust'}
+              </button>
+            </div>
+            <div className="ai-adjust-chips">
+              {ADJUST_CHIPS.map(chip => (
+                <button
+                  key={chip}
+                  type="button"
+                  className="chip chip-suggest"
+                  onClick={() => handleAdjust(chip)}
+                  disabled={adjusting}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+            {adjustError && <div className="form-error" style={{ marginTop: 6 }}>{adjustError}</div>}
+          </div>
+
           {/* Editable name */}
           <input
             className="import-name-input"

@@ -259,3 +259,40 @@ export async function generateRecipeFromPrompt(prompt) {
   result.source = ''
   return result
 }
+
+// Apply a plain-language change to an existing recipe, e.g. "make it vegetarian"
+// or "halve the servings". Returns the full updated recipe in the same shape.
+export async function adjustRecipeWithAI(recipe, instruction) {
+  const current = JSON.stringify({
+    name: recipe.name || '',
+    ingredients: recipe.ingredients || [],
+    notes: recipe.notes || '',
+    tags: recipe.tags || [],
+    cookTime: recipe.cookTime || '',
+    servings: recipe.servings || 0,
+    calories: recipe.calories || 0,
+    protein_g: recipe.protein_g || 0,
+    carbs_g: recipe.carbs_g || 0,
+    fat_g: recipe.fat_g || 0,
+    // Send instructions in the ' | ' format the model expects.
+    instructions: (recipe.instructions || '').split('\n').map(s => s.trim()).filter(Boolean).join(' | '),
+  })
+
+  const aiData = await callGroq({
+    model: 'llama-3.3-70b-versatile',
+    temperature: 0.4,
+    max_tokens: 4000,
+    messages: [
+      {
+        role: 'system',
+        content: `You are a recipe editor. You are given a recipe as JSON and a change to apply. Apply ONLY the requested change and return the FULL updated recipe in the same JSON shape. Recalculate anything the change affects — e.g. scaling servings scales ingredient quantities and per-serving nutrition; making it vegetarian/vegan swaps the proteins and adjusts the affected steps; converting units rewrites quantities. Keep unrelated fields intact.\n\n${GENERATE_SCHEMA}`,
+      },
+      {
+        role: 'user',
+        content: `Current recipe:\n${current}\n\nChange to apply: ${instruction.trim()}`,
+      },
+    ],
+  })
+  if (aiData.error) throw new Error(aiData.error.message)
+  return parseAIResponse(aiData.choices?.[0]?.message?.content ?? '')
+}

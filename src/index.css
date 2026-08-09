@@ -1470,6 +1470,46 @@ button {
   box-shadow: var(--shadow);
 }
 
+/* Adjust-with-AI bar at the top of the preview */
+.ai-adjust {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ai-adjust-row {
+  display: flex;
+  gap: 8px;
+}
+
+.ai-adjust-row .form-input {
+  flex: 1;
+}
+
+.ai-adjust-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.chip-suggest {
+  cursor: pointer;
+  background: var(--bg2);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.chip-suggest:hover:not(:disabled) {
+  background: var(--card);
+  border-color: var(--accent);
+  color: var(--text1);
+}
+
+.chip-suggest:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* Editable recipe name in preview card */
 .import-name-input {
   display: block;
