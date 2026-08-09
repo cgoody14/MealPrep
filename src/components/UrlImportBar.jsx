@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Stars from './Stars'
-import { scrapeRecipeWithAI, scrapeRecipeFromImage } from '../utils/recipeAgent'
+import { scrapeRecipeWithAI, scrapeRecipeFromImage, generateRecipeFromPrompt } from '../utils/recipeAgent'
 import { uploadRecipeAttachment } from '../utils/storage'
 
 const ALLOWED_TAGS = [
@@ -28,6 +28,13 @@ const PHOTO_STATUS_MESSAGES = [
   'Building preview…',
 ]
 
+const GENERATE_STATUS_MESSAGES = [
+  'Thinking up a recipe…',
+  'Choosing ingredients…',
+  'Writing the steps…',
+  'Building preview…',
+]
+
 export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed }) {
   const [url, setUrl] = useState('')
   const [status, setStatus] = useState('idle') // 'idle' | 'loading' | 'preview'
@@ -41,6 +48,8 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
   const [photoFiles, setPhotoFiles] = useState([])
   const [photoObjectUrls, setPhotoObjectUrls] = useState([])
   const [photoError, setPhotoError] = useState('')
+  const [describeInput, setDescribeInput] = useState('')
+  const [describeError, setDescribeError] = useState('')
 
   const intervalRef = useRef(null)
   const successTimerRef = useRef(null)
@@ -163,6 +172,46 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     }
   }
 
+  const handleGenerate = async () => {
+    if (!describeInput.trim()) return
+    setStatus('loading')
+    setDescribeError('')
+    setFallbackMsg('')
+    setSuccessMsg('')
+
+    setStatusMsg(GENERATE_STATUS_MESSAGES[0])
+    let idx = 0
+    intervalRef.current = setInterval(() => {
+      idx = (idx + 1) % GENERATE_STATUS_MESSAGES.length
+      setStatusMsg(GENERATE_STATUS_MESSAGES[idx])
+    }, 1800)
+
+    try {
+      const result = await generateRecipeFromPrompt(describeInput)
+      stopStatusCycle()
+      setPreview({
+        name: result.name || '',
+        ingredients: Array.isArray(result.ingredients) ? result.ingredients : [],
+        notes: result.notes || '',
+        tags: Array.isArray(result.tags) ? result.tags.filter(t => ALLOWED_TAGS.includes(t)) : [],
+        cookTime: result.cookTime || '',
+        servings: parseInt(result.servings) || null,
+        calories: parseInt(result.calories) || null,
+        protein_g: parseInt(result.protein_g) || null,
+        carbs_g: parseInt(result.carbs_g) || null,
+        fat_g: parseInt(result.fat_g) || null,
+        instructions: (result.instructions || '').split(' | ').map(s => s.trim()).filter(Boolean).join('\n'),
+        source: '',
+        rating: 3,
+      })
+      setStatus('preview')
+    } catch (err) {
+      stopStatusCycle()
+      setDescribeError(err.message || 'Could not generate a recipe. Try rephrasing.')
+      setStatus('idle')
+    }
+  }
+
   const handleImport = async () => {
     if (!url.trim()) return
     setStatus('loading')
@@ -270,9 +319,14 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     setPhotoFiles([])
     setPhotoObjectUrls([])
     setPhotoError('')
+    setDescribeInput('')
+    setDescribeError('')
     if (fileInputRef.current) fileInputRef.current.value = ''
     stopStatusCycle()
   }
+
+  // "Try again" in the preview re-runs whichever source produced it.
+  const handleRetry = () => (url.trim() ? handleImport() : handleGenerate())
 
   return (
     <div className="url-import-section">
@@ -300,9 +354,9 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
           {status === 'preview' && preview && (
             <button
               className="btn btn-secondary"
-              onClick={handleImport}
+              onClick={handleRetry}
               disabled={status === 'loading'}
-              title="Re-scan the page in case something was missed or didn't load"
+              title="Generate again in case something was missed"
             >
               Try again
             </button>
@@ -376,6 +430,29 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
             </div>
           )}
         </div>
+
+        {/* Divider */}
+        <div className="import-divider"><span>or</span></div>
+
+        {/* Describe-a-recipe row */}
+        <div className="describe-row">
+          <textarea
+            className="form-input describe-input"
+            value={describeInput}
+            onChange={e => setDescribeInput(e.target.value)}
+            placeholder="Describe a recipe you're craving… e.g. a cozy chicken pot pie, or spicy Thai peanut noodles"
+            rows={2}
+            disabled={status === 'loading'}
+          />
+          <button
+            className="btn btn-primary"
+            onClick={handleGenerate}
+            disabled={status === 'loading' || !describeInput.trim()}
+          >
+            {status === 'loading' && !photoFiles.length && !url.trim() ? 'Generating…' : '✨ Generate'}
+          </button>
+        </div>
+        {describeError && <div className="import-fallback-msg">{describeError}</div>}
 
         {status === 'loading' && statusMsg && (
           <div className="import-status-line">{statusMsg}</div>
