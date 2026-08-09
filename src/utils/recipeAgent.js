@@ -233,9 +233,14 @@ protein, chicken, beef, pork, steak, shrimp, salmon, lamb, turkey, seafood, past
 Instructions rules:
 - Write ALL steps as a single string separated by ' | ' (space pipe space) — NOT newlines
 - Produce 8-20 detailed steps; never compress multiple actions into one step
-- Include specific temperatures, times, techniques, and quantities where relevant
+- EVERY step must restate the exact quantities/measurements of the ingredients it uses (pull them straight from the ingredient list) — never write a step that just names an ingredient without its amount
+- Include specific temperatures (e.g. medium-high heat, 400°F), specific times (e.g. 6-8 minutes), pan/tool, and visual doneness cues in each relevant step
 - Keep prep steps separate from cook steps; end with a plating/serving step
-- Aim for 15-30 words per step`
+- Aim for 20-35 words per step; be descriptive, like a cookbook author
+- Bad (too vague): '3. Add chicken and cook until browned'
+- Good (descriptive with measurements): '3. Add the 1 lb cubed chicken thighs in a single layer and cook over medium-high heat, undisturbed, 3-4 minutes per side until golden brown and cooked through'
+- Bad: '7. Combine peanut butter, soy sauce, and coconut milk'
+- Good: '7. In a bowl, whisk 1/3 cup peanut butter, 3 tbsp soy sauce, 1/2 cup coconut milk, 1 tbsp honey, and 1 tsp rice vinegar until smooth'`
 
 // Invent a full recipe from a freeform description, e.g. "spicy Thai peanut noodles".
 export async function generateRecipeFromPrompt(prompt) {
