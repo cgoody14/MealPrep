@@ -7,6 +7,43 @@ function parseSteps(instructions) {
     .filter(Boolean)
 }
 
+// Words that don't identify an ingredient (units, quantities, prep verbs).
+const ING_STOPWORDS = new Set([
+  'cup','cups','tbsp','tablespoon','tablespoons','tsp','teaspoon','teaspoons',
+  'oz','ounce','ounces','lb','lbs','pound','pounds','gram','grams','kg','ml','liter','liters',
+  'clove','cloves','can','cans','jar','package','packages','pinch','dash','handful',
+  'slice','slices','stick','sticks','sprig','sprigs','piece','pieces','bunch','head',
+  'to','of','and','or','the','into','cut','minced','chopped','diced','sliced','grated',
+  'fresh','freshly','ground','large','small','medium','boneless','skinless','finely',
+  'optional','taste','for','with','plus','more','about','room','temperature','divided',
+  'peeled','halved','quartered','thinly','roughly','packed','drained','rinsed','beaten',
+])
+
+// Extract the identifying food words from an ingredient line, dropping the
+// quantity, units, and prep notes (everything after the first comma / parens).
+function ingredientKeywords(ing) {
+  const base = (ing || '')
+    .split(',')[0]
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[0-9¼½¾⅓⅔⅛⅜⅝⅞/.\-]+/g, ' ')
+  return base
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(w => w.length >= 3 && !ING_STOPWORDS.has(w))
+}
+
+function wordInText(word, text) {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`\\b${escaped}s?\\b`, 'i').test(text)
+}
+
+// Which of the recipe's ingredients this step actually uses.
+function ingredientsForStep(stepText, ingredients) {
+  return ingredients.filter(ing =>
+    ingredientKeywords(ing).some(kw => wordInText(kw, stepText))
+  )
+}
+
 function renderStepText(text) {
   const parts = text.split(/(If desired[,.]?|[Oo]ptional[,:]?)/g)
   return parts.map((part, i) =>
@@ -136,6 +173,7 @@ export default function CookMode({ meal, scaledIngredients, scaledServings, orig
   const isOptional = /If desired|[Oo]ptional/.test(step)
   const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0
   const ingredients = scaledIngredients || meal.ingredients || []
+  const stepIngredients = ingredientsForStep(step, ingredients)
 
   const toggleIng = (ing) => {
     setCheckedIngs(prev => {
@@ -215,6 +253,24 @@ export default function CookMode({ meal, scaledIngredients, scaledServings, orig
             <div className="cook-step-text">
               {renderStepText(step)}
             </div>
+
+            {stepIngredients.length > 0 && (
+              <div className="cook-step-ings">
+                <div className="cook-step-ings-title">🧂 For this step</div>
+                <ul className="cook-step-ings-list">
+                  {stepIngredients.map((ing, i) => (
+                    <li
+                      key={i}
+                      className={`cook-step-ing ${checkedIngs.has(ing) ? 'cook-ing-checked' : ''}`}
+                      onClick={() => toggleIng(ing)}
+                    >
+                      <span className="cook-ing-check">{checkedIngs.has(ing) ? '✓' : '+'}</span>
+                      <span className="cook-ing-name">{ing}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {timerSecs && (
               <StepTimer key={`${currentStep}-${timerSecs}`} seconds={timerSecs} />

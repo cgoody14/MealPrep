@@ -4662,6 +4662,49 @@ button {
   font-style: normal;
 }
 
+/* Per-step ingredient checklist in Cook Mode */
+.cook-step-ings {
+  width: 100%;
+  max-width: 520px;
+  border: 1px solid currentColor;
+  border-color: color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+
+.cook-step-ings-title {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin-bottom: 8px;
+}
+
+.cook-step-ings-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cook-step-ing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1.35;
+  transition: opacity 0.15s;
+}
+
+.cook-step-ing:hover {
+  opacity: 0.8;
+}
+
 .cook-nav {
   display: flex;
   align-items: center;
