@@ -138,6 +138,13 @@ export default function CookMode({ meal, scaledIngredients, scaledServings, orig
   const [showIngs, setShowIngs] = useState(false)
   const [darkBg, setDarkBg] = useState(true)
   const wakeLockRef = useRef(null)
+  const stepAreaRef = useRef(null)
+
+  // Always start each step scrolled to the top.
+  useEffect(() => {
+    stepAreaRef.current?.scrollTo({ top: 0 })
+    window.scrollTo({ top: 0 })
+  }, [currentStep])
 
   // Request wake lock to prevent screen sleep
   useEffect(() => {
@@ -241,7 +248,7 @@ export default function CookMode({ meal, scaledIngredients, scaledServings, orig
           )}
 
           {/* Step area */}
-          <div className="cook-step-area">
+          <div className="cook-step-area" ref={stepAreaRef}>
             <div className="cook-step-counter">
               Step {currentStep + 1} of {totalSteps}
             </div>
