@@ -76,41 +76,59 @@ function buildFallback(url) {
 }
 
 export async function scrapeRecipeWithAI(url) {
-  // ── Production: server fetches the real page, extracts content, runs Groq ──
+  // ── 1. Production: server fetches the real page, extracts content, runs Groq ──
   // callScrape returns null in dev (no server), falls back to AI-memory below.
+  let serverResult = null
   try {
-    const scraped = await callScrape(url)
-    if (scraped && !scraped._fallback && !scraped.error) {
-      return scraped
+    serverResult = await callScrape(url)
+    if (serverResult && !serverResult._fallback && !serverResult.error) {
+      return serverResult
     }
-    // scrape returned a _fallback — still show the form but with the fallback data
-    if (scraped?._fallback) return scraped
   } catch { /* network error — fall through */ }
 
-  // ── Dev / fallback: ask Groq to recall the recipe from training data ────────
-  // Less reliable for paywalled or obscure sites, but works for well-known ones.
-  try {
-    const aiData = await callGroq({
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.1,
-      max_tokens: 4000,
-      messages: [
-        {
-          role: 'system',
-          content: `You are a strict recipe transcriber. When given a recipe URL, recall the recipe from your training data and transcribe ONLY what is explicitly written in that recipe. Return ONLY a valid JSON object with no preamble, no markdown, no backticks — raw JSON only.\n\n${RECIPE_JSON_SCHEMA}`,
-        },
-        {
-          role: 'user',
-          content: `Transcribe the recipe at this URL exactly as written: ${url}\n\nFor the instructions field, write each step in full detail — include temperatures, times, quantities, and techniques. Do not summarize or shorten any step.`,
-        },
-      ],
-    })
-    const result = parseAIResponse(aiData.choices?.[0]?.message?.content ?? '')
-    return result
-  } catch (err) {
-    console.error('[recipeAgent] scrape failed:', err.message)
-    return buildFallback(url)
+  // ── 2. Dev only: ask Groq to recall the exact recipe from the URL ───────────
+  // (In prod, callScrape already ran Groq server-side on the real page.)
+  if (import.meta.env.VITE_GROQ_API_KEY) {
+    try {
+      const aiData = await callGroq({
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.1,
+        max_tokens: 4000,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a strict recipe transcriber. When given a recipe URL, recall the recipe from your training data and transcribe ONLY what is explicitly written in that recipe. Return ONLY a valid JSON object with no preamble, no markdown, no backticks — raw JSON only.\n\n${RECIPE_JSON_SCHEMA}`,
+          },
+          {
+            role: 'user',
+            content: `Transcribe the recipe at this URL exactly as written: ${url}\n\nFor the instructions field, write each step in full detail — include temperatures, times, quantities, and techniques. Do not summarize or shorten any step.`,
+          },
+        ],
+      })
+      const recalled = parseAIResponse(aiData.choices?.[0]?.message?.content ?? '')
+      if (Array.isArray(recalled.ingredients) && recalled.ingredients.length > 0) {
+        return recalled
+      }
+    } catch { /* fall through to approximation */ }
   }
+
+  // ── 3. Page couldn't be read (blocked/unreachable) — generate a close AI
+  //       approximation from the dish name so the user gets a usable draft
+  //       instead of an empty form. Clearly flagged for the UI.
+  const guessName = buildFallback(url).name
+  if (guessName && guessName.toLowerCase() !== 'imported recipe') {
+    try {
+      const approx = await generateRecipeFromPrompt(guessName)
+      if (Array.isArray(approx.ingredients) && approx.ingredients.length > 0) {
+        return { ...approx, source: url, _approximated: true }
+      }
+    } catch (err) {
+      console.error('[recipeAgent] approximation failed:', err.message)
+    }
+  }
+
+  // ── 4. Nothing worked — empty fallback form (preserve the blocked flag) ──────
+  return { ...buildFallback(url), _blocked: !!serverResult?._blocked }
 }
 
 // Convert any image file to a base64 JPEG, resizing large images down

@@ -258,7 +258,11 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     }
     stopStatusCycle()
 
-    if (result._fallback) {
+    if (result._approximated) {
+      setFallbackMsg(
+        "We couldn't read that page, so this is an AI approximation of a similar recipe — please review the ingredients and steps and edit before saving."
+      )
+    } else if (result._fallback) {
       setFallbackMsg(
         result._blocked
           ? "That site blocks automated access (AllRecipes does this). Take a screenshot of the recipe and use photo import instead, or fill in the details below."
