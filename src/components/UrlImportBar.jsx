@@ -26,6 +26,14 @@ const GENERATE_STATUS_MESSAGES = [
   'Building preview…',
 ]
 
+// A URL has no spaces and contains a scheme or a domain; anything else
+// (e.g. "spicy thai peanut noodles") is treated as a description for AI.
+function looksLikeUrl(s) {
+  const t = (s || '').trim()
+  if (!t || /\s/.test(t)) return false
+  return /^https?:\/\//i.test(t) || /^www\./i.test(t) || /\.[a-z]{2,}(\/|$|\?)/i.test(t)
+}
+
 export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed }) {
   const [url, setUrl] = useState('')
   const [status, setStatus] = useState('idle') // 'idle' | 'loading' | 'preview'
@@ -39,7 +47,6 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
   const [photoFiles, setPhotoFiles] = useState([])
   const [photoObjectUrls, setPhotoObjectUrls] = useState([])
   const [photoError, setPhotoError] = useState('')
-  const [describeInput, setDescribeInput] = useState('')
   const [describeError, setDescribeError] = useState('')
   const [adjustInput, setAdjustInput] = useState('')
   const [adjusting, setAdjusting] = useState(false)
@@ -167,7 +174,7 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
   }
 
   const handleGenerate = async () => {
-    if (!describeInput.trim()) return
+    if (!url.trim()) return
     setStatus('loading')
     setDescribeError('')
     setFallbackMsg('')
@@ -181,7 +188,7 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     }, 1800)
 
     try {
-      const result = await generateRecipeFromPrompt(describeInput)
+      const result = await generateRecipeFromPrompt(url)
       stopStatusCycle()
       setPreview({
         name: result.name || '',
@@ -351,7 +358,6 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     setPhotoFiles([])
     setPhotoObjectUrls([])
     setPhotoError('')
-    setDescribeInput('')
     setDescribeError('')
     setAdjustInput('')
     setAdjustError('')
@@ -359,42 +365,55 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
     stopStatusCycle()
   }
 
+  // Route the unified field: a URL imports, anything else generates with AI.
+  const handleSmartSubmit = () => {
+    if (!url.trim() || status === 'loading') return
+    return looksLikeUrl(url) ? handleImport() : handleGenerate()
+  }
+
   // "Try again" in the preview re-runs whichever source produced it.
-  const handleRetry = () => (url.trim() ? handleImport() : handleGenerate())
+  const handleRetry = () => (looksLikeUrl(url) ? handleImport() : handleGenerate())
 
   return (
     <div className="url-import-section">
       <div className="url-import-bar">
-        <span className="url-import-label">Import Recipe</span>
+        <span className="url-import-label">Add a Recipe</span>
 
-        {/* URL row */}
-        <div className="url-import-row">
-          <input
-            className="form-input url-import-input"
-            type="url"
+        {/* Unified smart field: paste a URL OR describe a dish for AI */}
+        <div className="smart-import">
+          <textarea
+            className="form-input smart-import-input"
             value={url}
             onChange={e => setUrl(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleImport()}
-            placeholder="Paste a recipe URL…"
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSmartSubmit() } }}
+            placeholder="Paste a recipe link — or describe a dish and let AI create it (e.g. spicy Thai peanut noodles with chicken)"
+            rows={3}
             disabled={status === 'loading'}
           />
-          <button
-            className="btn btn-primary"
-            onClick={handleImport}
-            disabled={status === 'loading' || !url.trim()}
-          >
-            {status === 'loading' && !photoFiles.length ? 'Importing…' : 'Import'}
-          </button>
-          {status === 'preview' && preview && (
+          <div className="smart-import-actions">
             <button
-              className="btn btn-secondary"
-              onClick={handleRetry}
-              disabled={status === 'loading'}
-              title="Generate again in case something was missed"
+              className="btn btn-primary smart-import-btn"
+              onClick={handleSmartSubmit}
+              disabled={status === 'loading' || !url.trim()}
             >
-              Try again
+              {status === 'loading'
+                ? (looksLikeUrl(url) ? 'Importing…' : 'Generating…')
+                : (looksLikeUrl(url) ? 'Import' : '✨ Generate with AI')}
             </button>
-          )}
+            {status === 'preview' && preview && (
+              <button
+                className="btn btn-secondary"
+                onClick={handleRetry}
+                disabled={status === 'loading'}
+                title="Run it again in case something was missed"
+              >
+                Try again
+              </button>
+            )}
+          </div>
+          <span className="smart-import-hint">
+            Paste a link to import a recipe, or type an idea and AI will write the full recipe for you.
+          </span>
         </div>
 
         {/* Divider */}
@@ -465,27 +484,6 @@ export default function UrlImportBar({ onImport, reimportUrl, onReimportConsumed
           )}
         </div>
 
-        {/* Divider */}
-        <div className="import-divider"><span>or</span></div>
-
-        {/* Describe-a-recipe row */}
-        <div className="describe-row">
-          <textarea
-            className="form-input describe-input"
-            value={describeInput}
-            onChange={e => setDescribeInput(e.target.value)}
-            placeholder="Describe a recipe you're craving… e.g. a cozy chicken pot pie, or spicy Thai peanut noodles"
-            rows={2}
-            disabled={status === 'loading'}
-          />
-          <button
-            className="btn btn-primary"
-            onClick={handleGenerate}
-            disabled={status === 'loading' || !describeInput.trim()}
-          >
-            {status === 'loading' && !photoFiles.length && !url.trim() ? 'Generating…' : '✨ Generate'}
-          </button>
-        </div>
         {describeError && <div className="import-fallback-msg">{describeError}</div>}
 
         {status === 'loading' && statusMsg && (
