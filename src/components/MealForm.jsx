@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
 import Stars from './Stars'
 import { uploadRecipeAttachment, isImageUrl } from '../utils/storage'
-import { estimateNutrition } from '../utils/recipeAgent'
+import { estimateNutrition, adjustRecipeWithAI } from '../utils/recipeAgent'
+
+const ADJUST_CHIPS = ['Halve servings', 'Double it', 'Make it vegetarian', 'Make it healthier']
 
 const ALL_TAGS = [
   'protein','chicken','beef','pork','steak','shrimp','salmon','lamb','turkey',
@@ -54,9 +56,58 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
   const [photoObjectUrls, setPhotoObjectUrls] = useState([])
   const [nutritionLoading, setNutritionLoading] = useState(false)
   const [nutritionError, setNutritionError] = useState('')
+  const [adjustInput, setAdjustInput] = useState('')
+  const [adjusting, setAdjusting] = useState(false)
+  const [adjustError, setAdjustError] = useState('')
   const photoInputRef = useRef(null)
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+
+  // Rewrite any part of the recipe with AI, then drop the result into the
+  // form fields so the user can review/tweak before saving.
+  const handleAdjust = async (instructionArg) => {
+    const instruction = (instructionArg ?? adjustInput).trim()
+    if (!instruction || adjusting) return
+    setAdjusting(true)
+    setAdjustError('')
+    try {
+      const result = await adjustRecipeWithAI(
+        {
+          name: form.name,
+          ingredients: form.ingredients,
+          notes: form.notes,
+          tags: form.tags,
+          cookTime: form.cook_time,
+          servings: form.servings,
+          calories: form.calories,
+          protein_g: form.protein_g,
+          carbs_g: form.carbs_g,
+          fat_g: form.fat_g,
+          instructions: form.instructions,
+        },
+        instruction
+      )
+      setForm(f => ({
+        ...f,
+        name: result.name || f.name,
+        ingredients: Array.isArray(result.ingredients) ? result.ingredients : f.ingredients,
+        notes: result.notes ?? f.notes,
+        tags: Array.isArray(result.tags) ? result.tags.filter(t => ALL_TAGS.includes(t)) : f.tags,
+        cook_time: result.cookTime || f.cook_time,
+        servings: result.servings ? String(result.servings) : f.servings,
+        calories: result.calories ? String(result.calories) : f.calories,
+        protein_g: result.protein_g ? String(result.protein_g) : f.protein_g,
+        carbs_g: result.carbs_g ? String(result.carbs_g) : f.carbs_g,
+        fat_g: result.fat_g ? String(result.fat_g) : f.fat_g,
+        instructions: (result.instructions || '').split(' | ').map(s => s.trim()).filter(Boolean).join('\n') || f.instructions,
+      }))
+      setAdjustInput('')
+    } catch (err) {
+      setAdjustError(err.message || 'Could not adjust the recipe. Try rephrasing.')
+    } finally {
+      setAdjusting(false)
+    }
+  }
 
   const checkDuplicate = (name) => {
     const trimmed = name.trim().toLowerCase()
@@ -184,6 +235,44 @@ export default function MealForm({ initial, onSave, onClose, existingMeals = [] 
         <h2 className="modal-title">{initial?.id ? 'Edit Meal' : 'Add Meal'}</h2>
 
         <form onSubmit={handleSubmit} className="meal-form">
+          {/* Adjust the whole recipe with AI */}
+          <div className="ai-adjust form-ai-adjust">
+            <label className="form-label">✨ Adjust with AI</label>
+            <div className="ai-adjust-row">
+              <input
+                className="form-input"
+                value={adjustInput}
+                onChange={e => setAdjustInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdjust() } }}
+                placeholder="Tell AI how to change this recipe… e.g. make it vegetarian, double it, convert to metric"
+                disabled={adjusting}
+              />
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => handleAdjust()}
+                disabled={adjusting || !adjustInput.trim()}
+              >
+                {adjusting ? 'Adjusting…' : 'Apply'}
+              </button>
+            </div>
+            <div className="ai-adjust-chips">
+              {ADJUST_CHIPS.map(chip => (
+                <button
+                  key={chip}
+                  type="button"
+                  className="chip chip-suggest"
+                  onClick={() => handleAdjust(chip)}
+                  disabled={adjusting}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+            <div className="form-hint">AI rewrites the fields below — review before saving.</div>
+            {adjustError && <div className="form-error" style={{ marginTop: 6 }}>{adjustError}</div>}
+          </div>
+
           <div className="form-group">
             <label className="form-label">Name {!initial?.id && <span className="required">*</span>}</label>
             <input
