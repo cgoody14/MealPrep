@@ -4626,7 +4626,9 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* Top-align so a step taller than the screen always opens at its top.
+     (justify-content: center clips/hides the top of overflowing content.) */
+  justify-content: flex-start;
   padding: 40px 48px;
   gap: 24px;
   overflow-y: auto;
