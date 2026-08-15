@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { AI_TEXT_MODEL } from '../src/lib/aiModels.js'
 
 // Same schema as recipeAgent.js — defines the JSON shape Groq must return
 const RECIPE_JSON_SCHEMA = `Exactly this shape:
@@ -256,7 +257,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-120b',
+        model: AI_TEXT_MODEL,
         temperature: 0.1,
         max_tokens: 4000,
         messages: [

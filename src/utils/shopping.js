@@ -1,4 +1,5 @@
 import { callGroq } from './groqClient'
+import { AI_TEXT_MODEL } from '../lib/aiModels'
 
 export function buildShoppingList(meals) {
   const cats = {
@@ -36,7 +37,7 @@ export async function enrichIngredientsWithQuantities(mealName, ingredients) {
   try {
     // callGroq imported at top of file
     const data = await callGroq({
-      model: 'openai/gpt-oss-120b',
+      model: AI_TEXT_MODEL,
       temperature: 0.1,
       max_tokens: 500,
       messages: [
@@ -72,7 +73,7 @@ export async function consolidateQuantities(categoryItems, mealNames) {
   try {
     // callGroq imported at top of file
     const data = await callGroq({
-      model: 'openai/gpt-oss-120b',
+      model: AI_TEXT_MODEL,
       temperature: 0.1,
       max_tokens: 800,
       messages: [
@@ -109,7 +110,7 @@ export async function categorizeIngredient(ingredient) {
   try {
     // callGroq imported at top of file
     const data = await callGroq({
-      model: 'openai/gpt-oss-120b',
+      model: AI_TEXT_MODEL,
       temperature: 0.1,
       max_tokens: 50,
       messages: [
