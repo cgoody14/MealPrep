@@ -94,7 +94,7 @@ export async function scrapeRecipeWithAI(url) {
       const aiData = await callGroq({
         model: AI_TEXT_MODEL,
         temperature: 0.1,
-        max_tokens: 4000,
+        max_tokens: 2500,
         messages: [
           {
             role: 'system',
@@ -266,7 +266,7 @@ export async function generateRecipeFromPrompt(prompt) {
   const aiData = await callGroq({
     model: AI_TEXT_MODEL,
     temperature: 0.6,
-    max_tokens: 4000,
+    max_tokens: 2500,
     messages: [
       {
         role: 'system',
@@ -305,7 +305,7 @@ export async function adjustRecipeWithAI(recipe, instruction) {
   const aiData = await callGroq({
     model: AI_TEXT_MODEL,
     temperature: 0.4,
-    max_tokens: 4000,
+    max_tokens: 2500,
     messages: [
       {
         role: 'system',

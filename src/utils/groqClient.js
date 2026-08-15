@@ -10,8 +10,20 @@ async function getAuthHeader() {
   return session?.access_token ? `Bearer ${session.access_token}` : null
 }
 
-export async function callGroq(body) {
-  // ── Development shortcut ────────────────────────────────────────────────────
+const sleep = (ms) => new Promise(r => setTimeout(r, ms))
+const RATE_LIMIT_UI_MSG =
+  "Rouxlo's AI is busy right now — please wait a few seconds and try again."
+
+function isRateLimit(status, msg) {
+  return status === 429 || /rate limit/i.test(msg || '')
+}
+// Groq errors say "Please try again in 25.0125s" — pull out the seconds.
+function retryAfterMs(msg) {
+  const m = /try again in ([\d.]+)s/i.exec(msg || '')
+  return m ? Math.ceil(parseFloat(m[1]) * 1000) : null
+}
+
+async function rawCall(body) {
   const devKey = import.meta.env.VITE_GROQ_API_KEY
   if (devKey) {
     const res = await fetch(GROQ_DIRECT, {
@@ -19,12 +31,8 @@ export async function callGroq(body) {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${devKey}` },
       body: JSON.stringify(body),
     })
-    const data = await res.json()
-    if (data.error) throw new Error(data.error.message)
-    return data
+    return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) }
   }
-
-  // ── Production: authenticated server proxy ──────────────────────────────────
   const authHeader = await getAuthHeader()
   if (!authHeader) throw new Error('Not authenticated')
   const res = await fetch('/api/groq', {
@@ -32,9 +40,27 @@ export async function callGroq(body) {
     headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
     body: JSON.stringify(body),
   })
-  const data = await res.json()
-  if (!res.ok || data.error) throw new Error(data.error?.message || 'Groq request failed')
-  return data
+  return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) }
+}
+
+export async function callGroq(body) {
+  // Retry once on a short rate-limit window; otherwise surface a friendly message.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { ok, status, data } = await rawCall(body)
+    const errMsg = (!ok || data?.error) ? (data?.error?.message || 'Groq request failed') : ''
+    if (!errMsg) return data
+
+    if (isRateLimit(status, errMsg)) {
+      const waitMs = retryAfterMs(errMsg)
+      if (attempt === 0 && waitMs != null && waitMs <= 8000) {
+        await sleep(waitMs + 300)
+        continue
+      }
+      throw new Error(RATE_LIMIT_UI_MSG)
+    }
+    throw new Error(errMsg)
+  }
+  throw new Error(RATE_LIMIT_UI_MSG)
 }
 
 // Calls the server-side scrape endpoint which fetches the real page content.

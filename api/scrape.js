@@ -259,7 +259,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: AI_TEXT_MODEL,
         temperature: 0.1,
-        max_tokens: 4000,
+        max_tokens: 2500,
         messages: [
           {
             role: 'system',
