@@ -91,7 +91,7 @@ export async function scrapeRecipeWithAI(url) {
   if (import.meta.env.VITE_GROQ_API_KEY) {
     try {
       const aiData = await callGroq({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         temperature: 0.1,
         max_tokens: 4000,
         messages: [
@@ -198,7 +198,7 @@ export async function scrapeRecipeFromImage(files) {
 
 export async function estimateNutrition(name, ingredients) {
   const data = await callGroq({
-    model: 'llama-3.3-70b-versatile',
+    model: 'openai/gpt-oss-120b',
     temperature: 0.1,
     max_tokens: 200,
     messages: [
@@ -263,7 +263,7 @@ Instructions rules:
 // Invent a full recipe from a freeform description, e.g. "spicy Thai peanut noodles".
 export async function generateRecipeFromPrompt(prompt) {
   const aiData = await callGroq({
-    model: 'llama-3.3-70b-versatile',
+    model: 'openai/gpt-oss-120b',
     temperature: 0.6,
     max_tokens: 4000,
     messages: [
@@ -302,7 +302,7 @@ export async function adjustRecipeWithAI(recipe, instruction) {
   })
 
   const aiData = await callGroq({
-    model: 'llama-3.3-70b-versatile',
+    model: 'openai/gpt-oss-120b',
     temperature: 0.4,
     max_tokens: 4000,
     messages: [

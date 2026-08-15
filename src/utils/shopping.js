@@ -36,7 +36,7 @@ export async function enrichIngredientsWithQuantities(mealName, ingredients) {
   try {
     // callGroq imported at top of file
     const data = await callGroq({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       temperature: 0.1,
       max_tokens: 500,
       messages: [
@@ -72,7 +72,7 @@ export async function consolidateQuantities(categoryItems, mealNames) {
   try {
     // callGroq imported at top of file
     const data = await callGroq({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       temperature: 0.1,
       max_tokens: 800,
       messages: [
@@ -109,7 +109,7 @@ export async function categorizeIngredient(ingredient) {
   try {
     // callGroq imported at top of file
     const data = await callGroq({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       temperature: 0.1,
       max_tokens: 50,
       messages: [
