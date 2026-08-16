@@ -4,8 +4,8 @@
   "description": "Your personal recipe collection and meal planner",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAF7F2",
-  "theme_color": "#B85C2C",
+  "background_color": "#FAF7F1",
+  "theme_color": "#5E7150",
   "orientation": "portrait",
   "icons": [
     {

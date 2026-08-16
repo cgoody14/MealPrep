@@ -9,37 +9,55 @@
 }
 
 :root {
-  --bg: #FAF7F2;
-  --bg2: #F2EDE4;
+  /* ── Modern Kitchen palette — warm, natural, editorial ── */
+  --bg: #FAF7F1;          /* warm ivory */
+  --bg2: #F1ECE1;         /* sand */
   --card: #FFFFFF;
-  --border: #E2DAD0;
-  --border2: #CEC4B8;
-  --text: #1C1814;
-  --text2: #6B6259;
-  --text3: #A09890;
-  --accent: #B85C2C;
-  --accent2: #E8874A;
-  --green: #4A7C59;
-  --yellow: #C9973A;
-  --shadow: 0 2px 12px rgba(0,0,0,0.07);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+  --border: #E8E1D5;
+  --border2: #D6CDBF;
+  --text: #211E19;        /* warm charcoal / near-black */
+  --text2: #6E655A;       /* warm gray */
+  --text3: #A79E92;
+  --accent: #5E7150;      /* sage / olive — primary brand accent */
+  --accent2: #7E9163;     /* lighter sage — hover / icons */
+  --accent-bright: #7E9163;
+  --accent-soft: #ECEFE2; /* sage tint — AI cards, active chips */
+  --terracotta: #C0603E;  /* muted tomato — secondary accent */
+  --terracotta-soft: #F6E7DF;
+  --yellow: #E0AD46;      /* buttery highlight */
+  --green: #5F8A57;       /* success (made / in-week) */
+  --shadow: 0 1px 2px rgba(33,30,25,0.04), 0 4px 14px rgba(33,30,25,0.05);
+  --shadow-lg: 0 10px 34px rgba(33,30,25,0.10);
   --sidebar-w: 220px;
-  --radius: 10px;
-  --radius-sm: 6px;
+  --radius: 12px;         /* soft, restrained — not bubbly */
+  --radius-sm: 8px;
+  /* ── Typography ── */
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;  /* editorial serif, used selectively */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'JetBrains Mono', 'Courier New', monospace;
 }
 
-/* ── Dark mode overrides ── */
+/* ── Dark mode overrides (warm charcoal, not clinical) ── */
 [data-theme="dark"] {
-  --bg: #18161A;
-  --bg2: #221F26;
-  --card: #27242B;
-  --border: #3A3540;
-  --border2: #4A4555;
-  --text: #F0EBE3;
-  --text2: #B8AFA6;
-  --text3: #786E6A;
-  --shadow: 0 2px 12px rgba(0,0,0,0.30);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.40);
+  --bg: #1A1712;
+  --bg2: #221E18;
+  --card: #262119;
+  --border: #38312A;
+  --border2: #4A4238;
+  --text: #F2ECE1;
+  --text2: #B8AEA1;
+  --text3: #837869;
+  --accent: #93A671;      /* lightened sage for dark */
+  --accent2: #A7B98A;
+  --accent-bright: #A7B98A;
+  --accent-soft: #2A2E22;
+  --terracotta: #D57B57;
+  --terracotta-soft: #3A2A22;
+  --yellow: #E0AD46;
+  --green: #86AE6A;
+  --shadow: 0 1px 2px rgba(0,0,0,0.30), 0 4px 14px rgba(0,0,0,0.32);
+  --shadow-lg: 0 10px 34px rgba(0,0,0,0.45);
 }
 
 /* ── Skeleton loading ── */
@@ -147,7 +165,7 @@ html, body {
 }
 
 body {
-  font-family: 'Archivo', system-ui, sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--text);
   font-size: 14px;
@@ -221,7 +239,7 @@ body {
 }
 
 .sidebar-brand-text {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -303,7 +321,7 @@ body {
 }
 
 .page-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 34px;
   font-weight: 600;
   color: var(--text);
@@ -345,7 +363,7 @@ body {
 }
 
 .section-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 600;
 }
@@ -382,10 +400,15 @@ button {
 .btn-primary {
   background: var(--accent);
   color: #fff;
+  letter-spacing: 0.01em;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #a34f23;
+  background: #4E5F42; /* darker sage */
+}
+
+[data-theme="dark"] .btn-primary:hover:not(:disabled) {
+  background: #A7B98A;
 }
 
 .btn-secondary {
@@ -415,7 +438,7 @@ button {
   color: #fff;
   border-color: var(--green);
   font-weight: 600;
-  box-shadow: 0 0 0 3px rgba(74,124,89,0.18);
+  box-shadow: 0 0 0 3px rgba(95,138,87,0.20);
 }
 
 @keyframes markMadePop {
@@ -836,7 +859,7 @@ button {
 }
 
 .meal-name {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 19px;
   font-weight: 600;
   color: var(--text);
@@ -1034,7 +1057,7 @@ button {
   font-weight: 700;
   color: var(--text);
   margin: 0 0 8px;
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
 }
 
 .install-subtitle {
@@ -1147,7 +1170,7 @@ button {
 }
 
 .modal-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 20px;
@@ -1172,7 +1195,7 @@ button {
 }
 
 .detail-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 28px;
   font-weight: 600;
   margin-bottom: 6px;
@@ -1194,7 +1217,7 @@ button {
 }
 
 .stat-value {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 600;
   color: var(--text);
@@ -1536,7 +1559,7 @@ button {
 .chip-suggest:hover:not(:disabled) {
   background: var(--card);
   border-color: var(--accent);
-  color: var(--text1);
+  color: var(--text);
 }
 
 .chip-suggest:disabled {
@@ -1544,11 +1567,27 @@ button {
   cursor: default;
 }
 
+/* ── AI "sous-chef" treatment: subtle, magical, restrained ──
+   AI surfaces get a soft sage tint + sage hairline so they feel
+   special without turning the app into an AI dashboard. */
+.form-ai-adjust {
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border));
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.form-ai-adjust .form-label {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* Editable recipe name in preview card */
 .import-name-input {
   display: block;
   width: 100%;
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 600;
   color: var(--text);
@@ -2166,7 +2205,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 700;
 }
@@ -2321,7 +2360,7 @@ button {
 }
 
 .by-recipe-meal-name {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 17px;
   font-weight: 600;
   margin-bottom: 8px;
@@ -2398,7 +2437,7 @@ button {
 }
 
 .by-recipe-card-name {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text);
@@ -2497,7 +2536,7 @@ button {
 }
 
 .rand-result-name {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 16px;
   font-weight: 600;
   color: var(--text);
@@ -2577,7 +2616,7 @@ button {
   overflow-y: auto;
   margin-bottom: 16px;
   color: var(--text);
-  font-family: 'Archivo', monospace;
+  font-family: var(--font-mono);
 }
 
 .send-actions {
@@ -2631,7 +2670,7 @@ button {
 }
 
 .auth-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 32px;
   font-weight: 600;
   color: var(--text);
@@ -3006,7 +3045,7 @@ button {
 }
 
 .upgrade-tier-name {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 600;
   color: var(--text);
@@ -3398,7 +3437,7 @@ button {
 }
 
 .onboarding-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 26px;
   font-weight: 600;
   color: var(--text);
@@ -3721,7 +3760,7 @@ button {
 }
 
 .faq-section-title {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 600;
   color: var(--text);
@@ -4491,7 +4530,7 @@ button {
 
 .cook-meal-name {
   display: block;
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: clamp(18px, 4vw, 28px);
   font-weight: 600;
   white-space: nowrap;
@@ -4788,7 +4827,7 @@ button {
 }
 
 .cook-timer-time {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
   min-width: 72px;
