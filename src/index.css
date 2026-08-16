@@ -398,13 +398,17 @@ button {
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--accent2); /* deep olive — AA contrast with white text */
   color: #fff;
   letter-spacing: 0.01em;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent2); /* deep olive */
+  background: #384A34; /* darker olive */
+}
+
+[data-theme="dark"] .btn-primary:hover:not(:disabled) {
+  background: #55654F;
 }
 
 .btn-secondary {
