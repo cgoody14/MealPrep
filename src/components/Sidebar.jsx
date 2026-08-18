@@ -8,8 +8,12 @@ const NAV = [
   { path: '/faqs', icon: '?', label: 'FAQs', countKey: null },
 ]
 
-export default function Sidebar({ mealCount, weekCount }) {
+export default function Sidebar({ mealCount, weekCount, isAdmin }) {
   const counts = { meals: mealCount, week: weekCount }
+  // Owner-only Dashboard link (server-side endpoint still enforces access).
+  const navItems = isAdmin
+    ? [...NAV, { path: '/admin', icon: '📊', label: 'Dashboard', countKey: null }]
+    : NAV
 
   return (
     <>
@@ -25,7 +29,7 @@ export default function Sidebar({ mealCount, weekCount }) {
           <span className="sidebar-brand-text">Rouxlo</span>
         </div>
         <ul className="sidebar-nav">
-          {NAV.map(item => (
+          {navItems.map(item => (
             <li key={item.path}>
               <NavLink
                 to={item.path}

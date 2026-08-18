@@ -11,6 +11,7 @@ import ThisWeek from './pages/ThisWeek'
 import Planner from './pages/Planner'
 import Shopping from './pages/Shopping'
 import Faqs from './pages/Faqs'
+import Admin from './pages/Admin'
 import { useMeals } from './hooks/useMeals'
 import { useWeekMeals } from './hooks/useWeekMeals'
 import { useHousehold } from './hooks/useHousehold'
@@ -384,6 +385,12 @@ function AppShell() {
   })
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark')
   const [refreshing, setRefreshing] = useState(false)
+  // Owner-only admin dashboard gating (server-side gate is the real control).
+  const [userEmail, setUserEmail] = useState('')
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserEmail((data?.user?.email || '').toLowerCase()))
+  }, [])
+  const isAdmin = !!userEmail && userEmail === (import.meta.env.VITE_ADMIN_EMAIL || '').toLowerCase()
   const mainRef = useRef(null)
 
   const toggleDark = () => {
@@ -443,6 +450,7 @@ function AppShell() {
       <Sidebar
         mealCount={meals.length}
         weekCount={weekMeals.length}
+        isAdmin={isAdmin}
       />
       <div className="top-right-actions">
         <button
@@ -523,6 +531,7 @@ function AppShell() {
             }
           />
           <Route path="/faqs" element={<Faqs />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
