@@ -12,7 +12,7 @@ export default function Stars({ rating, onRate, size = 'md' }) {
           style={{
             fontSize: px,
             cursor: onRate ? 'pointer' : 'default',
-            color: n <= rating ? 'var(--accent2)' : 'var(--border2)',
+            color: n <= rating ? 'var(--star)' : 'var(--border2)',
             lineHeight: 1,
             transition: 'color 0.15s',
           }}
