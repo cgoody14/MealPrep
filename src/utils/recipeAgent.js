@@ -55,8 +55,8 @@ function parseAIResponse(text) {
   try {
     return JSON.parse(clean)
   } catch {
-    // Strip control characters that can invalidate JSON
-    const sanitized = clean.replace(/[-]/g, ' ')
+    // Strip control characters (not hyphens) that can invalidate JSON
+    const sanitized = clean.replace(/[\u0000-\u001F]/g, ' ')
     return JSON.parse(sanitized)
   }
 }
@@ -94,7 +94,9 @@ export async function scrapeRecipeWithAI(url) {
       const aiData = await callGroq({
         model: AI_TEXT_MODEL,
         temperature: 0.1,
-        max_tokens: 2500,
+        max_tokens: 4000,
+        reasoning_effort: 'low',
+        response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
@@ -202,6 +204,8 @@ export async function estimateNutrition(name, ingredients) {
     model: AI_TEXT_MODEL,
     temperature: 0.1,
     max_tokens: 200,
+    reasoning_effort: 'low',
+    response_format: { type: 'json_object' },
     messages: [
       {
         role: 'system',
@@ -266,7 +270,9 @@ export async function generateRecipeFromPrompt(prompt) {
   const aiData = await callGroq({
     model: AI_TEXT_MODEL,
     temperature: 0.6,
-    max_tokens: 2500,
+    max_tokens: 4000,
+    reasoning_effort: 'low',
+    response_format: { type: 'json_object' },
     messages: [
       {
         role: 'system',
@@ -305,7 +311,9 @@ export async function adjustRecipeWithAI(recipe, instruction) {
   const aiData = await callGroq({
     model: AI_TEXT_MODEL,
     temperature: 0.4,
-    max_tokens: 2500,
+    max_tokens: 4000,
+    reasoning_effort: 'low',
+    response_format: { type: 'json_object' },
     messages: [
       {
         role: 'system',
