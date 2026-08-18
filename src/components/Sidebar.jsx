@@ -12,7 +12,7 @@ export default function Sidebar({ mealCount, weekCount, isAdmin }) {
   const counts = { meals: mealCount, week: weekCount }
   // Owner-only Dashboard link (server-side endpoint still enforces access).
   const navItems = isAdmin
-    ? [...NAV, { path: '/admin', icon: '📊', label: 'Dashboard', countKey: null }]
+    ? [...NAV, { path: '/admin', icon: '📊', label: 'Dashboard', mobileLabel: 'Admin', countKey: null }]
     : NAV
 
   return (
@@ -49,7 +49,7 @@ export default function Sidebar({ mealCount, weekCount, isAdmin }) {
 
       {/* Mobile bottom tab bar */}
       <nav className="bottom-tabs">
-        {NAV.map(item => (
+        {navItems.map(item => (
           <NavLink
             key={item.path}
             to={item.path}
