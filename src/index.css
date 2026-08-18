@@ -5139,6 +5139,27 @@ button {
 .admin-empty { color: var(--text3); font-style: italic; padding: 12px 6px; }
 
 @media (max-width: 860px) {
-  .admin-grid { grid-template-columns: repeat(2, 1fr); }
-  .admin-two-col { grid-template-columns: 1fr; }
+  .admin-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .admin-two-col { grid-template-columns: 1fr; gap: 14px; }
+  .admin-section { padding: 14px; }
+  .admin-tile { padding: 14px 15px; }
+  .admin-tile-value { font-size: 24px; }
+  /* Chart: taller and horizontally scrollable so bars stay wide + tappable */
+  .admin-chart-bars {
+    height: 180px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .admin-chart-col { min-width: 18px; }
+  .admin-bar { width: 46%; }
+  .admin-table td { padding: 10px 6px; }  /* larger tap/read targets */
+}
+
+@media (max-width: 420px) {
+  .admin-tile-value { font-size: 21px; }
+  .admin-tile-label { font-size: 11px; }
+  .admin-table { font-size: 12.5px; }
+  .admin-td-status { display: none; }  /* keep email · amount · date readable */
 }
