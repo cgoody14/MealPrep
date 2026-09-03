@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../supabase'
 import { getTier, canJoinHousehold, TierGateError } from '../lib/subscriptions'
 import { notifyHousehold } from '../lib/push'
@@ -9,6 +9,11 @@ export function useHousehold() {
   const [currentUserId, setCurrentUserId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  // Detect a member joining THIS household (for an in-app toast).
+  const [remoteJoin, setRemoteJoin] = useState(null)
+  const prevHouseholdIdRef = useRef(null)
+  const prevMemberIdsRef = useRef([])
+  const initializedRef = useRef(false)
 
   const fetchHousehold = useCallback(async () => {
     setLoading(true)
@@ -46,6 +51,20 @@ export function useHousehold() {
         .select('user_id, joined_at, display_name')
 
       setMembers(memberRows || [])
+
+      // Detect a NEW member of the same household (not on first load, and not
+      // when the current user just switched households themselves).
+      const ids = (memberRows || []).map(m => m.user_id)
+      if (initializedRef.current && prevHouseholdIdRef.current === membership.household_id) {
+        const added = ids.find(id => id !== user.id && !prevMemberIdsRef.current.includes(id))
+        if (added) {
+          const m = (memberRows || []).find(x => x.user_id === added)
+          setRemoteJoin({ name: m?.display_name || 'A new member', at: Date.now() })
+        }
+      }
+      prevHouseholdIdRef.current = membership.household_id
+      prevMemberIdsRef.current = ids
+      initializedRef.current = true
     } catch (err) {
       setError(err.message)
     } finally {
@@ -54,6 +73,19 @@ export function useHousehold() {
   }, [])
 
   useEffect(() => { fetchHousehold() }, [fetchHousehold])
+
+  // Live membership updates — refetch when anyone's household row changes
+  // (drives the "joined your household" toast + keeps the member list current).
+  useEffect(() => {
+    if (!currentUserId) return
+    const channel = supabase
+      .channel(`household-${currentUserId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_households' }, () => {
+        fetchHousehold()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [currentUserId, fetchHousehold])
 
   // Join an existing household via its 6-character invite code
   const joinHousehold = async (code) => {
@@ -134,5 +166,5 @@ export function useHousehold() {
     await fetchHousehold()
   }
 
-  return { household, members, currentUserId, loading, error, fetchHousehold, joinHousehold, leaveHousehold, updateDisplayName, removeMember }
+  return { household, members, currentUserId, loading, error, fetchHousehold, joinHousehold, leaveHousehold, updateDisplayName, removeMember, remoteJoin }
 }

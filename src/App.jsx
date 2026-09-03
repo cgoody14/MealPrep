@@ -330,8 +330,8 @@ function ScrollToTop() {
 
 function AppShell() {
   const { meals, loading: mealsLoading, addMeal, updateMeal, deleteMeal, markMadeToday, fetchMeals, remoteAdd } = useMeals()
-  const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek, fetchWeekMeals, updateDayOfWeek, updateServingsOverride } = useWeekMeals()
-  const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName, removeMember, fetchHousehold } = useHousehold()
+  const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek, fetchWeekMeals, updateDayOfWeek, updateServingsOverride, remoteWeekAdd } = useWeekMeals()
+  const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName, removeMember, fetchHousehold, remoteJoin } = useHousehold()
   const [showSettings, setShowSettings] = useState(false)
   const [upgradeReason, setUpgradeReason] = useState(null)
   const [upgradeToast, setUpgradeToast] = useState(null) // 'success' | 'canceled' | null
@@ -392,17 +392,37 @@ function AppShell() {
   }, [])
   const isAdmin = !!userEmail && userEmail === (import.meta.env.VITE_ADMIN_EMAIL || '').toLowerCase()
 
-  // In-app toast when another household member adds a recipe (live via Realtime).
-  const [recipeToast, setRecipeToast] = useState(null)
+  // In-app toasts for live household activity (all via Realtime).
+  const [recipeToast, setRecipeToast] = useState(null) // { icon, text } | null
+  const nameFor = (uid) => members.find(m => m.user_id === uid)?.display_name || 'A household member'
+
+  // A member added a recipe
   useEffect(() => {
     if (!remoteAdd) return
-    const adder = members.find(m => m.user_id === remoteAdd.userId)
-    const who = adder?.display_name || 'A household member'
-    setRecipeToast(`${who} added "${remoteAdd.name}"`)
+    setRecipeToast({ icon: '🍽️', text: `${nameFor(remoteAdd.userId)} added "${remoteAdd.name}"` })
     const t = setTimeout(() => setRecipeToast(null), 6000)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remoteAdd])
+
+  // A member scheduled a meal for This Week
+  useEffect(() => {
+    if (!remoteWeekAdd) return
+    const mealName = meals.find(m => m.id === remoteWeekAdd.mealId)?.name || 'a meal'
+    setRecipeToast({ icon: '📅', text: `${nameFor(remoteWeekAdd.userId)} added ${mealName} to This Week` })
+    const t = setTimeout(() => setRecipeToast(null), 6000)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteWeekAdd])
+
+  // Someone joined the household
+  useEffect(() => {
+    if (!remoteJoin) return
+    setRecipeToast({ icon: '👋', text: `${remoteJoin.name} joined your household` })
+    const t = setTimeout(() => setRecipeToast(null), 6000)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteJoin])
   const mainRef = useRef(null)
 
   const toggleDark = () => {
@@ -579,8 +599,8 @@ function AppShell() {
 
       {recipeToast && (
         <div className="recipe-toast" role="status">
-          <span className="recipe-toast-icon" aria-hidden="true">🍽️</span>
-          <span className="recipe-toast-text">{recipeToast}</span>
+          <span className="recipe-toast-icon" aria-hidden="true">{recipeToast.icon}</span>
+          <span className="recipe-toast-text">{recipeToast.text}</span>
           <button className="recipe-toast-close" onClick={() => setRecipeToast(null)} aria-label="Dismiss">✕</button>
         </div>
       )}

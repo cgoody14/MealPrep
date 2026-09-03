@@ -9,6 +9,8 @@ export function useWeekMeals() {
   const [error, setError] = useState(null)
   const [userId, setUserId] = useState(null)
   const [weekStart, setWeekStart] = useState(getWeekStart)
+  // Set when another member schedules a meal — drives an in-app toast.
+  const [remoteWeekAdd, setRemoteWeekAdd] = useState(null)
 
   // Detect week boundary crossing while the app is open (e.g. tab open Sun→Mon)
   useEffect(() => {
@@ -50,7 +52,10 @@ export function useWeekMeals() {
     if (!userId) return
     const channel = supabase
       .channel(`week-meals-${userId}-${weekStart}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'week_meals' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'week_meals' }, (payload) => {
+        if (payload.eventType === 'INSERT' && payload.new && payload.new.user_id !== userId) {
+          setRemoteWeekAdd({ mealId: payload.new.meal_id, userId: payload.new.user_id, at: Date.now() })
+        }
         fetchWeekMeals()
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'user_households' }, () => {
@@ -110,5 +115,5 @@ export function useWeekMeals() {
     setWeekMeals([])
   }
 
-  return { weekMeals, loading, error, weekStart, fetchWeekMeals, addToWeek, removeFromWeek, clearWeek, updateDayOfWeek, updateServingsOverride }
+  return { weekMeals, loading, error, weekStart, fetchWeekMeals, addToWeek, removeFromWeek, clearWeek, updateDayOfWeek, updateServingsOverride, remoteWeekAdd }
 }
