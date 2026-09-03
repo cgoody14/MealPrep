@@ -8,6 +8,8 @@ export function useMeals() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [userId, setUserId] = useState(null)
+  // Set when another household member inserts a recipe — drives an in-app toast.
+  const [remoteAdd, setRemoteAdd] = useState(null)
 
   const fetchMeals = useCallback(async () => {
     setLoading(true)
@@ -44,7 +46,12 @@ export function useMeals() {
     if (!userId) return
     const channel = supabase
       .channel(`meals-${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'meals' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meals' }, (payload) => {
+        // Someone else in the household added a recipe → fire an in-app toast.
+        // (RLS already scopes delivered events to this user's household.)
+        if (payload.eventType === 'INSERT' && payload.new && payload.new.user_id !== userId) {
+          setRemoteAdd({ name: payload.new.name, userId: payload.new.user_id, at: Date.now() })
+        }
         fetchMeals()
       })
       // Also watch household membership — when someone joins/leaves, the visible
@@ -137,5 +144,5 @@ export function useMeals() {
     })
   }
 
-  return { meals, loading, error, fetchMeals, addMeal, updateMeal, deleteMeal, markMadeToday }
+  return { meals, loading, error, fetchMeals, addMeal, updateMeal, deleteMeal, markMadeToday, remoteAdd }
 }

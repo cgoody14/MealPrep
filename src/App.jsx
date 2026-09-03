@@ -329,7 +329,7 @@ function ScrollToTop() {
 }
 
 function AppShell() {
-  const { meals, loading: mealsLoading, addMeal, updateMeal, deleteMeal, markMadeToday, fetchMeals } = useMeals()
+  const { meals, loading: mealsLoading, addMeal, updateMeal, deleteMeal, markMadeToday, fetchMeals, remoteAdd } = useMeals()
   const { weekMeals, loading: weekLoading, addToWeek, removeFromWeek, clearWeek, fetchWeekMeals, updateDayOfWeek, updateServingsOverride } = useWeekMeals()
   const { household, members, currentUserId, loading: householdLoading, joinHousehold, leaveHousehold, updateDisplayName, removeMember, fetchHousehold } = useHousehold()
   const [showSettings, setShowSettings] = useState(false)
@@ -391,6 +391,18 @@ function AppShell() {
     supabase.auth.getUser().then(({ data }) => setUserEmail((data?.user?.email || '').toLowerCase()))
   }, [])
   const isAdmin = !!userEmail && userEmail === (import.meta.env.VITE_ADMIN_EMAIL || '').toLowerCase()
+
+  // In-app toast when another household member adds a recipe (live via Realtime).
+  const [recipeToast, setRecipeToast] = useState(null)
+  useEffect(() => {
+    if (!remoteAdd) return
+    const adder = members.find(m => m.user_id === remoteAdd.userId)
+    const who = adder?.display_name || 'A household member'
+    setRecipeToast(`${who} added "${remoteAdd.name}"`)
+    const t = setTimeout(() => setRecipeToast(null), 6000)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteAdd])
   const mainRef = useRef(null)
 
   const toggleDark = () => {
@@ -562,6 +574,14 @@ function AppShell() {
             ? '✓ Payment received — your plan is upgrading.'
             : 'Checkout canceled — no changes.'}
           <button className="upgrade-toast-close" onClick={() => setUpgradeToast(null)} aria-label="Dismiss">✕</button>
+        </div>
+      )}
+
+      {recipeToast && (
+        <div className="recipe-toast" role="status">
+          <span className="recipe-toast-icon" aria-hidden="true">🍽️</span>
+          <span className="recipe-toast-text">{recipeToast}</span>
+          <button className="recipe-toast-close" onClick={() => setRecipeToast(null)} aria-label="Dismiss">✕</button>
         </div>
       )}
 

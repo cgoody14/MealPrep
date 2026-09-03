@@ -3121,6 +3121,44 @@ button {
   border: 1px solid var(--border);
 }
 
+/* In-app toast: a household member added a recipe (bottom, clear of tabs) */
+.recipe-toast {
+  position: fixed;
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 12px 16px;
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  box-shadow: var(--shadow-lg);
+  font-size: 14px;
+  font-weight: 500;
+  max-width: min(90vw, 420px);
+  animation: toastIn 0.25s ease-out;
+}
+.recipe-toast-icon { font-size: 18px; flex-shrink: 0; }
+.recipe-toast-text { flex: 1; line-height: 1.35; }
+.recipe-toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 14px;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+.recipe-toast-close:hover { color: var(--text); }
+@media (min-width: 861px) {
+  .recipe-toast { bottom: 24px; }
+}
+
 .upgrade-toast-close {
   background: none;
   border: none;
